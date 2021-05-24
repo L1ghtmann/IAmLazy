@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string></string>
+		</dict>
+		<dict>
+			<key>cellClass</key>
+			<string>IAmLazyPrefsCell</string>
+			<key>text</key>
+			<string>Make Tweak Backup</string>
+			<key>type</key>
+			<string>backup</string>
+			<key>action</key>
+			<string>makeTweakBackup:</string>
+		</dict>
+		
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string></string>
+		</dict>
+		<dict>
+			<key>cellClass</key>
+			<string>IAmLazyPrefsCell</string>
+			<key>text</key>
+			<string>Restore From Backup</string>
+			<key>type</key>
+			<string>restore</string>
+			<key>action</key>
+			<string>restoreFromBackup:</string>
+		</dict>
+		
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string></string>
+		</dict>
+		<dict>
+			<key>cellClass</key>
+			<string>IAmLazyPrefsCell</string>
+			<key>text</key>
+			<string>IAmLazy By Lightmann</string>
+			<key>type</key>
+			<string>text</string>
+		</dict>
+	</array>
+	<key>title</key>
+	<string>IAmLazy</string>
+</dict>
+</plist>

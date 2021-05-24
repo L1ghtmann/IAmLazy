@@ -1,0 +1,5 @@
+#!/bin/sh
+
+chown root:wheel /usr/libexec/iamlazy/AndSoAreYou
+chmod 6755 /usr/libexec/iamlazy/AndSoAreYou
+exit 0
