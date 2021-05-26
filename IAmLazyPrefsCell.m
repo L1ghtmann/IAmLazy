@@ -7,13 +7,13 @@
 
 	self = [super initWithStyle:style reuseIdentifier:reuseIdentifier specifier:specifier];
 
-	if (self) {		
+	if (self) {
 		_function = specifier.properties[@"type"];
 		_purpose = specifier.properties[@"text"];
 
-		// make icon 
+		// make icon
 		// helpful link for available SFSymbols: https://github.com/cyanzhong/sf-symbols-online
-		// note: SFSymbols' width and height aren't equal, so need to set the content mode accordingly  
+		// note: SFSymbols' width and height aren't equal, so need to set the content mode accordingly
 		if([_function isEqualToString:@"backup"]){
 			_functionIcon = [[UIImageView alloc] initWithFrame:CGRectZero];
 			[_functionIcon setImage:[UIImage systemImageNamed:@"plus.app"]];
@@ -27,26 +27,26 @@
 		else{
 			_functionIcon = nil;
 		}
-		// have to add as subview early so constraints work (same hierarchy) 
-		[self addSubview:_functionIcon]; 
-		
+		// have to add as subview early so constraints work (same hierarchy)
+		[self addSubview:_functionIcon];
+
 		// make label
 		_label = [[UILabel alloc] initWithFrame:CGRectZero];
 		[self addSubview:_label];
-		
-		[_label setTranslatesAutoresizingMaskIntoConstraints:NO];
-        [_label.widthAnchor constraintEqualToConstant:kWidth].active = YES;
-        [_label.heightAnchor constraintEqualToConstant:20].active = YES;
-        [_label.centerXAnchor constraintEqualToAnchor:self.centerXAnchor].active = YES;
-        [_label.bottomAnchor constraintEqualToAnchor:self.bottomAnchor constant:-(cellHeight/8)].active = YES;
 
-		_label.font = [UIFont systemFontOfSize:_label.font.pointSize weight:0.40]; 
-		[_label setTextAlignment:NSTextAlignmentCenter];     
+		[_label setTranslatesAutoresizingMaskIntoConstraints:NO];
+		[_label.widthAnchor constraintEqualToConstant:kWidth].active = YES;
+		[_label.heightAnchor constraintEqualToConstant:20].active = YES;
+		[_label.centerXAnchor constraintEqualToAnchor:self.centerXAnchor].active = YES;
+		[_label.bottomAnchor constraintEqualToAnchor:self.bottomAnchor constant:-(cellHeight/8)].active = YES;
+
+		_label.font = [UIFont systemFontOfSize:_label.font.pointSize weight:0.40];
+		[_label setTextAlignment:NSTextAlignmentCenter];
 		[_label setUserInteractionEnabled:NO];
 		[_label setText:_purpose];
 
-		// icon setup 
-		if(_functionIcon){ 
+		// icon setup
+		if(_functionIcon){
 			[_functionIcon setTranslatesAutoresizingMaskIntoConstraints:NO];
 			[_functionIcon.widthAnchor constraintEqualToConstant:(kHeight/4.5)].active = YES;
 			[_functionIcon.heightAnchor constraintEqualToConstant:(kHeight/4.5)].active = YES;
@@ -54,7 +54,7 @@
 			[_functionIcon.centerYAnchor constraintEqualToAnchor:self.centerYAnchor constant:-(cellHeight/8)+10].active = YES;
 			[_functionIcon setUserInteractionEnabled:NO];
 		}
-	}	
+	}
 
 	return self;
 }

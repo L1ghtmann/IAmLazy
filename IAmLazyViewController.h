@@ -1,6 +1,7 @@
 #import <UIKit/UIKit.h>
 
 @interface IAmLazyViewController : UIViewController
+@property (nonatomic) int itemCount;
 @property (nonatomic) NSMutableArray *items;
 @property (nonatomic) NSMutableArray *itemIcons;
 @property (nonatomic) NSMutableArray *itemDescriptions;

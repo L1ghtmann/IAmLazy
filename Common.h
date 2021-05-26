@@ -4,7 +4,7 @@
 #define filesToCopy @"/var/tmp/me.lightmann.iamlazy/filesToCopy.txt"
 #define backupDir @"/var/mobile/Documents/me.lightmann.iamlazy/"
 
-#define kWidth [UIScreen mainScreen].bounds.size.width 
+#define kWidth [UIScreen mainScreen].bounds.size.width
 #define kHeight [UIScreen mainScreen].bounds.size.height
 
 #define container (kHeight - [[UIApplication sharedApplication] statusBarHeight] - [[[(PreferencesAppController *)[UIApplication sharedApplication] rootController] navigationController] navigationBar].bounds.size.height)

@@ -20,7 +20,7 @@
 			<key>action</key>
 			<string>makeTweakBackup:</string>
 		</dict>
-		
+
 		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
@@ -37,7 +37,7 @@
 			<key>action</key>
 			<string>restoreFromBackup:</string>
 		</dict>
-		
+
 		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
@@ -48,7 +48,7 @@
 			<key>cellClass</key>
 			<string>IAmLazyPrefsCell</string>
 			<key>text</key>
-			<string>IAmLazy By Lightmann</string>
+			<string>v1.0.1 By Lightmann</string>
 			<key>type</key>
 			<string>text</string>
 		</dict>

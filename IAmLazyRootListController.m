@@ -22,7 +22,7 @@ static IAmLazyManager *manager;
 	NSIndexPath *pathToLastRow = [NSIndexPath indexPathForRow:lastRowIndex inSection:lastSectionIndex];
 	// custom cell height
 	if(indexPath != pathToLastRow){
-		return cellHeight; 
+		return cellHeight;
 	}
 	// for text cell (last cell), use a smaller height
 	else{
@@ -37,20 +37,20 @@ static IAmLazyManager *manager;
 		manager = [NSClassFromString(@"IAmLazyManager") sharedInstance];
 		[manager setRootVC:self];
 	}
-	
+
 	return self;
 }
 
 - (void)makeTweakBackup:(id)sender {
 	AudioServicesPlaySystemSound(1520); // haptic feedback
 
-	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Please confirm that you have adequate free storage before proceeding" preferredStyle:UIAlertControllerStyleActionSheet];
+	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Please confirm that you have around %.02f MB of free storage before proceeding", [manager getSizeOfAllPackages]/3] preferredStyle:UIAlertControllerStyleActionSheet];
 
 	UIAlertAction *confirm = [UIAlertAction actionWithTitle:@"Confirm" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
 		[self presentViewController:[[IAmLazyViewController alloc] initWithPurpose:@"backup"] animated:YES completion:nil];
 		[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
 		[manager makeTweakBackup];
-		[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer 
+		[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer
 		if(![manager encounteredError]){
 			dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
 				[self dismissViewControllerAnimated:YES completion:^ {
@@ -71,15 +71,15 @@ static IAmLazyManager *manager;
 }
 
 - (void)restoreFromBackup:(id)sender {
-	AudioServicesPlaySystemSound(1520); // haptic feedback 
-	
+	AudioServicesPlaySystemSound(1520); // haptic feedback
+
 	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Choose how you'd like to restore:" preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *latest = [UIAlertAction actionWithTitle:@"From Latest Backup" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
 		[self presentViewController:[[IAmLazyViewController alloc] initWithPurpose:@"restore"] animated:YES completion:nil];
 		[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
 		[manager restoreFromBackup];
-		[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer 
+		[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer
 		if(![manager encounteredError]){
 			dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
 				[self dismissViewControllerAnimated:YES completion:^ {
@@ -89,10 +89,10 @@ static IAmLazyManager *manager;
 		}
 	}];
 
-	UIAlertAction *specific = [UIAlertAction actionWithTitle:@"From A Specific Backup" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {		
-		NSMutableDictionary *backupInfo = [NSMutableDictionary new];							
+	UIAlertAction *specific = [UIAlertAction actionWithTitle:@"From A Specific Backup" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+		NSMutableDictionary *backupInfo = [NSMutableDictionary new];
 
-		// get backup file names							
+		// get backup file names
 		NSArray *backupNames = [manager getBackups];
 
 		NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
@@ -103,7 +103,7 @@ static IAmLazyManager *manager;
 		for(NSString *backup in backupNames){
 			NSString *path = [backupDir stringByAppendingPathComponent:backup];
 			NSDictionary *fileAttribs = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:nil];
-			NSDate *creationDate = [fileAttribs fileCreationDate]; 
+			NSDate *creationDate = [fileAttribs fileCreationDate];
 			NSString *dateString = [formatter stringFromDate:creationDate];
 			[backupDates addObject:dateString];
 			[backupInfo setObject:dateString forKey:backup];
@@ -116,10 +116,10 @@ static IAmLazyManager *manager;
 		NSArray *sortedBackupNames = [[backupInfo allKeys] sortedArrayUsingDescriptors:@[nameDescriptor]];
 		NSArray *sortedBackupDates = [backupInfo objectsForKeys:sortedBackupNames notFoundMarker:[NSNull null]];
 
-		// post list of available backups 
+		// post list of available backups
 		UIAlertController *subalert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Choose the backup you'd like to restore from:" preferredStyle:UIAlertControllerStyleAlert];
-		
-		// make each available backup its own action 
+
+		// make each available backup its own action
 		for(int i = 0; i < [backupNames count]; i++){
 			NSString *backupName = sortedBackupNames[i];
 			NSString *backupDate = sortedBackupDates[i];
@@ -128,7 +128,7 @@ static IAmLazyManager *manager;
 				[self presentViewController:[[IAmLazyViewController alloc] initWithPurpose:@"restore"] animated:YES completion:nil];
 				[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
 				[manager restoreFromBackup:backupName];
-				[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer 
+				[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer
 				if(![manager encounteredError]){
 					dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
 						[self dismissViewControllerAnimated:YES completion:^ {
@@ -141,7 +141,7 @@ static IAmLazyManager *manager;
 			[subalert addAction:action];
 		}
 
-		// add a cancel action to the end of the list 
+		// add a cancel action to the end of the list
 		UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
 			[self dismissViewControllerAnimated:YES completion:nil];
 		}];
@@ -157,19 +157,19 @@ static IAmLazyManager *manager;
 
 	[alert addAction:latest];
 	[alert addAction:specific];
-    [alert addAction:cancel];
+	[alert addAction:cancel];
 
 	[self presentViewController:alert animated:YES completion:nil];
 }
 
 -(void)popPostBackup{
-	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Tweak backup completed successfully in %@ seconds!", [[NSClassFromString(@"IAmLazyManager") sharedInstance] getDuration]] preferredStyle:UIAlertControllerStyleAlert];
+	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Tweak backup completed successfully in %@ seconds! \n\nYour backup can be found in\n /var/mobile/Documents/me.lightmann.iamlazy/", [[NSClassFromString(@"IAmLazyManager") sharedInstance] getDuration]] preferredStyle:UIAlertControllerStyleAlert];
 
     UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
 		[self dismissViewControllerAnimated:YES completion:nil];
 	}];
 
-    [alert addAction:okay];
+	[alert addAction:okay];
 
  	[self presentViewController:alert animated:YES completion:nil];
 }
@@ -180,20 +180,20 @@ static IAmLazyManager *manager;
     UIAlertAction *uicache = [UIAlertAction actionWithTitle:@"UICache" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
 		NSTask *task = [[NSTask alloc] init];
 		[task setLaunchPath:@"/usr/bin/uicache"];
-		[task setArguments:@[@"-a"]];  
+		[task setArguments:@[@"-a"]];
 		[task launch];
 	}];
 
     UIAlertAction *respring = [UIAlertAction actionWithTitle:@"Respring" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
 		NSTask *task = [[NSTask alloc] init];
-		[task setLaunchPath:@"/usr/bin/sbreload"];  
+		[task setLaunchPath:@"/usr/bin/sbreload"];
 		[task launch];
 	}];
 
     UIAlertAction *both = [UIAlertAction actionWithTitle:@"UICache & Respring" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
 		NSTask *task = [[NSTask alloc] init];
 		[task setLaunchPath:@"/usr/bin/uicache"];
-		[task setArguments:@[@"-a", @"--respring"]];  
+		[task setArguments:@[@"-a", @"--respring"]];
 		[task launch];
 	}];
 

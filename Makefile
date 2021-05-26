@@ -11,7 +11,7 @@ IAmLazy_FILES = IAmLazyManager.m IAmLazyPrefsCell.m IAmLazyRootListController.m 
 IAmLazy_FRAMEWORKS = UIKit
 IAmLazy_PRIVATE_FRAMEWORKS = Preferences
 IAmLazy_INSTALL_PATH = /Library/PreferenceBundles
-IAmLazy_CFLAGS = -fobjc-arc 
+IAmLazy_CFLAGS = -fobjc-arc
 
 include $(THEOS_MAKE_PATH)/bundle.mk
 
