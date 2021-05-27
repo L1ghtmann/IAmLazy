@@ -302,7 +302,7 @@
 
 	CGFloat backupSize = [[[NSFileManager defaultManager] attributesOfItemAtPath:path error:nil] fileSize]/1000000; // bytes -> megabytes
 
-	if(backupSize >= self.estimatedBackupSize*.75 && backupSize <= self.estimatedBackupSize*1.25){
+	if(backupSize >= self.estimatedBackupSize*.5 && backupSize <= self.estimatedBackupSize*1.5){
 		NSLog(@"IAmLazyLog backup looks good!");
 	}
 	else{
