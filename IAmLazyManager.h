@@ -6,10 +6,8 @@
 @property (nonatomic, retain) NSDate *endTime;
 @property (nonatomic, retain) NSArray *allPackages;
 @property (nonatomic, retain) NSArray *userPackages;
-@property (nonatomic) CGFloat estimatedBackupSize;
 @property (nonatomic) BOOL encounteredError;
 +(instancetype)sharedInstance;
--(CGFloat)getSizeOfAllPackages;
 -(NSArray *)getBackups;
 -(int)getLatestBackup;
 -(void)executeCommand:(NSString *)cmd;

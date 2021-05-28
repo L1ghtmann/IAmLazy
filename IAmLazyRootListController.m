@@ -44,7 +44,7 @@ static IAmLazyManager *manager;
 - (void)makeTweakBackup:(id)sender {
 	AudioServicesPlaySystemSound(1520); // haptic feedback
 
-	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Please confirm that you have around %.02f MB of free storage before proceeding", [manager getSizeOfAllPackages]/3] preferredStyle:UIAlertControllerStyleActionSheet];
+	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Please confirm that you have adequate free storage before proceeding" preferredStyle:UIAlertControllerStyleActionSheet];
 
 	UIAlertAction *confirm = [UIAlertAction actionWithTitle:@"Confirm" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
 		[self presentViewController:[[IAmLazyViewController alloc] initWithPurpose:@"backup"] animated:YES completion:nil];

@@ -61,7 +61,7 @@
 	[self makeTarball];
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"4"];
 
-	// check that the backup size looks right (kb or b means something likely went wrong)
+	// check that the backup exists
 	[self verifyBackup];
 
 	// make note of end time
@@ -120,21 +120,6 @@
 	}
 
 	NSLog(@"IAmLazyLog %lu user packages", userPackages.count);
-
-	// get size estimate (used for verifcation later)
-	NSString *output = [self executeCommandWithOutput:@"dpkg-query -Wf '${Package}\n${Installed-Size}\n'" andWait:YES];
-	NSArray *lines = [output componentsSeparatedByString:@"\n"];
-
-	int index = 0;
-	int userPackagesTotal = 0;
-	for(NSString *line in lines){
-		if([userPackages containsObject:line]){
-			userPackagesTotal += [lines[index+1] intValue];
-		}
-		index++;
-	}
-
-	[self setEstimatedBackupSize:(userPackagesTotal/1000)*.5]; // kilobytes -> megabytes, then halved
 
 	return userPackages;
 }
@@ -300,19 +285,7 @@
 		return;
 	}
 
-	CGFloat backupSize = [[[NSFileManager defaultManager] attributesOfItemAtPath:path error:nil] fileSize]/1000000; // bytes -> megabytes
-
-	if(backupSize >= self.estimatedBackupSize*.5 && backupSize <= self.estimatedBackupSize*1.5){
-		NSLog(@"IAmLazyLog backup looks good!");
-	}
-	else{
-		NSString *reason = [NSString stringWithFormat:@"Something went wrong. \n\n%@ doesn't look right. \n\nPlease try making another backup", path];
-		[self popErrorAlertWithReason:reason];
-		NSLog(@"IAmLazyLog %@", reason);
-
-		// delete the backup since it doesn't look too hot
-		[self executeCommand:[NSString stringWithFormat:@"rm %@", path]];
-	}
+	NSLog(@"IAmLazyLog backup looks good!");
 }
 
 -(NSString *)getDuration{
