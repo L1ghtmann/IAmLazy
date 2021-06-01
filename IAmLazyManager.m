@@ -12,11 +12,14 @@
     return sharedInstance;
 }
 
--(void)makeTweakBackup{
+-(void)makeTweakBackupWithFilter:(BOOL)filter{
 	NSLog(@"IAmLazyLog starting tweak backup . . .");
 
+	// reset errors
+	[self setEncounteredError:NO];
+
 	// make note of start time
-	self.startTime = [NSDate date];
+	[self setStartTime:[NSDate date]];
 
 	// check if Documents/ has root ownership
 	if([[NSFileManager defaultManager] isWritableFileAtPath:@"/var/mobile/Documents/"] == 0){
@@ -29,16 +32,19 @@
 	// check for old tmp files
 	if([[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
 		NSLog(@"IAmLazyLog found old tmp files!");
-		[self cleanupTmp];
+		// needs to be run as root since the files have root perms
+		[self executeCommandAsRoot:@[@"cleanup-tmp"]];
+		NSLog(@"IAmLazyLog cleaned up old tmp files!");
 	}
 
 	// get all packages
-	self.allPackages = [self getAllPackages];
+	[self setAllPackages:[self getAllPackages]];
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0"];
 
-	// filter out bootstrap-specific packages
+	// filter out bootstrap-specific packages (or not)
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
-	self.userPackages = [self getUserPackages];
+	if(filter) [self setUserPackages:[self getUserPackages]];
+	else [self setUserPackages:self.allPackages];
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
 
 	// make fresh tmp directory
@@ -56,16 +62,24 @@
 	[self buildDebs];
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"3"];
 
+	if(!filter){
+		NSString *bootstrap = @"bingner_elucubratus";
+		if([[NSFileManager defaultManager] fileExistsAtPath:@"/.procursus_strapped"]){
+			bootstrap = @"procursus";
+		}
+
+		// for unfiltered backups, create hidden file specifying the bootstrap it was created on
+		NSString *file = [NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap];
+		[[NSFileManager defaultManager] createFileAtPath:file contents:nil attributes:nil];
+	}
+
 	// make archive of all packages and cleanup after ourselves
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"3.7"];
-	[self makeTarball];
+	[self makeTarballWithFilter:filter];
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"4"];
 
-	// check that the backup exists
-	[self verifyBackup];
-
 	// make note of end time
-	self.endTime = [NSDate date];
+	[self setEndTime:[NSDate date]];
 
 	NSLog(@"IAmLazyLog tweak backup completed in %@ seconds!", [self getDuration]);
 }
@@ -84,12 +98,13 @@
 	NSArray *packages = [lines filteredArrayUsingPredicate:theAntiPredicate];
 
 	for(NSString *package in packages){
-		if([package length]){
+		// filter out IAmLazy since it'll be installed anyway
+		if([package length] && ![package isEqualToString:@"me.lightmann.iamlazy"]){
 			[allPackages addObject:package];
 		}
 	}
 
-	NSLog(@"IAmLazyLog %lu total packages", allPackages.count);
+	NSLog(@"IAmLazyLog %lu total packages", [allPackages count]);
 
 	return allPackages;
 }
@@ -113,8 +128,7 @@
 			}
 		}
 
-		// also filter out IAmLazy since it'll be installed anyway
-		if(!bootstrapPackage && ![package isEqualToString:@"me.lightmann.iamlazy"]){
+		if(!bootstrapPackage){
 			[userPackages addObject:package];
 		}
 	}
@@ -247,7 +261,7 @@
 -(void)cleanupTmpSubDirs{
 	NSLog(@"IAmLazyLog cleaning up tmp subdirs . . .");
 
-	// has to be done as root since files have root perms
+	// has to be done as root since the files have root perms
 	// doing each dir explicitly to ensure no accidental deletions
 	for(NSString *packageName in self.userPackages){
 		[self executeCommandAsRoot:@[@"post-build", packageName]];
@@ -256,7 +270,7 @@
 	NSLog(@"IAmLazyLog cleaned up tmp subdirs!");
 }
 
--(void)makeTarball{
+-(void)makeTarballWithFilter:(BOOL)filter{
 	NSLog(@"IAmLazyLog making tarball . . .");
 
 	// make backup dir
@@ -266,17 +280,23 @@
 
 	int latestBackup = [self getLatestBackup];
 
-	NSString *backupName = [NSString stringWithFormat:@"IAmLazy-%d.tar.xz", latestBackup+1];
+	NSString *backupName;
+
+	if(filter) backupName = [NSString stringWithFormat:@"IAmLazy-%d.tar.xz", latestBackup+1];
+	else backupName = [NSString stringWithFormat:@"IAmLazy-%du.tar.xz", latestBackup+1];
 
 	[self executeCommand:[NSString stringWithFormat:@"cd %@ && tar --remove-files -cJf %@ -C /var/tmp me.lightmann.iamlazy", backupDir, backupName]];
 
 	NSLog(@"IAmLazyLog made %@ and cleaned up tmp dir!", backupName);
+
+	// confirm that the backup exists
+	[self verifyBackup:backupName];
 }
 
--(void)verifyBackup{
+-(void)verifyBackup:(NSString *)backupName{
 	NSLog(@"IAmLazyLog verifying backup . . .");
 
-	NSString *path = [NSString stringWithFormat:@"%@IAmLazy-%d.tar.xz", backupDir, [self getLatestBackup]];
+	NSString *path = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
 
 	if(![[NSFileManager defaultManager] fileExistsAtPath:path]){
 		NSString *reason = [NSString stringWithFormat:@"%@ doesn't exist!", path];
@@ -293,76 +313,11 @@
 	return [NSString stringWithFormat:@"%.02f", duration];
 }
 
--(void)restoreFromBackup{
-	NSLog(@"IAmLazyLog restoring from latest backup . . .");
-
-	BOOL check1 = YES;
-	BOOL check2 = YES;
-	BOOL check3 = YES;
-
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"null"];
-
-	// check for backup dir
-	if(![[NSFileManager defaultManager] fileExistsAtPath:backupDir]){
-		check1 = NO;
-	}
-
-	if(check1){
-		int backupCount = [[self getBackups] count];
-
-		// check for backups
-		if(!backupCount){
-			check2 = NO;
-		}
-
-		if(check2){
-			NSString *latestBackupName = [NSString stringWithFormat:@"IAmLazy-%d.tar.xz", [self getLatestBackup]];
-
-			// check for target backup
-			if(![[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithFormat:@"%@%@", backupDir, latestBackupName]]){
-				check3 = NO;
-			}
-
-			if(check3){
-				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0"];
-
-				// check for old tmp files
-				if([[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
-					NSLog(@"IAmLazyLog found old tmp files!");
-					[self cleanupTmp];
-				}
-
-				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
-				[self unpackArchive:latestBackupName];
-				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
-
-				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
-				[self installDebs];
-				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
-
-				NSLog(@"IAmLazyLog successfully restored from backup (%@)!", latestBackupName);
-			}
-			else{
-				NSString *reason = [NSString stringWithFormat:@"target backup -- %@ -- could not be found!", latestBackupName];
-				[self popErrorAlertWithReason:reason];
-				NSLog(@"IAmLazyLog restore aborted because: %@", reason);
-			}
-		}
-		else{
-			NSString *reason = @"no backups were found!";
-			[self popErrorAlertWithReason:reason];
-			NSLog(@"IAmLazyLog restore aborted because: %@", reason);
-		}
-	}
-	else{
-		NSString *reason = @"backup dir does not exist!";
-		[self popErrorAlertWithReason:reason];
-		NSLog(@"IAmLazyLog restore aborted because: %@", reason);
-	}
-}
-
 -(void)restoreFromBackup:(NSString *)backupName{
 	NSLog(@"IAmLazyLog restoring from %@ . . .", backupName);
+
+	// reset errors
+	[self setEncounteredError:NO];
 
 	BOOL check1 = YES;
 	BOOL check2 = YES;
@@ -395,7 +350,9 @@
 				// check for old tmp files
 				if([[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
 					NSLog(@"IAmLazyLog found old tmp files!");
-					[self cleanupTmp];
+					// needs to be run as root since the files have root perms
+					[self executeCommandAsRoot:@[@"cleanup-tmp"]];
+					NSLog(@"IAmLazyLog cleaned up old tmp files!");
 				}
 
 				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
@@ -409,7 +366,7 @@
 				NSLog(@"IAmLazyLog successfully restored from backup (%@)!", backupName);
 			}
 			else{
-				NSString *reason = [NSString stringWithFormat:@"target backup -- %@ -- could not be found!", backupName];
+				NSString *reason = [NSString stringWithFormat:@"target backup -- %@ -- could not be found! \n\nIf your latest backup is unfiltered (u), you must select it manually via the \"restore from a specific backup\" option", backupName];
 				[self popErrorAlertWithReason:reason];
 				NSLog(@"IAmLazyLog restore aborted because: %@", reason);
 			}
@@ -445,22 +402,13 @@
 	[self cleanupTmp];
 }
 
--(CGFloat)getSizeOfAllPackages{
-	NSString *output = [self executeCommandWithOutput:@"dpkg-query -Wf '${Installed-Size}\n'" andWait:YES];
-	NSArray *lines = [output componentsSeparatedByString:@"\n"];
+-(void)cleanupTmp{
+	NSLog(@"IAmLazyLog cleaning up tmp dir . . .");
 
-	int totalkbSize = 0;
-	for(NSString *line in lines){
-		if([line length]){
-			totalkbSize += [line intValue];
-		}
-	}
+	// this doesn't need root because the debs were built as mobile
+	[self executeCommand:[NSString stringWithFormat:@"rm -rf %@", tmpDir]];
 
-	// use 1/3 of this value as a rough estimate for the backup size
-	// this really isn't that accurate, but it gives a good ballpark figure
-	CGFloat totalSizeInMB = totalkbSize/1000;
-
-	return totalSizeInMB;
+	NSLog(@"IAmLazyLog cleaned up tmp dir!");
 }
 
 -(NSArray *)getBackups{
@@ -497,14 +445,6 @@
 	return latestBackup;
 }
 
--(void)cleanupTmp{
-	NSLog(@"IAmLazyLog cleaning up tmp dir . . .");
-
-	[self executeCommand:[NSString stringWithFormat:@"rm -rf %@", tmpDir]];
-
-	NSLog(@"IAmLazyLog cleaned up tmp dir!");
-}
-
 // Note: using the desired binaries (e.g., rm, rsync) as the launch path occasionally causes a crash (EXC_CORPSE_NOTIFY) because abort() was called???
 // to fix this, switched the launch path to bourne shell and, voila, no crash!
 -(void)executeCommand:(NSString *)cmd{
@@ -528,6 +468,7 @@
 
 	NSFileHandle *handle = [pipe fileHandleForReading];
 	NSData *data = [handle readDataToEndOfFile];
+	[handle closeFile];
 	NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 
 	return output;
@@ -543,9 +484,9 @@
 }
 
 -(void)popErrorAlertWithReason:(NSString *)reason{
-	self.encounteredError = YES;
+	[self setEncounteredError:YES];
 
-	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy encountered an error:" message:reason preferredStyle:UIAlertControllerStyleAlert];
+	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy Error:" message:reason preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
 		[self.rootVC dismissViewControllerAnimated:YES completion:nil];

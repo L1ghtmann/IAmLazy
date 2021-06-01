@@ -18,7 +18,7 @@
 			<key>type</key>
 			<string>backup</string>
 			<key>action</key>
-			<string>makeTweakBackup:</string>
+			<string>backupSelection:</string>
 		</dict>
 
 		<dict>
@@ -35,7 +35,7 @@
 			<key>type</key>
 			<string>restore</string>
 			<key>action</key>
-			<string>restoreFromBackup:</string>
+			<string>restoreSelection:</string>
 		</dict>
 
 		<dict>
@@ -48,10 +48,10 @@
 			<key>cellClass</key>
 			<string>IAmLazyPrefsCell</string>
 			<key>text</key>
-			<string>v1.0.1.2 By Lightmann</string>
+			<string>v1.0.2 By Lightmann</string>
 			<key>type</key>
 			<string>text</string>
-		</dict>
+ 		</dict>
 	</array>
 	<key>title</key>
 	<string>IAmLazy</string>

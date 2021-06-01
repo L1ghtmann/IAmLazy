@@ -56,7 +56,13 @@ int main(int argc, char *argv[]) {
     setuid(0);
     setuid(0);
 
-    if(strcmp(argv[1], "copy-files") == 0 && argc == 3){
+    if(strcmp(argv[1], "cleanup-tmp") == 0 && argc == 2){
+        // remove tmp dir
+        NSString *cmd = [NSString stringWithFormat:@"rm -rf %@", tmpDir];
+        executeCommand(cmd);
+    }
+
+    else if(strcmp(argv[1], "copy-files") == 0 && argc == 3){
         const char* ctweakdir = argv[2];
         NSString *tweakDir = [NSString stringWithCString:ctweakdir encoding:NSASCIIStringEncoding];
 

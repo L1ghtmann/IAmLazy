@@ -8,7 +8,7 @@
 	self = [super init];
 
 	if(self) {
-		if([purpose isEqualToString:@"backup"]){
+		if([purpose containsString:@"backup"]){
 			self.itemCount = 5;
 		}
 		else{
@@ -37,7 +37,15 @@
 }
 
 - (void)makeTitleWithPurpose:(NSString *)purpose{
-	NSString *text = [NSString stringWithFormat:@"%@ Progress", purpose];
+	NSString *refinedPurpose;
+	if([purpose containsString:@"backup"]){
+		refinedPurpose = @"backup";
+	}
+	else{
+		refinedPurpose = purpose;
+	}
+
+	NSString *text = [NSString stringWithFormat:@"%@ Progress", refinedPurpose];
 
 	UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(0,35,kWidth,30)];
 	title.font = [UIFont systemFontOfSize:30 weight:0.60];
@@ -51,7 +59,7 @@
 - (NSMutableArray *)iconsForPurpose:(NSString *)purpose{
 	NSMutableArray *icons = [NSMutableArray new];
 
-	if([purpose isEqualToString:@"backup"]){
+	if([purpose containsString:@"backup"]){
 		[icons addObject:@"list.number"];
 		[icons addObject:@"person.crop.circle"];
 		[icons addObject:@"rectangle.on.rectangle.angled"];
@@ -103,10 +111,17 @@
 - (NSMutableArray *)itemDescriptionsForPurpose:(NSString *)purpose{
 	NSMutableArray *itemDescs = [NSMutableArray new];
 
-	if([purpose isEqualToString:@"backup"]){
+	if([purpose isEqualToString:@"standard-backup"]){
 		[itemDescs addObject:@"Generating list of installed packages"];
 		[itemDescs addObject:@"Filtering list for user packages"];
 		[itemDescs addObject:@"Gathering files for user packages"];
+		[itemDescs addObject:@"Building debs from gathered files"];
+		[itemDescs addObject:@"Creating backup from debs"];
+	}
+	else if([purpose isEqualToString:@"unfiltered-backup"]){
+		[itemDescs addObject:@"Generating list of installed packages"];
+		[itemDescs addObject:@"Skipping user package filter"];
+		[itemDescs addObject:@"Gathering files for installed packages"];
 		[itemDescs addObject:@"Building debs from gathered files"];
 		[itemDescs addObject:@"Creating backup from debs"];
 	}

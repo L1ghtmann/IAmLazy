@@ -41,52 +41,105 @@ static IAmLazyManager *manager;
 	return self;
 }
 
-- (void)makeTweakBackup:(id)sender {
+- (void)backupSelection:(id)sender {
 	AudioServicesPlaySystemSound(1520); // haptic feedback
 
-	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Please confirm that you have adequate free storage before proceeding" preferredStyle:UIAlertControllerStyleActionSheet];
+	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Choose how you'd like to backup:" preferredStyle:UIAlertControllerStyleAlert];
 
-	UIAlertAction *confirm = [UIAlertAction actionWithTitle:@"Confirm" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
-		[self presentViewController:[[IAmLazyViewController alloc] initWithPurpose:@"backup"] animated:YES completion:nil];
-		[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
-		[manager makeTweakBackup];
-		[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer
-		if(![manager encounteredError]){
-			dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-				[self dismissViewControllerAnimated:YES completion:^ {
-					[self popPostBackup];
-				}];
-			});
-		}
+	UIAlertAction *standard = [UIAlertAction actionWithTitle:@"Standard Backup" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+		UIAlertController *subalert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Please confirm that you have adequate free storage before proceeding" preferredStyle:UIAlertControllerStyleAlert];
+
+		UIAlertAction *confirm = [UIAlertAction actionWithTitle:@"Confirm" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+			[self makeTweakBackupWithFilter:YES];
+		}];
+
+		UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+			[self dismissViewControllerAnimated:YES completion:nil];
+		}];
+
+		[subalert addAction:confirm];
+		[subalert addAction:cancel];
+
+		[self presentViewController:subalert animated:YES completion:nil];
+	}];
+
+	UIAlertAction *unfiltered = [UIAlertAction actionWithTitle:@"Unfiltered Backup" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+		UIAlertController *subalert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Please confirm that you have adequate free storage before proceeding" preferredStyle:UIAlertControllerStyleAlert];
+
+		UIAlertAction *confirm = [UIAlertAction actionWithTitle:@"Confirm" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+			[self makeTweakBackupWithFilter:NO];
+		}];
+
+		UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+			[self dismissViewControllerAnimated:YES completion:nil];
+		}];
+
+		[subalert addAction:confirm];
+		[subalert addAction:cancel];
+
+		[self presentViewController:subalert animated:YES completion:nil];
 	}];
 
 	UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
 		[self dismissViewControllerAnimated:YES completion:nil];
 	}];
 
-	[alert addAction:confirm];
-    [alert addAction:cancel];
+	[alert addAction:standard];
+	[alert addAction:unfiltered];
+	[alert addAction:cancel];
 
 	[self presentViewController:alert animated:YES completion:nil];
 }
 
-- (void)restoreFromBackup:(id)sender {
+- (void)makeTweakBackupWithFilter:(BOOL)filter{
+	if(filter) [self presentViewController:[[IAmLazyViewController alloc] initWithPurpose:@"standard-backup"] animated:YES completion:nil];
+	else [self presentViewController:[[IAmLazyViewController alloc] initWithPurpose:@"unfiltered-backup"] animated:YES completion:nil];
+	[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
+	[manager makeTweakBackupWithFilter:filter];
+	[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer
+	if(![manager encounteredError]){
+		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+			[self dismissViewControllerAnimated:YES completion:^ {
+				[self popPostBackup];
+			}];
+		});
+	}
+}
+
+- (void)popPostBackup{
+	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Tweak backup completed successfully in %@ seconds! \n\nYour backup can be found in\n /var/mobile/Documents/me.lightmann.iamlazy/", [manager getDuration]] preferredStyle:UIAlertControllerStyleAlert];
+
+    UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+		[self dismissViewControllerAnimated:YES completion:nil];
+	}];
+
+	[alert addAction:okay];
+
+ 	[self presentViewController:alert animated:YES completion:nil];
+}
+
+- (void)restoreSelection:(id)sender {
 	AudioServicesPlaySystemSound(1520); // haptic feedback
 
 	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Choose how you'd like to restore:" preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *latest = [UIAlertAction actionWithTitle:@"From Latest Backup" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
-		[self presentViewController:[[IAmLazyViewController alloc] initWithPurpose:@"restore"] animated:YES completion:nil];
-		[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
-		[manager restoreFromBackup];
-		[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer
-		if(![manager encounteredError]){
-			dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-				[self dismissViewControllerAnimated:YES completion:^ {
-					[self popPostRestore];
-				}];
-			});
-		}
+		NSString *backupName = [NSString stringWithFormat:@"IAmLazy-%d.tar.xz", [manager getLatestBackup]];
+
+		UIAlertController *subalert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName] preferredStyle:UIAlertControllerStyleAlert];
+
+		UIAlertAction *yes = [UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+			[self restoreFromBackup:backupName];
+		}];
+
+		UIAlertAction *no = [UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+			[self dismissViewControllerAnimated:YES completion:nil];
+		}];
+
+		[subalert addAction:yes];
+		[subalert addAction:no];
+
+		[self presentViewController:subalert animated:YES completion:nil];
 	}];
 
 	UIAlertAction *specific = [UIAlertAction actionWithTitle:@"From A Specific Backup" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
@@ -125,23 +178,25 @@ static IAmLazyManager *manager;
 			NSString *backupDate = sortedBackupDates[i];
 			NSString *backup = [NSString stringWithFormat:@"%@ [%@]", backupName, backupDate];
 			UIAlertAction *action = [UIAlertAction actionWithTitle:backup style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
-				[self presentViewController:[[IAmLazyViewController alloc] initWithPurpose:@"restore"] animated:YES completion:nil];
-				[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
-				[manager restoreFromBackup:backupName];
-				[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer
-				if(![manager encounteredError]){
-					dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-						[self dismissViewControllerAnimated:YES completion:^ {
-							[self popPostRestore];
-						}];
-					});
-				}
+				UIAlertController *subsubalert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName] preferredStyle:UIAlertControllerStyleAlert];
+
+				UIAlertAction *yes = [UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+					[self restoreFromBackup:backupName];
+				}];
+
+				UIAlertAction *no = [UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+					[self dismissViewControllerAnimated:YES completion:nil];
+				}];
+
+				[subsubalert addAction:yes];
+				[subsubalert addAction:no];
+
+				[self presentViewController:subsubalert animated:YES completion:nil];
 			}];
 
 			[subalert addAction:action];
 		}
 
-		// add a cancel action to the end of the list
 		UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
 			[self dismissViewControllerAnimated:YES completion:nil];
 		}];
@@ -162,19 +217,21 @@ static IAmLazyManager *manager;
 	[self presentViewController:alert animated:YES completion:nil];
 }
 
--(void)popPostBackup{
-	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Tweak backup completed successfully in %@ seconds! \n\nYour backup can be found in\n /var/mobile/Documents/me.lightmann.iamlazy/", [[NSClassFromString(@"IAmLazyManager") sharedInstance] getDuration]] preferredStyle:UIAlertControllerStyleAlert];
-
-    UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
-		[self dismissViewControllerAnimated:YES completion:nil];
-	}];
-
-	[alert addAction:okay];
-
- 	[self presentViewController:alert animated:YES completion:nil];
+- (void)restoreFromBackup:(NSString *)backupName{
+	[self presentViewController:[[IAmLazyViewController alloc] initWithPurpose:@"restore"] animated:YES completion:nil];
+	[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
+	[manager restoreFromBackup:backupName];
+	[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer
+	if(![manager encounteredError]){
+		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+			[self dismissViewControllerAnimated:YES completion:^ {
+				[self popPostRestore];
+			}];
+		});
+	}
 }
 
--(void)popPostRestore{
+- (void)popPostRestore{
 	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Choose a post-restore command:" preferredStyle:UIAlertControllerStyleAlert];
 
     UIAlertAction *uicache = [UIAlertAction actionWithTitle:@"UICache" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
