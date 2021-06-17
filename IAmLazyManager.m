@@ -1,9 +1,13 @@
 #import "IAmLazyManager.h"
 #import "Common.h"
 
+// Lightmann
+// Made during covid
+// IAmLazy
+
 @implementation IAmLazyManager
 
-+(instancetype)sharedInstance {
++(instancetype)sharedInstance{
 	static dispatch_once_t p = 0;
     __strong static IAmLazyManager* sharedInstance = nil;
     dispatch_once(&p, ^{
@@ -21,36 +25,46 @@
 	// make note of start time
 	[self setStartTime:[NSDate date]];
 
-	// check if Documents/ has root ownership
+	// check if Documents/ has root ownership (it shouldn't)
 	if([[NSFileManager defaultManager] isWritableFileAtPath:@"/var/mobile/Documents/"] == 0){
 		NSString *reason = [NSString stringWithFormat:@"/var/mobile/Documents is not writeable. \n\nPlease ensure that the directory's owner is mobile and not root"];
 		[self popErrorAlertWithReason:reason];
-		NSLog(@"IAmLazyLog %@", reason);
+		NSLog(@"IAmLazyLog %@", [reason stringByReplacingOccurrencesOfString:@"\n" withString:@""]);
 		return;
 	}
 
 	// check for old tmp files
 	if([[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
 		NSLog(@"IAmLazyLog found old tmp files!");
-		// needs to be run as root since the files have root perms
-		[self executeCommandAsRoot:@[@"cleanup-tmp"]];
-		NSLog(@"IAmLazyLog cleaned up old tmp files!");
+		[self cleanupTmp];
 	}
 
 	// get all packages
-	[self setAllPackages:[self getAllPackages]];
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"null"];
+	NSArray *allPackages = [self getAllPackages];
+	if(![allPackages count]){
+		NSString *reason = [NSString stringWithFormat:@"Failed to generate list of installed packages! \n\nPlease try again."];
+		[self popErrorAlertWithReason:reason];
+		NSLog(@"IAmLazyLog %@", [reason stringByReplacingOccurrencesOfString:@"\n" withString:@""]);
+		return;
+	}
+	[self setAllPackages:allPackages];
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0"];
 
 	// filter out bootstrap-specific packages (or not)
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
-	if(filter) [self setUserPackages:[self getUserPackages]];
+	if(filter){
+		NSArray *userPackages = [self getUserPackages];
+		if(![userPackages count]){
+			NSString *reason = [NSString stringWithFormat:@"Failed to filter list for user packages! \n\nPlease try again."];
+			[self popErrorAlertWithReason:reason];
+			NSLog(@"IAmLazyLog %@", [reason stringByReplacingOccurrencesOfString:@"\n" withString:@""]);
+			return;
+		}
+		[self setUserPackages:userPackages];
+	}
 	else [self setUserPackages:self.allPackages];
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
-
-	// make fresh tmp directory
-	if(![[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
-		[[NSFileManager defaultManager] createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:nil];
-	}
 
 	// gather bits for packages
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
@@ -62,18 +76,10 @@
 	[self buildDebs];
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"3"];
 
-	if(!filter){
-		NSString *bootstrap = @"bingner_elucubratus";
-		if([[NSFileManager defaultManager] fileExistsAtPath:@"/.procursus_strapped"]){
-			bootstrap = @"procursus";
-		}
+	// for unfiltered backups, create hidden file specifying the bootstrap it was created on
+	if(!filter) [self makeBootstrapFile];
 
-		// for unfiltered backups, create hidden file specifying the bootstrap it was created on
-		NSString *file = [NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap];
-		[[NSFileManager defaultManager] createFileAtPath:file contents:nil attributes:nil];
-	}
-
-	// make archive of all packages and cleanup after ourselves
+	// make archive of all packages
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"3.7"];
 	[self makeTarballWithFilter:filter];
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"4"];
@@ -139,17 +145,9 @@
 }
 
 -(void)gatherDebFiles{
-	NSLog(@"IAmLazyLog gathering deb files . . .");
+	NSLog(@"IAmLazyLog gathering bits for debs . . .");
 
-	// get file paths for packages
 	for(NSString *package in self.userPackages){
-		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:package];
-
-		// make dir to hold stuff for the tweak
-		if(![[NSFileManager defaultManager] fileExistsAtPath:tweakDir]){
-			[[NSFileManager defaultManager] createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:nil];
-		}
-
 		NSMutableArray *files = [NSMutableArray new];
 
 		NSString *output = [self executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -L %@", package] andWait:NO];
@@ -178,21 +176,28 @@
 			}
 			// check if path leads to dir and if not, copy
 			else{
-				if(![[[[NSFileManager defaultManager] attributesOfItemAtPath:path error:nil] fileType] isEqualToString:@"NSFileTypeDirectory"]){
+				if(![[[[NSFileManager defaultManager] attributesOfItemAtPath:path error:NULL] fileType] isEqualToString:@"NSFileTypeDirectory"]){
 					[files addObject:path];
 				}
 			}
 		}
 
-		// put all files-to-copy in a list for easier writing
+		// put all the files we want copied in a list for easier writing
 		NSString *filePaths = [[files valueForKey:@"description"] componentsJoinedByString:@"\n"];
 
-		// this is nice because it overwrites the file content, unlike the write method from NSFileManager
-		BOOL fileList = [filePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:nil];
-		if(!fileList){
-			NSString *reason = [NSString stringWithFormat:@"failed to make filesToCopy.txt"];
-			[self popErrorAlertWithReason:reason];
-			NSLog(@"IAmLazyLog %@", reason);
+		// make fresh tmp directory
+		if(![[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
+			[[NSFileManager defaultManager] createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:NULL];
+		}
+
+		// this is nice because it overwrites the file's content, unlike the write method from NSFileManager
+		[filePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+
+		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:package];
+
+		// make dir to hold stuff for the tweak
+		if(![[NSFileManager defaultManager] fileExistsAtPath:tweakDir]){
+			[[NSFileManager defaultManager] createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:NULL];
 		}
 
 		// give 'go' for files to be copied
@@ -200,21 +205,21 @@
 			[self copyFilesToDirectory:tweakDir];
 		}
 		else{
-			NSLog(@"IAmLazyLog filesToCopy.txt blank or DNE");
+			NSLog(@"IAmLazyLog filesToCopy.txt DNE for %@", package);
 		}
 
 		// make control file
 		[self makeControlForPackage:package inDirectory:tweakDir];
 	}
 
-	// remove filesToCopy.txt now that we're done
-	[self executeCommand:[NSString stringWithFormat:@"rm %@", filesToCopy]];
+	// remove filesToCopy.txt now that we're done using it
+	[[NSFileManager defaultManager] removeItemAtPath:filesToCopy error:NULL];
 
-	NSLog(@"IAmLazyLog gathered deb files!");
+	NSLog(@"IAmLazyLog gathered bits for debs!");
 }
 
 -(void)copyFilesToDirectory:(NSString *)tweakDir{
-	NSString *fileContents = [NSString stringWithContentsOfFile:filesToCopy encoding:NSUTF8StringEncoding error:nil];
+	NSString *fileContents = [NSString stringWithContentsOfFile:filesToCopy encoding:NSUTF8StringEncoding error:NULL];
 	NSArray *files = [fileContents componentsSeparatedByString:@"\n"];
 	NSLog(@"IAmLazyLog copying %lu files to %@", [files count], tweakDir);
 
@@ -232,17 +237,12 @@
 	NSString *debian = [NSString stringWithFormat:@"%@/DEBIAN/", tweakDir];
 
 	// make DEBIAN dir
-	if (![[NSFileManager defaultManager] fileExistsAtPath:debian]){
-		[[NSFileManager defaultManager] createDirectoryAtPath:debian withIntermediateDirectories:YES attributes:nil error:nil];
+	if(![[NSFileManager defaultManager] fileExistsAtPath:debian]){
+		[[NSFileManager defaultManager] createDirectoryAtPath:debian withIntermediateDirectories:YES attributes:nil error:NULL];
 	}
 
 	// write info to file
-	BOOL control = [[NSFileManager defaultManager] createFileAtPath:[debian stringByAppendingPathComponent:@"control"] contents:[noStatusLine dataUsingEncoding:NSUTF8StringEncoding] attributes:nil];
-	if(!control){
-		NSString *reason = [NSString stringWithFormat:@"failed to make control file for %@", package];
-		[self popErrorAlertWithReason:reason];
-		NSLog(@"IAmLazyLog %@", reason);
-	}
+	[[NSFileManager defaultManager] createFileAtPath:[debian stringByAppendingPathComponent:@"control"] contents:[noStatusLine dataUsingEncoding:NSUTF8StringEncoding] attributes:nil];
 }
 
 -(void)buildDebs{
@@ -254,42 +254,49 @@
 	}
 
 	NSLog(@"IAmLazyLog built debs!");
-
-	[self cleanupTmpSubDirs];
 }
 
--(void)cleanupTmpSubDirs{
-	NSLog(@"IAmLazyLog cleaning up tmp subdirs . . .");
+-(void)makeBootstrapFile{
+	NSLog(@"IAmLazyLog making hidden bootstrap file . . .");
 
-	// has to be done as root since the files have root perms
-	// doing each dir explicitly to ensure no accidental deletions
-	for(NSString *packageName in self.userPackages){
-		[self executeCommandAsRoot:@[@"post-build", packageName]];
+	NSString *bootstrap = @"bingner_elucubratus";
+	if([[NSFileManager defaultManager] fileExistsAtPath:@"/.procursus_strapped"]){
+		bootstrap = @"procursus";
 	}
+	NSString *file = [NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap];
+	[[NSFileManager defaultManager] createFileAtPath:file contents:nil attributes:nil];
 
-	NSLog(@"IAmLazyLog cleaned up tmp subdirs!");
+	NSLog(@"IAmLazyLog made hidden bootstrap file!");
 }
 
 -(void)makeTarballWithFilter:(BOOL)filter{
 	NSLog(@"IAmLazyLog making tarball . . .");
 
-	// make backup dir
-	if(![[NSFileManager defaultManager] fileExistsAtPath:backupDir]){
-		[[NSFileManager defaultManager] createDirectoryAtPath:backupDir withIntermediateDirectories:YES attributes:nil error:nil];
-	}
+	// get number from latest backup
+	NSString *numberString;
+	NSCharacterSet *numbers = [NSCharacterSet characterSetWithCharactersInString:@"0123456789"];
+	NSScanner *scanner = [NSScanner scannerWithString:[[self getBackups] firstObject]]; // get latest backup filename
+	[scanner scanUpToCharactersFromSet:numbers intoString:NULL]; // remove bit before the number(s)
+	[scanner scanCharactersFromSet:numbers intoString:&numberString]; // get number(s)
+	int latestBackup = [numberString intValue];
 
-	int latestBackup = [self getLatestBackup];
-
+	// craft new backup name
 	NSString *backupName;
-
 	if(filter) backupName = [NSString stringWithFormat:@"IAmLazy-%d.tar.xz", latestBackup+1];
 	else backupName = [NSString stringWithFormat:@"IAmLazy-%du.tar.xz", latestBackup+1];
 
-	[self executeCommand:[NSString stringWithFormat:@"cd %@ && tar --remove-files -cJf %@ -C /var/tmp me.lightmann.iamlazy", backupDir, backupName]];
+	// make backup dir if it doesn't exist already
+	if(![[NSFileManager defaultManager] fileExistsAtPath:backupDir]){
+		[[NSFileManager defaultManager] createDirectoryAtPath:backupDir withIntermediateDirectories:YES attributes:nil error:NULL];
+	}
 
-	NSLog(@"IAmLazyLog made %@ and cleaned up tmp dir!", backupName);
+	// make tarball (excludes subdirs in tmp dir)
+	// note: bourne shell doesn't support glob qualifiers (hence the "find ...." ugliness)
+	[self executeCommand:[NSString stringWithFormat:@"find %@ -maxdepth 1 ! -type d -print0 | xargs -0 tar -cJf %@%@", tmpDir, backupDir, backupName]];
 
-	// confirm that the backup exists
+	NSLog(@"IAmLazyLog made %@!", backupName);
+
+	[self cleanupTmp];
 	[self verifyBackup:backupName];
 }
 
@@ -297,7 +304,6 @@
 	NSLog(@"IAmLazyLog verifying backup . . .");
 
 	NSString *path = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
-
 	if(![[NSFileManager defaultManager] fileExistsAtPath:path]){
 		NSString *reason = [NSString stringWithFormat:@"%@ doesn't exist!", path];
 		[self popErrorAlertWithReason:reason];
@@ -350,35 +356,40 @@
 				// check for old tmp files
 				if([[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
 					NSLog(@"IAmLazyLog found old tmp files!");
-					// needs to be run as root since the files have root perms
-					[self executeCommandAsRoot:@[@"cleanup-tmp"]];
-					NSLog(@"IAmLazyLog cleaned up old tmp files!");
+					[self cleanupTmp];
 				}
 
 				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
 				[self unpackArchive:backupName];
 				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
 
-				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
-				[self installDebs];
-				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
+				BOOL compatible = YES;
+				if([backupName containsString:@"u.tar.xz"]){
+					compatible = [self verifyBootstrap];
+				}
 
-				NSLog(@"IAmLazyLog successfully restored from backup (%@)!", backupName);
+				if(compatible){
+					[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
+					[self installDebs];
+					[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
+
+					NSLog(@"IAmLazyLog successfully restored from backup (%@)!", backupName);
+				}
 			}
 			else{
-				NSString *reason = [NSString stringWithFormat:@"target backup -- %@ -- could not be found! \n\nIf your latest backup is unfiltered (u), you must select it manually via the \"restore from a specific backup\" option", backupName];
+				NSString *reason = [NSString stringWithFormat:@"Target backup -- %@ -- could not be found!", backupName];
 				[self popErrorAlertWithReason:reason];
 				NSLog(@"IAmLazyLog restore aborted because: %@", reason);
 			}
 		}
 		else{
-			NSString *reason = @"no backups were found!";
+			NSString *reason = @"No backups were found!";
 			[self popErrorAlertWithReason:reason];
 			NSLog(@"IAmLazyLog restore aborted because: %@", reason);
 		}
 	}
 	else{
-		NSString *reason = @"backup dir does not exist!";
+		NSString *reason = @"The backup dir does not exist!";
 		[self popErrorAlertWithReason:reason];
 		NSLog(@"IAmLazyLog restore aborted because: %@", reason);
 	}
@@ -387,9 +398,32 @@
 -(void)unpackArchive:(NSString *)backupName{
 	NSLog(@"IAmLazyLog unpacking archive . . .");
 
-	[self executeCommand:[NSString stringWithFormat:@"cd %@ && tar --xz -xf %@ -C /var/tmp", backupDir, backupName]];
+	// archive structure is: /var/tmp/me.lightmann.iamlazy, so have to strip /var/tmp/ before extracting
+	[self executeCommand:[NSString stringWithFormat:@"tar --xz --strip-components=2 -xf %@%@ -C /var/tmp", backupDir, backupName]];
 
 	NSLog(@"IAmLazyLog unpacked archive!");
+}
+
+-(BOOL)verifyBootstrap{
+	NSLog(@"IAmLazyLog verifying that the device is on a compatible bootstrap . . .");
+
+	NSString *bootstrap = @"bingner_elucubratus";
+	NSString *oppBootstrap = @"procursus";
+	if([[NSFileManager defaultManager] fileExistsAtPath:@"/.procursus_strapped"]){
+		bootstrap = @"procursus";
+		oppBootstrap = @"bingner_elucubratus";
+	}
+
+	if(![[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap]]){
+		NSString *reason = [NSString stringWithFormat:@"The backup you're trying to restore from was made for jailbreaks running the %@ bootstrap. \n\nYour current jailbreak is using %@!", oppBootstrap, bootstrap];
+		[self popErrorAlertWithReason:reason];
+		NSLog(@"IAmLazyLog restore aborted because: %@", [reason stringByReplacingOccurrencesOfString:@"\n" withString:@""]);
+		return NO;
+	}
+
+	NSLog(@"IAmLazyLog bootstrap looks good! Proceeding with the restore . . .");
+
+	return YES;
 }
 
 -(void)installDebs{
@@ -405,8 +439,9 @@
 -(void)cleanupTmp{
 	NSLog(@"IAmLazyLog cleaning up tmp dir . . .");
 
-	// this doesn't need root because the debs were built as mobile
-	[self executeCommand:[NSString stringWithFormat:@"rm -rf %@", tmpDir]];
+	// adjust tmp dir perms and delete
+	[self executeCommandAsRoot:@[@"pre-cleanup"]];
+	[[NSFileManager defaultManager] removeItemAtPath:tmpDir error:NULL];
 
 	NSLog(@"IAmLazyLog cleaned up tmp dir!");
 }
@@ -423,26 +458,13 @@
 		}
 	}];
 
-	return backups;
-}
+	// sort backups (https://stackoverflow.com/a/43096808)
+	NSSortDescriptor *nameDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self" ascending:YES comparator:^NSComparisonResult(id obj1, id obj2) {
+		return - [(NSString *)obj1 compare:(NSString *)obj2 options:NSNumericSearch]; // note: "-" == NSOrderedDescending
+	}];
+	NSArray *sortedBackups = [backups sortedArrayUsingDescriptors:@[nameDescriptor]];
 
--(int)getLatestBackup{
-	int latestBackup = 0;
-
-	NSCharacterSet *numbers = [NSCharacterSet characterSetWithCharactersInString:@"0123456789"];
-	for(NSString *fileName in [self getBackups]){
-		NSString *numberString;
-
-		NSScanner *scanner = [NSScanner scannerWithString:fileName];
-		[scanner scanUpToCharactersFromSet:numbers intoString:NULL]; // remove bit before the number(s)
-		[scanner scanCharactersFromSet:numbers intoString:&numberString]; // get number(s)
-		int backupNumber = [numberString intValue];
-
-		if(backupNumber > latestBackup) latestBackup = backupNumber;
-		else continue;
-	}
-
-	return latestBackup;
+	return sortedBackups;
 }
 
 // Note: using the desired binaries (e.g., rm, rsync) as the launch path occasionally causes a crash (EXC_CORPSE_NOTIFY) because abort() was called???

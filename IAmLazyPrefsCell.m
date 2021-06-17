@@ -1,6 +1,10 @@
 #include "IAmLazyPrefsCell.h"
 #import "Common.h"
 
+// Lightmann
+// Made during covid
+// IAmLazy
+
 @implementation IAmLazyPrefsCell
 
 - (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier specifier:(PSSpecifier *)specifier {

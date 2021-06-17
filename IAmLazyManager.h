@@ -19,7 +19,6 @@
 -(void)unpackArchive:(NSString *)backupName;
 -(void)installDebs;
 -(NSArray *)getBackups;
--(int)getLatestBackup;
 -(void)executeCommand:(NSString *)cmd;
 -(NSString *)executeCommandWithOutput:(NSString *)cmd andWait:(BOOL)wait;
 -(void)executeCommandAsRoot:(NSArray *)args;

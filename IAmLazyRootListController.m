@@ -1,8 +1,12 @@
-#include "IAmLazyRootListController.h"
+#import <AudioToolbox/AudioToolbox.h>
+#import "IAmLazyRootListController.h"
 #import "IAmLazyViewController.h"
 #import "IAmLazyManager.h"
 #import "Common.h"
-#import <AudioToolbox/AudioToolbox.h>
+
+// Lightmann
+// Made during covid
+// IAmLazy
 
 static IAmLazyManager *manager;
 
@@ -24,7 +28,7 @@ static IAmLazyManager *manager;
 	if(indexPath != pathToLastRow){
 		return cellHeight;
 	}
-	// for text cell (last cell), use a smaller height
+	// make last cell (options cell) shorter
 	else{
 		return cellHeight/3;
 	}
@@ -107,12 +111,23 @@ static IAmLazyManager *manager;
 }
 
 - (void)popPostBackup{
-	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Tweak backup completed successfully in %@ seconds! \n\nYour backup can be found in\n /var/mobile/Documents/me.lightmann.iamlazy/", [manager getDuration]] preferredStyle:UIAlertControllerStyleAlert];
+	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Tweak backup completed successfully in %@ seconds! \n\nYour backup can be found in\n %@", [manager getDuration], backupDir] preferredStyle:UIAlertControllerStyleAlert];
+
+	UIAlertAction *export = [UIAlertAction actionWithTitle:@"Export" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+		NSString *localPath = [NSString stringWithFormat:@"file://%@%@", backupDir, [[manager getBackups] firstObject]];
+		NSURL *fileURL = [NSURL URLWithString:localPath]; // to actually export the file, needs to be an NSURL
+
+		UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
+		activityViewController.modalTransitionStyle = UIModalTransitionStyleCoverVertical;
+
+		[self presentViewController:activityViewController animated:YES completion:nil];
+	}];
 
     UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
 		[self dismissViewControllerAnimated:YES completion:nil];
 	}];
 
+	[alert addAction:export];
 	[alert addAction:okay];
 
  	[self presentViewController:alert animated:YES completion:nil];
@@ -123,8 +138,8 @@ static IAmLazyManager *manager;
 
 	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Choose how you'd like to restore:" preferredStyle:UIAlertControllerStyleAlert];
 
-	UIAlertAction *latest = [UIAlertAction actionWithTitle:@"From Latest Backup" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
-		NSString *backupName = [NSString stringWithFormat:@"IAmLazy-%d.tar.xz", [manager getLatestBackup]];
+	UIAlertAction *latest = [UIAlertAction actionWithTitle:@"From The Latest Backup" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+		NSString *backupName = [[manager getBackups] firstObject];
 
 		UIAlertController *subalert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName] preferredStyle:UIAlertControllerStyleAlert];
 
@@ -143,39 +158,28 @@ static IAmLazyManager *manager;
 	}];
 
 	UIAlertAction *specific = [UIAlertAction actionWithTitle:@"From A Specific Backup" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
-		NSMutableDictionary *backupInfo = [NSMutableDictionary new];
-
-		// get backup file names
+		// get (sorted) backup filenames
 		NSArray *backupNames = [manager getBackups];
-
-		NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
-		[formatter setDateFormat:@"MMM dd, yyyy"];
 
 		// get backup creation dates
 		NSMutableArray *backupDates = [NSMutableArray new];
+		NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
+		[formatter setDateFormat:@"MMM dd, yyyy"];
 		for(NSString *backup in backupNames){
 			NSString *path = [backupDir stringByAppendingPathComponent:backup];
-			NSDictionary *fileAttribs = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:nil];
+			NSDictionary *fileAttribs = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:NULL];
 			NSDate *creationDate = [fileAttribs fileCreationDate];
 			NSString *dateString = [formatter stringFromDate:creationDate];
 			[backupDates addObject:dateString];
-			[backupInfo setObject:dateString forKey:backup];
 		}
-
-		// sort backup info (https://stackoverflow.com/a/43096808)
-		NSSortDescriptor *nameDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self" ascending:YES comparator:^NSComparisonResult(id obj1, id obj2) {
-			return - [(NSString *)obj1 compare:(NSString *)obj2 options:NSNumericSearch]; // note: "-" == NSOrderedDescending
-		}];
-		NSArray *sortedBackupNames = [[backupInfo allKeys] sortedArrayUsingDescriptors:@[nameDescriptor]];
-		NSArray *sortedBackupDates = [backupInfo objectsForKeys:sortedBackupNames notFoundMarker:[NSNull null]];
 
 		// post list of available backups
 		UIAlertController *subalert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Choose the backup you'd like to restore from:" preferredStyle:UIAlertControllerStyleAlert];
 
 		// make each available backup its own action
 		for(int i = 0; i < [backupNames count]; i++){
-			NSString *backupName = sortedBackupNames[i];
-			NSString *backupDate = sortedBackupDates[i];
+			NSString *backupName = backupNames[i];
+			NSString *backupDate = backupDates[i];
 			NSString *backup = [NSString stringWithFormat:@"%@ [%@]", backupName, backupDate];
 			UIAlertAction *action = [UIAlertAction actionWithTitle:backup style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
 				UIAlertController *subsubalert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName] preferredStyle:UIAlertControllerStyleAlert];

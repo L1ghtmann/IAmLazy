@@ -1,6 +1,10 @@
 #include "IAmLazyViewController.h"
 #import "Common.h"
 
+// Lightmann
+// Made during covid
+// IAmLazy
+
 @implementation IAmLazyViewController
 
 - (instancetype)initWithPurpose:(NSString *)purpose {
@@ -141,12 +145,20 @@
 		UIView *item = self.items[i];
 		CGPoint center = item.center;
 		CGPoint position = [item convertPoint:center toView:self.view];
+		CGFloat x = 0;
+		// RTL support
+		if([UIApplication sharedApplication].userInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft){
+			x = -10;
+		}
+		else{
+			x = position.x+35;
+		}
 
-		UILabel *itemDesc = [[UILabel alloc] initWithFrame:CGRectMake(position.x+35,position.y-28,kWidth,20)];
+		UILabel *itemDesc = [[UILabel alloc] initWithFrame:CGRectMake(x,position.y-28,kWidth,20)];
 		[itemDesc setText:self.itemDescriptions[i]];
 		[itemDesc setTextColor:[self accordingToInterfaceStyle]];
 
-		UILabel *itemStatus = [[UILabel alloc] initWithFrame:CGRectMake(position.x+35,position.y-8,kWidth,20)];
+		UILabel *itemStatus = [[UILabel alloc] initWithFrame:CGRectMake(x,position.y-8,kWidth,20)];
 		itemStatus.font = [UIFont systemFontOfSize:14 weight:-0.60];
 		[itemStatus setText:@"Waiting"];
 		[itemStatus setTextColor:[self accordingToInterfaceStyle]];

@@ -56,9 +56,10 @@ int main(int argc, char *argv[]) {
     setuid(0);
     setuid(0);
 
-    if(strcmp(argv[1], "cleanup-tmp") == 0 && argc == 2){
-        // remove tmp dir
-        NSString *cmd = [NSString stringWithFormat:@"rm -rf %@", tmpDir];
+    if(strcmp(argv[1], "pre-cleanup") == 0 && argc == 2){
+        // grant 'others' write access to our tmp dir
+        // allows 'user' user to delete it despite some files having root ownership
+        NSString *cmd = [NSString stringWithFormat:@"chmod -R 757 %@", tmpDir];
         executeCommand(cmd);
     }
 
@@ -83,15 +84,6 @@ int main(int argc, char *argv[]) {
 
         // copy files
         NSString *cmd = [NSString stringWithFormat:@"rsync -ar --files-from=%@ / %@", filesToCopy, tweakDir];
-        executeCommand(cmd);
-    }
-
-    else if(strcmp(argv[1], "post-build") == 0 && argc == 3){
-        const char* cpackage = argv[2];
-        NSString *package = [NSString stringWithCString:cpackage encoding:NSASCIIStringEncoding];
-
-        // remove package-specific subdir
-        NSString *cmd = [NSString stringWithFormat:@"rm -rf %@%@", tmpDir, package];
         executeCommand(cmd);
     }
 

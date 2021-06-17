@@ -8,7 +8,7 @@ include $(THEOS)/makefiles/common.mk
 
 BUNDLE_NAME = IAmLazy
 
-IAmLazy_FILES = IAmLazyManager.m IAmLazyPrefsCell.m IAmLazyRootListController.m IAmLazyViewController.m
+IAmLazy_FILES = IAmLazyManager.m IAmLazyOptionsSubPrefsListController.m IAmLazyPrefsCell.m IAmLazyRootListController.m IAmLazyViewController.m
 IAmLazy_FRAMEWORKS = UIKit
 IAmLazy_PRIVATE_FRAMEWORKS = Preferences
 IAmLazy_INSTALL_PATH = /Library/PreferenceBundles

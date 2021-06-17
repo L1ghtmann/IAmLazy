@@ -43,14 +43,24 @@
 			<string>PSGroupCell</string>
 			<key>label</key>
 			<string></string>
+			<key>footerText</key>
+			<string>v1.0.3 By Lightmann</string>
+			<key>footerAlignment</key>
+			<integer>1</integer>
 		</dict>
 		<dict>
+			<key>cell</key>
+ 			<string>PSLinkCell</string>
 			<key>cellClass</key>
 			<string>IAmLazyPrefsCell</string>
 			<key>text</key>
-			<string>v1.0.2 By Lightmann</string>
+			<string>Options</string>
 			<key>type</key>
-			<string>text</string>
+			<string>options</string>
+			<key>detail</key>
+ 			<string>IAmLazyOptionsSubPrefsListController</string>
+ 			<key>IAmLazySub</key>
+ 			<string>Options</string>
  		</dict>
 	</array>
 	<key>title</key>
