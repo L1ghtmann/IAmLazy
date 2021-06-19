@@ -292,7 +292,8 @@
 
 	// make tarball (excludes subdirs in tmp dir)
 	// note: bourne shell doesn't support glob qualifiers (hence the "find ...." ugliness)
-	[self executeCommand:[NSString stringWithFormat:@"find %@ -maxdepth 1 ! -type d -print0 | xargs -0 tar -cJf %@%@", tmpDir, backupDir, backupName]];
+	// ensure file structure is only me.lightmann.iamlazy/ not /var/tmp/me.lightmann.iamlazy/ (having --strip-components=2 on the restore end breaks compatibility w older backups)
+	[self executeCommand:[NSString stringWithFormat:@"cd /var/tmp && find ./me.lightmann.iamlazy -maxdepth 1 ! -type d -print0 | xargs -0 tar -cJf %@%@", backupDir, backupName]];
 
 	NSLog(@"IAmLazyLog made %@!", backupName);
 
@@ -398,8 +399,7 @@
 -(void)unpackArchive:(NSString *)backupName{
 	NSLog(@"IAmLazyLog unpacking archive . . .");
 
-	// archive structure is: /var/tmp/me.lightmann.iamlazy, so have to strip /var/tmp/ before extracting
-	[self executeCommand:[NSString stringWithFormat:@"tar --xz --strip-components=2 -xf %@%@ -C /var/tmp", backupDir, backupName]];
+	[self executeCommand:[NSString stringWithFormat:@"tar --xz -xf %@%@ -C /var/tmp", backupDir, backupName]];
 
 	NSLog(@"IAmLazyLog unpacked archive!");
 }
