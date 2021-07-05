@@ -7,13 +7,13 @@
 
 @implementation IAmLazyViewController
 
-- (instancetype)initWithPurpose:(NSString *)purpose {
+-(instancetype)initWithPurpose:(NSString *)purpose{
 
 	self = [super init];
 
-	if(self) {
+	if(self){
 		if([purpose containsString:@"backup"]){
-			self.itemCount = 5;
+			self.itemCount = 4;
 		}
 		else{
 			self.itemCount = 3;
@@ -33,14 +33,14 @@
 }
 
 // create primary (background) view
-- (void)viewDidLoad{
+-(void)viewDidLoad{
 	[super viewDidLoad];
 
 	self.view = [[UIView alloc] initWithFrame:CGRectMake(0,0,kWidth,kHeight)];
 	[self.view setBackgroundColor:[self fillAccordingToInterfaceStyle]];
 }
 
-- (void)makeTitleWithPurpose:(NSString *)purpose{
+-(void)makeTitleWithPurpose:(NSString *)purpose{
 	NSString *refinedPurpose;
 	if([purpose containsString:@"backup"]){
 		refinedPurpose = @"backup";
@@ -60,12 +60,11 @@
 	[self.view addSubview:title];
 }
 
-- (NSMutableArray *)iconsForPurpose:(NSString *)purpose{
+-(NSMutableArray *)iconsForPurpose:(NSString *)purpose{
 	NSMutableArray *icons = [NSMutableArray new];
 
 	if([purpose containsString:@"backup"]){
 		[icons addObject:@"list.number"];
-		[icons addObject:@"person.crop.circle"];
 		[icons addObject:@"rectangle.on.rectangle.angled"];
 		[icons addObject:@"rectangle.3.offgrid"];
 		[icons addObject:@"folder.badge.plus"];
@@ -79,7 +78,7 @@
 	return icons;
 }
 
-- (void)makeListWithItems:(int)count{
+-(void)makeListWithItems:(int)count{
 	self.items = [NSMutableArray new];
 	self.itemStatusIcons = [NSMutableArray new];
 
@@ -112,19 +111,17 @@
 	}
 }
 
-- (NSMutableArray *)itemDescriptionsForPurpose:(NSString *)purpose{
+-(NSMutableArray *)itemDescriptionsForPurpose:(NSString *)purpose{
 	NSMutableArray *itemDescs = [NSMutableArray new];
 
 	if([purpose isEqualToString:@"standard-backup"]){
-		[itemDescs addObject:@"Generating list of installed packages"];
-		[itemDescs addObject:@"Filtering list for user packages"];
+		[itemDescs addObject:@"Generating list of user packages"];
 		[itemDescs addObject:@"Gathering files for user packages"];
 		[itemDescs addObject:@"Building debs from gathered files"];
 		[itemDescs addObject:@"Creating backup from debs"];
 	}
 	else if([purpose isEqualToString:@"unfiltered-backup"]){
 		[itemDescs addObject:@"Generating list of installed packages"];
-		[itemDescs addObject:@"Skipping user package filter"];
 		[itemDescs addObject:@"Gathering files for installed packages"];
 		[itemDescs addObject:@"Building debs from gathered files"];
 		[itemDescs addObject:@"Creating backup from debs"];
@@ -138,7 +135,7 @@
 	return itemDescs;
 }
 
-- (void)elaborateItemsList{
+-(void)elaborateItemsList{
 	self.itemStatusText = [NSMutableArray new];
 
 	for(int i = 0; i < [self.items count]; i++){
@@ -171,7 +168,7 @@
 	}
 }
 
-- (void)makeLoadingWheel{
+-(void)makeLoadingWheel{
 	self.loading = [[UIActivityIndicatorView alloc] initWithFrame:CGRectMake((kWidth/2)-25,((kHeight*5)/6)+12.5,50,50)];
 	[self.loading setActivityIndicatorViewStyle:UIActivityIndicatorViewStyleLarge];
 	[self.loading setColor:[self accordingToInterfaceStyle]];
@@ -180,7 +177,7 @@
 	[self.view addSubview:self.loading];
 }
 
-- (void)updateProgress:(NSNotification *)notification{
+-(void)updateProgress:(NSNotification *)notification{
 	CGFloat item = [(NSString *)notification.object floatValue];
 	int itemInt = ceil(item);
 	BOOL isInteger = itemInt == item;
@@ -205,7 +202,7 @@
 	}
 }
 
-- (UIColor *)fillAccordingToInterfaceStyle{
+-(UIColor *)fillAccordingToInterfaceStyle{
 	if(self.traitCollection.userInterfaceStyle == 2){ // dark mode enabled
 		return [UIColor colorWithRed:16.0f/255.0f green:16.0f/255.0f blue:16.0f/255.0f alpha:1.0f];
 	}
@@ -214,7 +211,7 @@
 	}
 }
 
-- (UIColor *)accordingToInterfaceStyle{
+-(UIColor *)accordingToInterfaceStyle{
 	if(self.traitCollection.userInterfaceStyle == 2){ // dark mode enabled
 		return [UIColor colorWithRed:247.0f/255.0f green:249.0f/255.0f blue:250.0f/255.0f alpha:1.0];
 	}

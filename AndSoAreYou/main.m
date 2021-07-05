@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
         /*
             There are three main approaches to copying files:
                 1) one massive copy cmd with all desired source files specified
-                2) iterate through an array of files, running a cmd for each file individually
+                2) running a cmd for each file individually
                 3) read files to copy from a file
 
             1 -- quick, but can lead to an NSInternalInconsistencyException being thrown with reason: "Couldn't posix_spawn: error 7" (error 7 == E2BIG)
@@ -80,10 +80,20 @@ int main(int argc, char *argv[]) {
             2 -- works, but is really slow compared to 1 & 3
 
             3 -- solid and quick af (so we're going with this)
+            rsync has this functionality built-in with the --files-from flag, but rsync isn't preinstalled, so that means we'd have yet another dependency
+            alternatively, we can use xargs' -a flag, where it will read from a file and properly divvy up the args into mutliple cmds if ARG_MAX is exceeded
         */
 
         // copy files
-        NSString *cmd = [NSString stringWithFormat:@"rsync -ar --files-from=%@ / %@", filesToCopy, tweakDir];
+        NSString *cmd = [NSString stringWithFormat:@"xargs -a %@ cp -a --parents -t %@ ", filesToCopy, tweakDir];
+        executeCommand(cmd);
+    }
+
+    else if(strcmp(argv[1], "build-debs") == 0 && argc == 2){
+        // Note: the default compression for dpkg-deb is xz (as of 1.15.6), which will occassionally cause an error:
+        // "unexpected end of file in archive member header in packageName.deb" upon extraction/installation if there
+        // is a dpkg version conflict. in order to fix this, we need to use gzip compression
+        NSString *cmd = [NSString stringWithFormat:@"cd %@ && find . -maxdepth 1 -type d | xargs -I %% dpkg-deb -b -Zgzip -z9 %%", tmpDir];
         executeCommand(cmd);
     }
 
@@ -92,7 +102,7 @@ int main(int argc, char *argv[]) {
         NSString *cmd = [NSString stringWithFormat:@"dpkg -iR %@", tmpDir];
         executeCommand(cmd);
 
-        // resolve dependencies for configured packages and remove unconfirgurable packages (e.g., incompatible iOS vers, etc)
+        // resolve dependencies and remove unconfirgurable packages (e.g., incompatible iOS vers, etc)
         NSString *cmd2 = [NSString stringWithFormat:@"apt-get install -fy --allow-unauthenticated"];
         executeCommand(cmd2);
     }

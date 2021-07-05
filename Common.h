@@ -1,4 +1,4 @@
-#import "NSTask.h"
+#import <NSTask.h>
 
 #define tmpDir @"/var/tmp/me.lightmann.iamlazy/"
 #define filesToCopy @"/var/tmp/me.lightmann.iamlazy/filesToCopy.txt"

@@ -12,7 +12,7 @@
 		</dict>
 		<dict>
 			<key>cellClass</key>
-			<string>IAmLazyPrefsCell</string>
+			<string>IAmLazyTableCell</string>
 			<key>text</key>
 			<string>Make Tweak Backup</string>
 			<key>type</key>
@@ -29,7 +29,7 @@
 		</dict>
 		<dict>
 			<key>cellClass</key>
-			<string>IAmLazyPrefsCell</string>
+			<string>IAmLazyTableCell</string>
 			<key>text</key>
 			<string>Restore From Backup</string>
 			<key>type</key>
@@ -44,7 +44,7 @@
 			<key>label</key>
 			<string></string>
 			<key>footerText</key>
-			<string>v1.0.3.1 By Lightmann</string>
+			<string>v1.1.0 By Lightmann</string>
 			<key>footerAlignment</key>
 			<integer>1</integer>
 		</dict>
@@ -52,13 +52,13 @@
 			<key>cell</key>
  			<string>PSLinkCell</string>
 			<key>cellClass</key>
-			<string>IAmLazyPrefsCell</string>
+			<string>IAmLazyTableCell</string>
 			<key>text</key>
 			<string>Options</string>
 			<key>type</key>
 			<string>options</string>
 			<key>detail</key>
- 			<string>IAmLazyOptionsSubPrefsListController</string>
+ 			<string>IAmLazyOptionsListController</string>
  			<key>IAmLazySub</key>
  			<string>Options</string>
  		</dict>

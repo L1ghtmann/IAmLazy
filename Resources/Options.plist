@@ -8,21 +8,32 @@
             <key>cell</key>
             <string>PSGroupCell</string>
             <key>label</key>
-            <string>Miscellaneous</string>
+            <string></string>
         </dict>
 		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
+			<key>cellClass</key>
+			<string>IAmLazyTableCell</string>
+			<key>text</key>
 			<string>Export A Backup</string>
+			<key>type</key>
+			<string>export</string>
 			<key>action</key>
 			<string>exportBackup:</string>
 		</dict>
+
 		<dict>
-			<key>cell</key>
-			<string>PSButtonCell</string>
-			<key>label</key>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string></string>
+        </dict>
+		<dict>
+			<key>cellClass</key>
+			<string>IAmLazyTableCell</string>
+			<key>text</key>
 			<string>Delete A Backup</string>
+			<key>type</key>
+			<string>delete</string>
 			<key>action</key>
 			<string>deleteBackup:</string>
 		</dict>

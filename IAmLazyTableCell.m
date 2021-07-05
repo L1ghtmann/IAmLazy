@@ -1,21 +1,21 @@
-#include "IAmLazyPrefsCell.h"
+#include "IAmLazyTableCell.h"
 #import "Common.h"
 
 // Lightmann
 // Made during covid
 // IAmLazy
 
-@implementation IAmLazyPrefsCell
+@implementation IAmLazyTableCell
 
-- (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier specifier:(PSSpecifier *)specifier {
+-(instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier specifier:(PSSpecifier *)specifier{
 
 	self = [super initWithStyle:style reuseIdentifier:reuseIdentifier specifier:specifier];
 
-	if (self) {
+	if (self){
 		_function = specifier.properties[@"type"];
-		_purpose = specifier.properties[@"text"];
+		_functionDescriptor = specifier.properties[@"text"];
 
-		// make icon
+		// icon setup
 		// helpful link for available SFSymbols: https://github.com/cyanzhong/sf-symbols-online
 		// note: SFSymbols' width and height aren't equal, so need to set the content mode accordingly
 		if([_function isEqualToString:@"backup"]){
@@ -28,13 +28,31 @@
 			[_functionIcon setImage:[UIImage systemImageNamed:@"arrow.counterclockwise.circle"]];
 			[_functionIcon setContentMode:UIViewContentModeScaleAspectFit];
 		}
+		else if([_function isEqualToString:@"export"]){
+			_functionIcon = [[UIImageView alloc] initWithFrame:CGRectZero];
+			[_functionIcon setImage:[UIImage systemImageNamed:@"tray.and.arrow.up.fill"]];
+			[_functionIcon setContentMode:UIViewContentModeScaleAspectFit];
+		}
+		else if([_function isEqualToString:@"delete"]){
+			_functionIcon = [[UIImageView alloc] initWithFrame:CGRectZero];
+			[_functionIcon setImage:[UIImage systemImageNamed:@"trash.circle"]];
+			[_functionIcon setContentMode:UIViewContentModeScaleAspectFit];
+		}
 		else{
 			_functionIcon = nil;
 		}
-		// have to add as subview early so constraints work (same hierarchy)
-		[self addSubview:_functionIcon];
 
-		// make label
+		if(_functionIcon){
+			[self addSubview:_functionIcon];
+			[_functionIcon setTranslatesAutoresizingMaskIntoConstraints:NO];
+			[_functionIcon.widthAnchor constraintEqualToConstant:(kHeight/4.5)].active = YES;
+			[_functionIcon.heightAnchor constraintEqualToConstant:(kHeight/4.5)].active = YES;
+			[_functionIcon.centerXAnchor constraintEqualToAnchor:self.centerXAnchor].active = YES;
+			[_functionIcon.centerYAnchor constraintEqualToAnchor:self.centerYAnchor constant:-(cellHeight/8)+10].active = YES;
+			[_functionIcon setUserInteractionEnabled:NO];
+		}
+
+		// label setup
 		_label = [[UILabel alloc] initWithFrame:CGRectZero];
 		[self addSubview:_label];
 
@@ -47,27 +65,17 @@
 		_label.font = [UIFont systemFontOfSize:_label.font.pointSize weight:0.40];
 		[_label setTextAlignment:NSTextAlignmentCenter];
 		[_label setUserInteractionEnabled:NO];
-		[_label setText:_purpose];
-
-		// icon setup
-		if(_functionIcon){
-			[_functionIcon setTranslatesAutoresizingMaskIntoConstraints:NO];
-			[_functionIcon.widthAnchor constraintEqualToConstant:(kHeight/4.5)].active = YES;
-			[_functionIcon.heightAnchor constraintEqualToConstant:(kHeight/4.5)].active = YES;
-			[_functionIcon.centerXAnchor constraintEqualToAnchor:self.centerXAnchor].active = YES;
-			[_functionIcon.centerYAnchor constraintEqualToAnchor:self.centerYAnchor constant:-(cellHeight/8)+10].active = YES;
-			[_functionIcon setUserInteractionEnabled:NO];
-		}
+		[_label setText:_functionDescriptor];
 	}
 
 	return self;
 }
 
-- (void)setBackgroundColor:(UIColor *)color{
+-(void)setBackgroundColor:(UIColor *)color{
 	[super setBackgroundColor:[self accordingToInterfaceStyle]];
 }
 
-- (UIColor *)accordingToInterfaceStyle{
+-(UIColor *)accordingToInterfaceStyle{
 	if(self.traitCollection.userInterfaceStyle == 2){ // dark mode enabled
 		return [UIColor colorWithRed:16.0f/255.0f green:16.0f/255.0f blue:16.0f/255.0f alpha:1.0f];
 	}

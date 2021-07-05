@@ -3,15 +3,14 @@
 @interface IAmLazyManager : NSObject
 @property (nonatomic, retain) UIViewController *rootVC;
 @property (nonatomic, retain) NSDate *startTime;
-@property (nonatomic, retain) NSArray *allPackages;
-@property (nonatomic, retain) NSArray *userPackages;
+@property (nonatomic, retain) NSArray *packages;
 @property (nonatomic, retain) NSDate *endTime;
 @property (nonatomic) BOOL encounteredError;
 +(instancetype)sharedInstance;
 -(void)makeTweakBackupWithFilter:(BOOL)filter;
 -(NSArray *)getAllPackages;
 -(NSArray *)getUserPackages;
--(void)gatherDebFiles;
+-(void)gatherPackageFiles;
 -(void)buildDebs;
 -(void)makeTarballWithFilter:(BOOL)filter;
 -(NSString *)getDuration;
