@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
     }
 
     else{
-        printf("Houston, we have a problem: an invalid arguement(s) was provided\n");
+        printf("Houston, we have a problem: an invalid argument (or arguments) was provided!\n");
         exit(EXIT_FAILURE);
     }
 

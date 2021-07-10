@@ -133,13 +133,37 @@
 	for(NSString *package in self.packages){
 		NSMutableArray *files = [NSMutableArray new];
 
-		// list installed files for package and check that they are exclusive to said package (not like /bin or something general)
-		NSString *output = [self executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -L %@ | xargs dpkg-query -S", package] andWait:NO]; // will hang if wait == YES
+		// Note: the fastest and most reliable way to gather all package files is to pipe dpkg-query -L into xargs (w dpkg-query -S)
+		// thanks to iOS' restrictive memory usage parameters, however, this is not plausible for some devices and setups
+		// xargs can be quite the memory hog and will occasionally reach the arbitrary memory threshold set by Apple,
+		// resulting in jetsam killing the Preferences process, which in turn stops the backup from proceeding past this step
+		// to avoid this, we divvy up the process so as to avoid painfully running dpkg-query -S on every line individually
+		NSString *output = [self executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -L %@", package] andWait:NO]; // will hang if wait == YES
 		NSArray *lines = [output componentsSeparatedByString:@"\n"]; // split at newline
-		for(NSString *line in lines){
-			NSArray *bits = [line componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-			if([bits count] == 2 && [bits.firstObject isEqualToString:[package stringByAppendingString:@":"]]){
-				[files addObject:bits.lastObject];
+
+		// find known things
+		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF contains[c] '.'"];
+		NSArray *knownThings = [lines filteredArrayUsingPredicate:thePredicate];
+		for(NSString *path in knownThings){
+			if([path length] && ![path isEqualToString:@"/."]){
+				// assuming any file/dir/symlink with "."
+				// is exclusive to the current package
+				// yes, i know this isn't great....
+				[files addObject:path];
+			}
+		}
+
+		// find lingering things
+		NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate];
+		NSArray *otherThings = [lines filteredArrayUsingPredicate:theAntiPredicate];
+		for(NSString *path in otherThings){
+			if([path length]){
+				// take installed files for package and check that they are exclusive to said package (not like /bin or something general)
+				NSString *output2 = [self executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -S %@", path] andWait:NO];
+				NSArray *bits = [output2 componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+				if([bits count] == 2 && [bits.firstObject isEqualToString:[package stringByAppendingString:@":"]]){
+					[files addObject:bits.lastObject];
+				}
 			}
 		}
 
