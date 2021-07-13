@@ -61,6 +61,17 @@
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0"];
 	}
 
+	// make fresh tmp directory
+	if(![[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
+		NSError *error = NULL;
+		[[NSFileManager defaultManager] createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&error];
+		if(error){
+			NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", tmpDir, error.localizedDescription];
+			[self popErrorAlertWithReason:reason];
+			return;
+		}
+	}
+
 	// gather bits for packages
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
 	[self gatherPackageFiles];
@@ -73,6 +84,17 @@
 
 	// for unfiltered backups, create hidden file specifying the bootstrap it was created on
 	if(!filter) [self makeBootstrapFile];
+
+	// make backup dir if it doesn't exist already
+	if(![[NSFileManager defaultManager] fileExistsAtPath:backupDir]){
+		NSError *error = NULL;
+		[[NSFileManager defaultManager] createDirectoryAtPath:backupDir withIntermediateDirectories:YES attributes:nil error:&error];
+		if(error){
+			NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", backupDir, error.localizedDescription];
+			[self popErrorAlertWithReason:reason];
+			return;
+		}
+	}
 
 	// make archive of all packages
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2.7"];
@@ -87,14 +109,14 @@
 	NSMutableArray *allPackages = [NSMutableArray new];
 
 	NSString *output = [self executeCommandWithOutput:@"dpkg-query -Wf '${Package;-50}${Priority}\n'" andWait:YES];
-	NSArray *lines = [output componentsSeparatedByString:@"\n"]; // split at newlines
+	NSArray *lines = [output componentsSeparatedByString:@"\n"];
 
 	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF endswith 'required'"]; // filter out local packages
 	NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate]; // find the opposite of ^
 	NSArray *packages = [lines filteredArrayUsingPredicate:theAntiPredicate];
 
 	for(NSString *line in packages){
-		// filter out IAmLazy since it'll be installed anyway by the user
+		// filter out IAmLazy since it'll be installed by the user anyway
 		if([line length] && ![line containsString:@"me.lightmann.iamlazy"]){
 			NSArray *bits = [line componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 			if([bits count]) [allPackages addObject:bits.firstObject];
@@ -108,7 +130,7 @@
 	NSMutableArray *userPackages = [NSMutableArray new];
 
 	NSString *output = [self executeCommandWithOutput:@"dpkg-query -Wf '${Package;-50}${Maintainer}\n'" andWait:YES];
-	NSArray *lines = [output componentsSeparatedByString:@"\n"]; // split at newlines
+	NSArray *lines = [output componentsSeparatedByString:@"\n"];
 
 	NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF contains 'Sam Bingner'"]; // filter out bootstrap packages
 	NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF contains 'Jay Freeman (saurik)'"];
@@ -119,7 +141,7 @@
 	NSArray *packages = [lines filteredArrayUsingPredicate:theAntiPredicate];
 
 	for(NSString *line in packages){
-		// filter out IAmLazy since it'll be installed anyway by the user
+		// filter out IAmLazy since it'll be installed by the user anyway
 		if([line length] && ![line containsString:@"me.lightmann.iamlazy"]){
 			NSArray *bits = [line componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 			if([bits count]) [userPackages addObject:bits.firstObject];
@@ -133,84 +155,79 @@
 	for(NSString *package in self.packages){
 		NSMutableArray *files = [NSMutableArray new];
 
-		// Note: the fastest and most reliable way to gather all package files is to pipe dpkg-query -L into xargs (w dpkg-query -S)
-		// thanks to iOS' restrictive memory usage parameters, however, this is not plausible for some devices and setups
-		// xargs can be quite the memory hog and will occasionally reach the arbitrary memory threshold set by Apple,
-		// resulting in jetsam killing the Preferences process, which in turn stops the backup from proceeding past this step
-		// to avoid this, we divvy up the process so as to avoid painfully running dpkg-query -S on every line individually
 		NSString *output = [self executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -L %@", package] andWait:NO]; // will hang if wait == YES
-		NSArray *lines = [output componentsSeparatedByString:@"\n"]; // split at newline
-
-		// find known things
-		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF contains[c] '.'"];
-		NSArray *knownThings = [lines filteredArrayUsingPredicate:thePredicate];
-		for(NSString *path in knownThings){
-			if([path length] && ![path isEqualToString:@"/."]){
-				// assuming any file/dir/symlink with "."
-				// is exclusive to the current package
-				// yes, i know this isn't great....
-				[files addObject:path];
+		NSArray *lines = [output componentsSeparatedByString:@"\n"];
+		for(NSString *line in lines){
+			if(![line length] || [line isEqualToString:@"/."]){
+				continue; // disregard
 			}
-		}
 
-		// find lingering things
-		NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate];
-		NSArray *otherThings = [lines filteredArrayUsingPredicate:theAntiPredicate];
-		for(NSString *path in otherThings){
-			if([path length]){
-				// take installed files for package and check that they are exclusive to said package (not like /bin or something general)
-				NSString *output2 = [self executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -S %@", path] andWait:NO];
-				NSArray *bits = [output2 componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-				if([bits count] == 2 && [bits.firstObject isEqualToString:[package stringByAppendingString:@":"]]){
-					[files addObject:bits.lastObject];
+			// check to see how many times the current filepath is present in the list output
+			// shoutout Cœur on StackOverflow for this efficient code (https://stackoverflow.com/a/57869286)
+			int count = [[NSMutableString stringWithString:output] replaceOccurrencesOfString:line withString:line options:NSLiteralSearch range:NSMakeRange(0, output.length)];
+
+			if(count == 1){ // this is good; means it's unique!
+				[files addObject:line];
+			}
+			else{
+				// sometimes files will have similar names (e.g., /usr/bin/zip, /usr/bin/zipcloak, /usr/bin/zipnote, /usr/bin/zipsplit)
+				// though /usr/bin/zip will have a count > 1, since it's present in the other filepaths, we want to avoid disregarding it
+				// since it's a valid file. instead, we want to disregard all dirs/symlinks that are part of the package's list structure
+				// in the above example for zip, that would mean disregarding /usr and /usr/bin as they're both present in the filepaths
+				NSError *readError = NULL;
+				NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:line error:&readError];
+				if(readError){
+					NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", line, readError.localizedDescription);
+					continue;
+				}
+
+				NSString *type = [fileAttributes fileType];
+				if(![type isEqualToString:@"NSFileTypeDirectory"] && ![type isEqualToString:@"NSFileTypeSymbolicLink"]){
+					[files addObject:line];
 				}
 			}
 		}
 
 		// put all the files we want copied in a list for easier writing
 		NSString *filePaths = [[files valueForKey:@"description"] componentsJoinedByString:@"\n"];
-
-		// make fresh tmp directory
-		if(![[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
-			[[NSFileManager defaultManager] createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:NULL];
+		if(![filePaths length]){
+			NSLog(@"[IAmLazyLog] filePaths list is blank for %@!", package);
 		}
 
-		// write filepaths that we're going to copy to a file
 		// this is nice because it overwrites the file's content, unlike the write method from NSFileManager
-		[filePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+		NSError *writeError = NULL;
+		[filePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
+		if(writeError){
+			NSLog(@"[IAmLazyLog] Failed to write filePaths to %@ for %@! Error: %@", filesToCopy, package, writeError.localizedDescription);
+			continue;
+		}
 
 		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:package];
 
 		// make dir to hold stuff for the tweak
 		if(![[NSFileManager defaultManager] fileExistsAtPath:tweakDir]){
-			[[NSFileManager defaultManager] createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:NULL];
+			NSError *error = NULL;
+			[[NSFileManager defaultManager] createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&error];
+			if(error){
+				NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", tweakDir, writeError.localizedDescription);
+				continue;
+			}
 		}
 
-		// give 'go' for files to be copied
-		if([[NSFileManager defaultManager] fileExistsAtPath:filesToCopy]){
-			[self copyFilesToDirectory:tweakDir];
-		}
-		else{
-			NSLog(@"IAmLazyLog %@ DNE for %@", filesToCopy, package);
-		}
-
-		// make control file
+		[self copyFilesToDirectory:tweakDir];
 		[self makeControlForPackage:package inDirectory:tweakDir];
 	}
 
-	// remove filesToCopy.txt now that we're done using it
-	[[NSFileManager defaultManager] removeItemAtPath:filesToCopy error:NULL];
+	// remove filesToCopy.txt now that we're done w it
+	NSError *error = NULL;
+	[[NSFileManager defaultManager] removeItemAtPath:filesToCopy error:&error];
+	if(error){
+		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", filesToCopy, error.localizedDescription);
+	}
 }
 
 -(void)copyFilesToDirectory:(NSString *)tweakDir{
-	NSString *fileContents = [NSString stringWithContentsOfFile:filesToCopy encoding:NSUTF8StringEncoding error:NULL];
-	NSArray *files = [fileContents componentsSeparatedByString:@"\n"];
-	if(![files count]){
-		NSLog(@"IAmLazyLog no filesToCopy for %@!", tweakDir);
-		return;
-	}
-
-	// has to be copied as root in order to retain attributes (ownership, etc)
+	// have to copy as root in order to retain attributes (ownership, etc)
 	[self executeCommandAsRoot:@[@"copy-files", tweakDir]];
 }
 
@@ -223,11 +240,18 @@
 
 	// make DEBIAN dir
 	if(![[NSFileManager defaultManager] fileExistsAtPath:debian]){
-		[[NSFileManager defaultManager] createDirectoryAtPath:debian withIntermediateDirectories:YES attributes:nil error:NULL];
+		NSError *error = NULL;
+		[[NSFileManager defaultManager] createDirectoryAtPath:debian withIntermediateDirectories:YES attributes:nil error:&error];
+		if(error){
+			NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", debian, error.localizedDescription);
+			return;
+		}
 	}
 
 	// write info to file
-	[[NSFileManager defaultManager] createFileAtPath:[debian stringByAppendingPathComponent:@"control"] contents:[noStatusLine dataUsingEncoding:NSUTF8StringEncoding] attributes:nil];
+	NSData *data = [noStatusLine dataUsingEncoding:NSUTF8StringEncoding];
+	NSString *control = [debian stringByAppendingPathComponent:@"control"];
+	[[NSFileManager defaultManager] createFileAtPath:control contents:data attributes:nil];
 }
 
 -(void)buildDebs{
@@ -260,11 +284,6 @@
 	NSString *backupName;
 	if(filter) backupName = [NSString stringWithFormat:@"IAmLazy-%d.tar.xz", latestBackup+1];
 	else backupName = [NSString stringWithFormat:@"IAmLazy-%du.tar.xz", latestBackup+1];
-
-	// make backup dir if it doesn't exist already
-	if(![[NSFileManager defaultManager] fileExistsAtPath:backupDir]){
-		[[NSFileManager defaultManager] createDirectoryAtPath:backupDir withIntermediateDirectories:YES attributes:nil error:NULL];
-	}
 
 	// make tarball (excludes subdirs in tmp dir)
 	// note: bourne shell doesn't support glob qualifiers (hence the "find ...." ugliness)
@@ -384,22 +403,37 @@
 }
 
 -(void)cleanupTmp{
-	// adjust tmp dir perms and delete
 	[self executeCommandAsRoot:@[@"pre-cleanup"]];
-	[[NSFileManager defaultManager] removeItemAtPath:tmpDir error:NULL];
+	if([[NSFileManager defaultManager] isDeletableFileAtPath:tmpDir]){
+		NSError *error = NULL;
+		[[NSFileManager defaultManager] removeItemAtPath:tmpDir error:&error];
+		if(error){
+			NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", tmpDir, error.localizedDescription);
+			return;
+		}
+	}
+	else{
+		NSLog(@"[IAmLazyLog] %@ cannot be deleted?!", tmpDir);
+		return;
+	}
 }
 
 -(NSArray *)getBackups{
 	NSMutableArray *backups = [NSMutableArray new];
 
-	NSArray *backupDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:backupDir error:NULL];
-	[backupDirContents enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-		NSString *filename = (NSString *)obj;
+	NSError *readError = NULL;
+	NSArray *backupDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:backupDir error:&readError];
+	if(readError){
+		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", backupDir, readError.localizedDescription);
+		return [NSArray new];
+	}
+
+	for(NSString *filename in backupDirContents){
 		NSString *extension = [[filename pathExtension] lowercaseString];
-		if([extension isEqualToString:@"xz"]){
+		if([filename containsString:@"IAmLazy-"] && [extension isEqualToString:@"xz"]){
 			[backups addObject:filename];
 		}
-	}];
+	}
 
 	// sort backups (https://stackoverflow.com/a/43096808)
 	NSSortDescriptor *nameDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self" ascending:YES comparator:^NSComparisonResult(id obj1, id obj2) {
@@ -463,7 +497,7 @@
 		[self.rootVC presentViewController:alert animated:YES completion:nil];
 	}];
 
-	NSLog(@"IAmLazyLog %@", [reason stringByReplacingOccurrencesOfString:@"\n" withString:@""]);
+	NSLog(@"[IAmLazyLog] %@", [reason stringByReplacingOccurrencesOfString:@"\n" withString:@""]);
 }
 
 @end

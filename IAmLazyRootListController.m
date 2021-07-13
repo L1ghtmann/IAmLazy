@@ -166,10 +166,20 @@ static IAmLazyManager *manager;
 		NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
 		[formatter setDateFormat:@"MMM dd, yyyy"];
 		for(NSString *backup in backupNames){
+			NSString *dateString = nil;
+
+			NSError *readError = NULL;
 			NSString *path = [backupDir stringByAppendingPathComponent:backup];
-			NSDictionary *fileAttribs = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:NULL];
-			NSDate *creationDate = [fileAttribs fileCreationDate];
-			NSString *dateString = [formatter stringFromDate:creationDate];
+			NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:&readError];
+			if(readError){
+				NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", path, readError.localizedDescription);
+				dateString = @"Error";
+			}
+			else{
+				NSDate *creationDate = [fileAttributes fileCreationDate];
+				dateString = [formatter stringFromDate:creationDate];
+			}
+
 			[backupDates addObject:dateString];
 		}
 

@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
         */
 
         // copy files
-        NSString *cmd = [NSString stringWithFormat:@"xargs -a %@ cp -a --parents -t %@ ", filesToCopy, tweakDir];
+        NSString *cmd = [NSString stringWithFormat:@"xargs -a %@ cp -a --parents -t %@", filesToCopy, tweakDir];
         executeCommand(cmd);
     }
 

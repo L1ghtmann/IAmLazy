@@ -84,31 +84,43 @@
             UIAlertAction *yes = [UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
                 // remove backup
                 NSString *filePath = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
-                [[NSFileManager defaultManager] removeItemAtPath:filePath error:NULL];
+                if([[NSFileManager defaultManager] isDeletableFileAtPath:filePath]){
+                    NSError *error = NULL;
+                    BOOL success = [[NSFileManager defaultManager] removeItemAtPath:filePath error:&error];
+                     if(success){
+                        NSString *text = [NSString stringWithFormat:@"Successfully deleted %@!", backupName];
 
-                // if success
-                if(![[NSFileManager defaultManager] fileExistsAtPath:filePath]){
-                    NSString *text = [NSString stringWithFormat:@"Successfully deleted %@!", backupName];
+                        UIAlertController *subsubalert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:text preferredStyle:UIAlertControllerStyleAlert];
+                        UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
+                            [self dismissViewControllerAnimated:YES completion:nil];
+                        }];
+                        [subsubalert addAction:okay];
+                        [self presentViewController:subsubalert animated:YES completion:nil];
+                    }
+                    else{
+                        NSString *text = [NSString stringWithFormat:@"An error occured and %@ was not deleted! \n\nError: %@", backupName, error.localizedDescription];
 
-                    UIAlertController *subsubalert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:text preferredStyle:UIAlertControllerStyleAlert];
-                     UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-                        [self dismissViewControllerAnimated:YES completion:nil];
-                    }];
-                    [subsubalert addAction:okay];
-                    [self presentViewController:subsubalert animated:YES completion:nil];
+                        UIAlertController *subsubalert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:text preferredStyle:UIAlertControllerStyleAlert];
+                        UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
+                            [self dismissViewControllerAnimated:YES completion:nil];
+                        }];
+                        [subsubalert addAction:okay];
+                        [self presentViewController:subsubalert animated:YES completion:nil];
+
+                        NSLog(@"[IAmLazyLog] %@", text);
+                    }
                 }
-                // if failure
                 else{
-                    NSString *text = [NSString stringWithFormat:@"An error occured and %@ was not deleted!", backupName];
+                    NSString *text = [NSString stringWithFormat:@"%@ cannot be deleted?!", filePath];
 
                     UIAlertController *subsubalert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:text preferredStyle:UIAlertControllerStyleAlert];
-                     UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
+                    UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
                         [self dismissViewControllerAnimated:YES completion:nil];
                     }];
                     [subsubalert addAction:okay];
                     [self presentViewController:subsubalert animated:YES completion:nil];
 
-                    NSLog(@"IAmLazyLog %@", text);
+                    NSLog(@"[IAmLazyLog] %@", text);
                 }
             }];
 
