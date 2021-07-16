@@ -56,10 +56,8 @@ int main(int argc, char *argv[]) {
     setuid(0);
     setuid(0);
 
-    if(strcmp(argv[1], "pre-cleanup") == 0 && argc == 2){
-        // grant 'others' write access to our tmp dir
-        // allows 'user' user to delete it despite some files having root ownership
-        NSString *cmd = [NSString stringWithFormat:@"chmod -R 757 %@", tmpDir];
+    if(strcmp(argv[1], "cleanup-tmp") == 0 && argc == 2){
+        NSString *cmd = [NSString stringWithFormat:@"rm -rf %@", tmpDir];
         executeCommand(cmd);
     }
 
@@ -85,7 +83,7 @@ int main(int argc, char *argv[]) {
         */
 
         // copy files
-        NSString *cmd = [NSString stringWithFormat:@"xargs -a %@ cp -a --parents -t %@", filesToCopy, tweakDir];
+        NSString *cmd = [NSString stringWithFormat:@"xargs -d '\n' -a %@ cp -a --parents -t %@", filesToCopy, tweakDir];
         executeCommand(cmd);
     }
 

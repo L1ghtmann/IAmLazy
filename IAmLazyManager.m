@@ -161,6 +161,11 @@
 			if(![line length] || [line isEqualToString:@"/."]){
 				continue; // disregard
 			}
+			// TODO: find a more elegant way of doing this
+			// some packages contain 1 instance of the following paths in their lists, meaning they will be picked up below and copied, which we don't want as they're general
+			else if([line isEqualToString:@"/Library/MobileSubstrate"] || [line isEqualToString:@"/Library/PreferenceBundles"] || [line isEqualToString:@"/Library/PreferenceLoader/Preferences"] || [line isEqualToString:@"/usr/bin"]){
+				continue; // disregard
+			}
 
 			// check to see how many times the current filepath is present in the list output
 			// shoutout Cœur on StackOverflow for this efficient code (https://stackoverflow.com/a/57869286)
@@ -172,8 +177,8 @@
 			else{
 				// sometimes files will have similar names (e.g., /usr/bin/zip, /usr/bin/zipcloak, /usr/bin/zipnote, /usr/bin/zipsplit)
 				// though /usr/bin/zip will have a count > 1, since it's present in the other filepaths, we want to avoid disregarding it
-				// since it's a valid file. instead, we want to disregard all dirs/symlinks that are part of the package's list structure
-				// in the above example for zip, that would mean disregarding /usr and /usr/bin as they're both present in the filepaths
+				// since it's a valid file. instead, we want to disregard all dirs and symlinks that don't lead to files that are part of
+				// the package's list structure. in the above example, that would mean disregarding /usr and /usr/bin
 				NSError *readError = NULL;
 				NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:line error:&readError];
 				if(readError){
@@ -184,6 +189,14 @@
 				NSString *type = [fileAttributes fileType];
 				if(![type isEqualToString:@"NSFileTypeDirectory"] && ![type isEqualToString:@"NSFileTypeSymbolicLink"]){
 					[files addObject:line];
+				}
+				else if([type isEqualToString:@"NSFileTypeSymbolicLink"]){
+					// want to grab any symlniks that lead to files, but ignore those that lead to dirs
+					// this will traverse any links and check for the existence of a file at the link's final destination
+					BOOL isDir = NO;
+					if([[NSFileManager defaultManager] fileExistsAtPath:line isDirectory:&isDir] && !isDir){
+						[files addObject:line];
+					}
 				}
 			}
 		}
@@ -235,6 +248,7 @@
 	// get info for package
 	NSString *output = [self executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -s %@", package] andWait:YES];
 	NSString *noStatusLine = [output stringByReplacingOccurrencesOfString:@"Status: install ok installed\n" withString:@""];
+	NSString *info = [noStatusLine stringByAppendingString:@"\n"]; // ensure final newline (deb will fail to build if missing)
 
 	NSString *debian = [NSString stringWithFormat:@"%@/DEBIAN/", tweakDir];
 
@@ -249,7 +263,7 @@
 	}
 
 	// write info to file
-	NSData *data = [noStatusLine dataUsingEncoding:NSUTF8StringEncoding];
+	NSData *data = [info dataUsingEncoding:NSUTF8StringEncoding];
 	NSString *control = [debian stringByAppendingPathComponent:@"control"];
 	[[NSFileManager defaultManager] createFileAtPath:control contents:data attributes:nil];
 }
@@ -403,19 +417,8 @@
 }
 
 -(void)cleanupTmp{
-	[self executeCommandAsRoot:@[@"pre-cleanup"]];
-	if([[NSFileManager defaultManager] isDeletableFileAtPath:tmpDir]){
-		NSError *error = NULL;
-		[[NSFileManager defaultManager] removeItemAtPath:tmpDir error:&error];
-		if(error){
-			NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", tmpDir, error.localizedDescription);
-			return;
-		}
-	}
-	else{
-		NSLog(@"[IAmLazyLog] %@ cannot be deleted?!", tmpDir);
-		return;
-	}
+	// has to be done as root since some files have root ownership
+	[self executeCommandAsRoot:@[@"cleanup-tmp"]];
 }
 
 -(NSArray *)getBackups{
