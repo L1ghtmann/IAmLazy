@@ -1,53 +1,99 @@
+#import "IALOptionsTableViewController.h"
+#import "IALProgressViewController.h"
+#import "IALRootViewController.h"
 #import <AudioToolbox/AudioToolbox.h>
-#import "IAmLazyRootListController.h"
-#import "IAmLazyViewController.h"
-#import "IAmLazyManager.h"
+#import "IALTableViewCell.h"
+#import "IALManager.h"
 #import "Common.h"
 
 // Lightmann
 // Made during covid
 // IAmLazy
 
-static IAmLazyManager *manager;
+static IALManager *manager;
 
-@implementation IAmLazyRootListController
-
--(NSArray *)specifiers{
-	if (!_specifiers){
-		_specifiers = [self loadSpecifiersFromPlistName:@"Root" target:self];
-	}
-
-	return _specifiers;
-}
-
--(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-	NSInteger lastSectionIndex = [tableView numberOfSections]-1;
-	NSInteger lastRowIndex = [tableView numberOfRowsInSection:lastSectionIndex]-1;
-	NSIndexPath *pathToLastRow = [NSIndexPath indexPathForRow:lastRowIndex inSection:lastSectionIndex];
-	// custom cell height
-	if(indexPath != pathToLastRow){
-		return cellHeight;
-	}
-	// make last cell (options cell) shorter
-	else{
-		return cellHeight/3;
-	}
-}
+@implementation IALRootViewController
 
 -(instancetype)init{
 	self = [super init];
 
 	if(self){
-		manager = [NSClassFromString(@"IAmLazyManager") sharedInstance];
+		manager = [IALManager sharedInstance];
 		[manager setRootVC:self];
 	}
 
 	return self;
 }
 
--(void)backupSelection:(id)sender{
+-(void)loadView{
+	[super loadView];
+
+	[self setTitle:@"IAmLazy"];
+}
+
+-(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
+	return 1;
+}
+
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+	return 3;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+	static NSString *cellIdentifier = @"cell";
+	IALTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
+
+	NSString *function;
+	NSString *functionDescriptor;
+
+	if(indexPath.row == 0){
+		function = @"backup";
+		functionDescriptor = @"Make Tweak Backup";
+	}
+	else if(indexPath.row == 1){
+		function = @"restore";
+		functionDescriptor = @"Restore From Backup";
+	}
+	else{
+		function = @"";
+		functionDescriptor = @"Options";
+	}
+
+	if(!cell){
+		cell = [[IALTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIdentifier function:function functionDescriptor:functionDescriptor];
+	}
+
+	return cell;
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+	// first two cells
+	if(indexPath.row < 2){
+		return cellHeight;
+	}
+	// last cell (options cell)
+	else{
+		return cellHeight/3;
+	}
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
 	AudioServicesPlaySystemSound(1520); // haptic feedback
 
+	if(indexPath.row == 0){ // backup cell
+		[self showBackupSelection];
+	}
+	else if(indexPath.row == 1){ // restore cell
+		[self showRestoreSelection];
+	}
+	else{ // options cell
+		[self showOptions];
+	}
+
+	[tableView deselectRowAtIndexPath:indexPath animated:YES];
+}
+
+-(void)showBackupSelection{
 	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Choose how you'd like to backup:" preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *standard = [UIAlertAction actionWithTitle:@"Standard Backup" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
@@ -96,8 +142,8 @@ static IAmLazyManager *manager;
 }
 
 -(void)makeTweakBackupWithFilter:(BOOL)filter{
-	if(filter) [self presentViewController:[[IAmLazyViewController alloc] initWithPurpose:@"standard-backup"] animated:YES completion:nil];
-	else [self presentViewController:[[IAmLazyViewController alloc] initWithPurpose:@"unfiltered-backup"] animated:YES completion:nil];
+	if(filter) [self presentViewController:[[IALProgressViewController alloc] initWithPurpose:@"standard-backup"] animated:YES completion:nil];
+	else [self presentViewController:[[IALProgressViewController alloc] initWithPurpose:@"unfiltered-backup"] animated:YES completion:nil];
 	[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
 	[manager makeTweakBackupWithFilter:filter];
 	[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer
@@ -133,9 +179,7 @@ static IAmLazyManager *manager;
  	[self presentViewController:alert animated:YES completion:nil];
 }
 
--(void)restoreSelection:(id)sender{
-	AudioServicesPlaySystemSound(1520); // haptic feedback
-
+-(void)showRestoreSelection{
 	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Choose how you'd like to restore:" preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *latest = [UIAlertAction actionWithTitle:@"From The Latest Backup" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
@@ -232,7 +276,7 @@ static IAmLazyManager *manager;
 }
 
 -(void)restoreFromBackup:(NSString *)backupName{
-	[self presentViewController:[[IAmLazyViewController alloc] initWithPurpose:@"restore"] animated:YES completion:nil];
+	[self presentViewController:[[IALProgressViewController alloc] initWithPurpose:@"restore"] animated:YES completion:nil];
 	[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
 	[manager restoreFromBackup:backupName];
 	[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer
@@ -251,7 +295,6 @@ static IAmLazyManager *manager;
     UIAlertAction *uicache = [UIAlertAction actionWithTitle:@"UICache" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
 		NSTask *task = [[NSTask alloc] init];
 		[task setLaunchPath:@"/usr/bin/uicache"];
-		[task setArguments:@[@"-a"]];
 		[task launch];
 	}];
 
@@ -264,7 +307,7 @@ static IAmLazyManager *manager;
     UIAlertAction *both = [UIAlertAction actionWithTitle:@"UICache & Respring" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
 		NSTask *task = [[NSTask alloc] init];
 		[task setLaunchPath:@"/usr/bin/uicache"];
-		[task setArguments:@[@"-a", @"--respring"]];
+		[task setArguments:@[@"--respring"]];
 		[task launch];
 	}];
 
@@ -278,6 +321,12 @@ static IAmLazyManager *manager;
 	[alert addAction:none];
 
  	[self presentViewController:alert animated:YES completion:nil];
+}
+
+-(void)showOptions{
+	UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:[[IALOptionsTableViewController alloc] init]];
+ 	[navigationController setModalPresentationStyle:UIModalPresentationFullScreen];
+	[self presentViewController:navigationController animated:YES completion:nil];
 }
 
 @end

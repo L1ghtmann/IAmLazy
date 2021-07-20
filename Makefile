@@ -1,20 +1,18 @@
 export DEBUG = 0
 export ARCHS = arm64 arm64e
-export TARGET=iphone:clang:latest:13.0
+export TARGET = iphone:clang:latest:13.0
 
-INSTALL_TARGET_PROCESSES = Preferences
+INSTALL_TARGET_PROCESSES = IAmLazy
 
 include $(THEOS)/makefiles/common.mk
 
-BUNDLE_NAME = IAmLazy
+APPLICATION_NAME = IAmLazy
 
-IAmLazy_FILES = IAmLazyManager.m IAmLazyOptionsListController.m IAmLazyRootListController.m IAmLazyTableCell.m IAmLazyViewController.m
-IAmLazy_FRAMEWORKS = UIKit
-IAmLazy_PRIVATE_FRAMEWORKS = Preferences
-IAmLazy_INSTALL_PATH = /Library/PreferenceBundles
+IAmLazy_FILES = $(wildcard *.m)
+IAmLazy_FRAMEWORKS = UIKit CoreGraphics
 IAmLazy_CFLAGS = -fobjc-arc
 
-include $(THEOS_MAKE_PATH)/bundle.mk
+include $(THEOS_MAKE_PATH)/application.mk
 
 SUBPROJECTS += AndSoAreYou
 

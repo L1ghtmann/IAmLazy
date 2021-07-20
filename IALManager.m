@@ -1,15 +1,15 @@
-#import "IAmLazyManager.h"
+#import "IALManager.h"
 #import "Common.h"
 
 // Lightmann
 // Made during covid
 // IAmLazy
 
-@implementation IAmLazyManager
+@implementation IALManager
 
 +(instancetype)sharedInstance{
 	static dispatch_once_t p = 0;
-    __strong static IAmLazyManager* sharedInstance = nil;
+    __strong static IALManager* sharedInstance = nil;
     dispatch_once(&p, ^{
         sharedInstance = [[self alloc] init];
     });
@@ -25,7 +25,7 @@
 
 	// check if Documents/ has root ownership (it shouldn't)
 	if([[NSFileManager defaultManager] isWritableFileAtPath:@"/var/mobile/Documents/"] == 0){
-		NSString *reason = [NSString stringWithFormat:@"/var/mobile/Documents is not writeable. \n\nPlease ensure that the directory's owner is mobile and not root."];
+		NSString *reason = @"/var/mobile/Documents is not writeable. \n\nPlease ensure that the directory's owner is mobile and not root.";
 		[self popErrorAlertWithReason:reason];
 		return;
 	}
@@ -40,7 +40,7 @@
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"null"];
 		NSArray *allPackages = [self getAllPackages];
 		if(![allPackages count]){
-			NSString *reason = [NSString stringWithFormat:@"Failed to generate list of installed packages! \n\nPlease try again."];
+			NSString *reason = @"Failed to generate list of installed packages! \n\nPlease try again.";
 			[self popErrorAlertWithReason:reason];
 			return;
 		}
@@ -53,7 +53,7 @@
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"null"];
 		NSArray *userPackages = [self getUserPackages];
 		if(![userPackages count]){
-			NSString *reason = [NSString stringWithFormat:@"Failed to generate list of user packages! \n\nPlease try again."];
+			NSString *reason = @"Failed to generate list of user packages! \n\nPlease try again.";
 			[self popErrorAlertWithReason:reason];
 			return;
 		}

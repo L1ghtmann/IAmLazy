@@ -1,6 +1,6 @@
 #import <UIKit/UIKit.h>
 
-@interface IAmLazyViewController : UIViewController
+@interface IALProgressViewController : UIViewController
 @property (nonatomic) int itemCount;
 @property (nonatomic) NSMutableArray *items;
 @property (nonatomic) NSMutableArray *itemIcons;

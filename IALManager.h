@@ -1,6 +1,6 @@
 #import <UIKit/UIKit.h>
 
-@interface IAmLazyManager : NSObject
+@interface IALManager : NSObject
 @property (nonatomic, retain) UIViewController *rootVC;
 @property (nonatomic, retain) NSDate *startTime;
 @property (nonatomic, retain) NSArray *packages;

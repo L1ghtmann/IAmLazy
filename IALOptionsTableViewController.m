@@ -1,45 +1,88 @@
+#import "IALOptionsTableViewController.h"
 #import <AudioToolbox/AudioToolbox.h>
-#import "IAmLazyOptionsListController.h"
-#import "IAmLazyManager.h"
+#import "IALTableViewCell.h"
+#import "IALManager.h"
 #import "Common.h"
 
 // Lightmann
 // Made during covid
 // IAmLazy
 
-@implementation IAmLazyOptionsListController
+@implementation IALOptionsTableViewController
 
--(NSArray *)specifiers{
-    return _specifiers;
+-(void)loadView{
+	[super loadView];
+
+	[self setTitle:@"Options"];
+
+    UIBarButtonItem *backButton = [[UIBarButtonItem alloc] initWithTitle:@"‹ Back" style:UIBarButtonItemStyleDone target:self action:@selector(returnToMain)];
+	self.navigationItem.leftBarButtonItem = backButton;
 }
 
--(void)loadFromSpecifier:(PSSpecifier *)specifier{
-    NSString *sub = [specifier propertyForKey:@"IAmLazySub"];
-    _specifiers = [self loadSpecifiersFromPlistName:sub target:self];
+-(void)returnToMain{
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
--(void)setSpecifier:(PSSpecifier *)specifier{
-	[self loadFromSpecifier:specifier];
-	[super setSpecifier:specifier];
+-(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
+	return 1;
 }
 
--(BOOL)shouldReloadSpecifiersOnResume{
-    return NO;
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+	return 2;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+	static NSString *cellIdentifier = @"cell";
+	IALTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
+
+	NSString *function;
+	NSString *functionDescriptor;
+
+	if(indexPath.row == 0){
+		function = @"export";
+		functionDescriptor = @"Export A Backup";
+	}
+	else if(indexPath.row == 1){
+		function = @"delete";
+		functionDescriptor = @"Delete A Backup";
+	}
+	else{
+		function = @"";
+		functionDescriptor = @"";
+	}
+
+	if(!cell){
+		cell = [[IALTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIdentifier function:function functionDescriptor:functionDescriptor];
+	}
+
+	return cell;
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-	// custom cell height
     return cellHeight;
 }
 
--(void)exportBackup:(id)sender{
-    AudioServicesPlaySystemSound(1520); // haptic feedback
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+	AudioServicesPlaySystemSound(1520); // haptic feedback
 
+	if(indexPath.row == 0){ // export cell
+		[self exportBackup];
+	}
+	else if(indexPath.row == 1){ // delete cell
+		[self deleteBackup];
+	}
+	else{
+	}
+
+	[tableView deselectRowAtIndexPath:indexPath animated:YES];
+}
+
+-(void)exportBackup{
     // post list of available backups
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Choose the backup you'd like to export:" preferredStyle:UIAlertControllerStyleAlert];
 
     // get backup filenames
-    NSArray *backupNames = [[IAmLazyManager sharedInstance] getBackups];
+    NSArray *backupNames = [[IALManager sharedInstance] getBackups];
 
     // make each available backup its own action
     for(int i = 0; i < [backupNames count]; i++){
@@ -58,7 +101,7 @@
     }
 
     UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-        [self dismissViewControllerAnimated:YES completion:nil];
+        [alert dismissViewControllerAnimated:YES completion:nil]; // since this is a presented vc, we have to tell the alert to dismiss itself
     }];
 
     [alert addAction:cancel];
@@ -66,14 +109,12 @@
 	[self presentViewController:alert animated:YES completion:nil];
 }
 
--(void)deleteBackup:(id)sender{
-    AudioServicesPlaySystemSound(1520); // haptic feedback
-
+-(void)deleteBackup{
     // post list of available backups
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Choose the backup you'd like to delete:" preferredStyle:UIAlertControllerStyleAlert];
 
     // get backup filenames
-    NSArray *backupNames = [[IAmLazyManager sharedInstance] getBackups];
+    NSArray *backupNames = [[IALManager sharedInstance] getBackups];
 
     // make each available backup its own action
     for(int i = 0; i < [backupNames count]; i++){
@@ -92,7 +133,7 @@
 
                         UIAlertController *subsubalert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:text preferredStyle:UIAlertControllerStyleAlert];
                         UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-                            [self dismissViewControllerAnimated:YES completion:nil];
+                            [subsubalert dismissViewControllerAnimated:YES completion:nil];
                         }];
                         [subsubalert addAction:okay];
                         [self presentViewController:subsubalert animated:YES completion:nil];
@@ -102,7 +143,7 @@
 
                         UIAlertController *subsubalert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:text preferredStyle:UIAlertControllerStyleAlert];
                         UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-                            [self dismissViewControllerAnimated:YES completion:nil];
+                            [subsubalert dismissViewControllerAnimated:YES completion:nil];
                         }];
                         [subsubalert addAction:okay];
                         [self presentViewController:subsubalert animated:YES completion:nil];
@@ -115,7 +156,7 @@
 
                     UIAlertController *subsubalert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:text preferredStyle:UIAlertControllerStyleAlert];
                     UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-                        [self dismissViewControllerAnimated:YES completion:nil];
+                        [subsubalert dismissViewControllerAnimated:YES completion:nil];
                     }];
                     [subsubalert addAction:okay];
                     [self presentViewController:subsubalert animated:YES completion:nil];
@@ -125,7 +166,7 @@
             }];
 
             UIAlertAction *no = [UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-                [self dismissViewControllerAnimated:YES completion:nil];
+                [subalert dismissViewControllerAnimated:YES completion:nil];
             }];
 
             [subalert addAction:yes];
@@ -138,7 +179,7 @@
     }
 
     UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-        [self dismissViewControllerAnimated:YES completion:nil];
+        [alert dismissViewControllerAnimated:YES completion:nil];
     }];
 
     [alert addAction:cancel];

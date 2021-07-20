@@ -1,5 +1,5 @@
 # IAmLazy
-Easily backup and restore your tweaks
+Easily backup and restore your tweaks from an 'offline' backup
 
 Available for free on BigBoss
 

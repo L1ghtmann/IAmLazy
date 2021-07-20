@@ -1,9 +1,9 @@
 Package: me.lightmann.iamlazy
 Name: IAmLazy
-Version: 1.2.0
-Depends: mobilesubstrate, preferenceloader, coreutils, findutils, gzip, tar, xz | xz-utils, firmware (>= 13.0)
+Version: 1.3.0
+Depends: coreutils, findutils, gzip, tar, xz | xz-utils, firmware (>= 13.0)
 Architecture: iphoneos-arm
-Description: Easily backup and restore your tweaks!
+Description: Easily backup and restore your tweaks from an 'offline' backup
 Maintainer: Lightmann
 Author: Lightmann
 Section: Utilities

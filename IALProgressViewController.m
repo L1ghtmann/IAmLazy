@@ -1,11 +1,11 @@
-#include "IAmLazyViewController.h"
+#include "IALProgressViewController.h"
 #import "Common.h"
 
 // Lightmann
 // Made during covid
 // IAmLazy
 
-@implementation IAmLazyViewController
+@implementation IALProgressViewController
 
 -(instancetype)initWithPurpose:(NSString *)purpose{
 
@@ -37,7 +37,7 @@
 	[super viewDidLoad];
 
 	self.view = [[UIView alloc] initWithFrame:CGRectMake(0,0,kWidth,kHeight)];
-	[self.view setBackgroundColor:[self fillAccordingToInterfaceStyle]];
+	[self.view setBackgroundColor:[self fillColor]];
 }
 
 -(void)makeTitleWithPurpose:(NSString *)purpose{
@@ -54,7 +54,7 @@
 	UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(0,35,kWidth,30)];
 	title.font = [UIFont systemFontOfSize:30 weight:0.60];
 	[title setText:[text uppercaseString]];
-	[title setTextColor:[self accordingToInterfaceStyle]];
+	[title setTextColor:[self accentColor]];
 	[title setTextAlignment:NSTextAlignmentCenter];
 
 	[self.view addSubview:title];
@@ -86,11 +86,11 @@
 		CGFloat y = 90+(i*100);
 
 		UIView *background = [[UIView alloc] initWithFrame:CGRectMake(10,y,60,60)];
-		[background setBackgroundColor:[self accordingToInterfaceStyle]];
+		[background setBackgroundColor:[self accentColor]];
 		[background.layer setCornerRadius:background.frame.size.height/2];
 
 		UIView *fill = [[UIView alloc] initWithFrame:CGRectInset(background.bounds, 1, 1)];
-		[fill setBackgroundColor:[self fillAccordingToInterfaceStyle]];
+		[fill setBackgroundColor:[self fillColor]];
 		[fill.layer setCornerRadius:background.frame.size.height/2];
 		[background addSubview:fill];
 
@@ -153,12 +153,12 @@
 
 		UILabel *itemDesc = [[UILabel alloc] initWithFrame:CGRectMake(x,position.y-28,kWidth,20)];
 		[itemDesc setText:self.itemDescriptions[i]];
-		[itemDesc setTextColor:[self accordingToInterfaceStyle]];
+		[itemDesc setTextColor:[self accentColor]];
 
 		UILabel *itemStatus = [[UILabel alloc] initWithFrame:CGRectMake(x,position.y-8,kWidth,20)];
 		itemStatus.font = [UIFont systemFontOfSize:14 weight:-0.60];
 		[itemStatus setText:@"Waiting"];
-		[itemStatus setTextColor:[self accordingToInterfaceStyle]];
+		[itemStatus setTextColor:[self accentColor]];
 		[itemStatus setAlpha:.75];
 
 		[self.view addSubview:itemDesc];
@@ -171,7 +171,7 @@
 -(void)makeLoadingWheel{
 	self.loading = [[UIActivityIndicatorView alloc] initWithFrame:CGRectMake((kWidth/2)-25,((kHeight*5)/6)+12.5,50,50)];
 	[self.loading setActivityIndicatorViewStyle:UIActivityIndicatorViewStyleLarge];
-	[self.loading setColor:[self accordingToInterfaceStyle]];
+	[self.loading setColor:[self accentColor]];
 	[self.loading setHidesWhenStopped:YES];
 	[self.loading startAnimating];
 	[self.view addSubview:self.loading];
@@ -202,7 +202,7 @@
 	}
 }
 
--(UIColor *)fillAccordingToInterfaceStyle{
+-(UIColor *)fillColor{
 	if(self.traitCollection.userInterfaceStyle == 2){ // dark mode enabled
 		return [UIColor colorWithRed:16.0f/255.0f green:16.0f/255.0f blue:16.0f/255.0f alpha:1.0f];
 	}
@@ -211,7 +211,7 @@
 	}
 }
 
--(UIColor *)accordingToInterfaceStyle{
+-(UIColor *)accentColor{
 	if(self.traitCollection.userInterfaceStyle == 2){ // dark mode enabled
 		return [UIColor colorWithRed:247.0f/255.0f green:249.0f/255.0f blue:250.0f/255.0f alpha:1.0];
 	}
