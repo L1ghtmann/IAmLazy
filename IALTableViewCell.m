@@ -41,12 +41,14 @@
 
 		if(_functionIcon){
 			[self addSubview:_functionIcon];
+
+			[_functionIcon setUserInteractionEnabled:NO];
+
 			[_functionIcon setTranslatesAutoresizingMaskIntoConstraints:NO];
 			[_functionIcon.widthAnchor constraintEqualToConstant:(kHeight/3.5)].active = YES;
 			[_functionIcon.heightAnchor constraintEqualToConstant:(kHeight/3.5)].active = YES;
 			[_functionIcon.centerXAnchor constraintEqualToAnchor:self.centerXAnchor].active = YES;
 			[_functionIcon.centerYAnchor constraintEqualToAnchor:self.centerYAnchor constant:-(cellHeight/7)+10].active = YES;
-			[_functionIcon setUserInteractionEnabled:NO];
 		}
 
 		// label setup
@@ -59,7 +61,7 @@
 		[_label.centerXAnchor constraintEqualToAnchor:self.centerXAnchor].active = YES;
 		[_label.bottomAnchor constraintEqualToAnchor:self.bottomAnchor constant:-(cellHeight/8)].active = YES;
 
-		_label.font = [UIFont systemFontOfSize:_label.font.pointSize weight:0.40];
+		_label.font = [UIFont systemFontOfSize:_label.font.pointSize*1.25 weight:0.40];
 		[_label setTextAlignment:NSTextAlignmentCenter];
 		[_label setUserInteractionEnabled:NO];
 		[_label setText:functionDescriptor];

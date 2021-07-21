@@ -16,7 +16,7 @@
 	[self setTitle:@"Options"];
 
     UIBarButtonItem *backButton = [[UIBarButtonItem alloc] initWithTitle:@"‹ Back" style:UIBarButtonItemStyleDone target:self action:@selector(returnToMain)];
-	self.navigationItem.leftBarButtonItem = backButton;
+    [self.navigationItem setLeftBarButtonItem:backButton];
 }
 
 -(void)returnToMain{
