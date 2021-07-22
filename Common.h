@@ -1,7 +1,8 @@
 #import <NSTask.h>
 
 #define tmpDir @"/var/tmp/me.lightmann.iamlazy/"
-#define filesToCopy @"/var/tmp/me.lightmann.iamlazy/filesToCopy.txt"
+#define filesToCopy @"/var/tmp/me.lightmann.iamlazy/.filesToCopy"
+#define targetDirectory @"/var/tmp/me.lightmann.iamlazy/.targetDirectory"
 #define backupDir @"/var/mobile/Documents/me.lightmann.iamlazy/"
 
 #define kWidth [UIScreen mainScreen].bounds.size.width

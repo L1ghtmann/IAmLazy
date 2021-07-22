@@ -227,21 +227,35 @@
 			}
 		}
 
-		[self copyFilesToDirectory:tweakDir];
+		// again, this is nice because it overwrites the file's content, unlike the write method from NSFileManager
+		NSError *writeError2 = NULL;
+		[tweakDir writeToFile:targetDirectory atomically:YES encoding:NSUTF8StringEncoding error:&writeError2];
+		if(writeError2){
+			NSLog(@"[IAmLazyLog] Failed to write tweakDir to %@ for %@! Error: %@", targetDirectory, package, writeError2.localizedDescription);
+			continue;
+		}
+
+		[self copyFilesToTargetDirectory];
 		[self makeControlForPackage:package inDirectory:tweakDir];
 	}
 
-	// remove filesToCopy.txt now that we're done w it
+	// remove .filesToCopy and .targetDirectory now that we're done w them
 	NSError *error = NULL;
 	[[NSFileManager defaultManager] removeItemAtPath:filesToCopy error:&error];
 	if(error){
 		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", filesToCopy, error.localizedDescription);
 	}
+
+	NSError *error2 = NULL;
+	[[NSFileManager defaultManager] removeItemAtPath:targetDirectory error:&error2];
+	if(error2){
+		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", targetDirectory, error2.localizedDescription);
+	}
 }
 
--(void)copyFilesToDirectory:(NSString *)tweakDir{
-	// have to copy as root in order to retain attributes (ownership, etc)
-	[self executeCommandAsRoot:@[@"copy-files", tweakDir]];
+-(void)copyFilesToTargetDirectory{
+	// Note: have to copy as root in order to retain attributes (ownership, etc)
+	[self executeCommandAsRoot:@"copy-files"];
 }
 
 -(void)makeControlForPackage:(NSString *)package inDirectory:(NSString *)tweakDir{
@@ -272,7 +286,7 @@
 	// Note: have to run as root for some packages to be built correctly (e.g., sudo, openssh-client, etc)
 	// if this isn't done as root, said packages will be corrupt and produce the error:
 	// "unexpected end of file in archive member header in packageName.deb" upon extraction/installation
-	[self executeCommandAsRoot:@[@"build-debs"]];
+	[self executeCommandAsRoot:@"build-debs"];
 }
 
 -(void)makeBootstrapFile{
@@ -412,13 +426,13 @@
 }
 
 -(void)installDebs{
-	[self executeCommandAsRoot:@[@"install-debs"]];
+	[self executeCommandAsRoot:@"install-debs"];
 	[self cleanupTmp];
 }
 
 -(void)cleanupTmp{
 	// has to be done as root since some files have root ownership
-	[self executeCommandAsRoot:@[@"cleanup-tmp"]];
+	[self executeCommandAsRoot:@"cleanup-tmp"];
 }
 
 -(NSArray *)getBackups{
@@ -477,10 +491,10 @@
 }
 
 // made one for AndSoAreYou just for consistency. This isn't really necessary
--(void)executeCommandAsRoot:(NSArray *)args{
+-(void)executeCommandAsRoot:(NSString *)cmd{
 	NSTask *task = [[NSTask alloc] init];
 	[task setLaunchPath:@"/usr/libexec/iamlazy/AndSoAreYou"];
-	[task setArguments:args];
+	[task setArguments:@[cmd]];
 	[task launch];
 	[task waitUntilExit];
 }

@@ -51,19 +51,23 @@ void executeCommand(NSString *cmd){
 }
 
 int main(int argc, char *argv[]) {
+    if(argc != 2){
+        printf("Houston, we have a problem: an invalid argument (or arguments) was provided!\n");
+        exit(EXIT_FAILURE);
+    }
+
     patch_setuid();
     platformize_me();
     setuid(0);
     setuid(0);
 
-    if(strcmp(argv[1], "cleanup-tmp") == 0 && argc == 2){
+    if(strcmp(argv[1], "cleanup-tmp") == 0){
         NSString *cmd = [NSString stringWithFormat:@"rm -rf %@", tmpDir];
         executeCommand(cmd);
     }
 
-    else if(strcmp(argv[1], "copy-files") == 0 && argc == 3){
-        const char* ctweakdir = argv[2];
-        NSString *tweakDir = [NSString stringWithCString:ctweakdir encoding:NSASCIIStringEncoding];
+    else if(strcmp(argv[1], "copy-files") == 0){
+        NSString *tweakDir = [NSString stringWithContentsOfFile:targetDirectory encoding:NSUTF8StringEncoding error:NULL];
 
         /*
             There are three main approaches to copying files:
@@ -87,7 +91,7 @@ int main(int argc, char *argv[]) {
         executeCommand(cmd);
     }
 
-    else if(strcmp(argv[1], "build-debs") == 0 && argc == 2){
+    else if(strcmp(argv[1], "build-debs") == 0){
         // Note: the default compression for dpkg-deb is xz (as of 1.15.6), which will occassionally cause an error:
         // "unexpected end of file in archive member header in packageName.deb" upon extraction/installation if there
         // is a dpkg version conflict. in order to fix this, we need to use gzip compression
@@ -95,7 +99,7 @@ int main(int argc, char *argv[]) {
         executeCommand(cmd);
     }
 
-    else if(strcmp(argv[1], "install-debs") == 0 && argc == 2){
+    else if(strcmp(argv[1], "install-debs") == 0){
         // force install debs
         NSString *cmd = [NSString stringWithFormat:@"dpkg -iR %@", tmpDir];
         executeCommand(cmd);
@@ -106,9 +110,9 @@ int main(int argc, char *argv[]) {
     }
 
     else{
-        printf("Houston, we have a problem: an invalid argument (or arguments) was provided!\n");
+        printf("Houston, we have a problem: an invalid argument was provided!\n");
         exit(EXIT_FAILURE);
     }
 
-    return 0;
+    exit(EXIT_SUCCESS);
 }

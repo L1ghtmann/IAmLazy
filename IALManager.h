@@ -20,5 +20,5 @@
 -(NSArray *)getBackups;
 -(void)executeCommand:(NSString *)cmd;
 -(NSString *)executeCommandWithOutput:(NSString *)cmd andWait:(BOOL)wait;
--(void)executeCommandAsRoot:(NSArray *)args;
+-(void)executeCommandAsRoot:(NSString *)cmd;
 @end
