@@ -203,21 +203,11 @@
 }
 
 -(UIColor *)fillColor{
-	if(self.traitCollection.userInterfaceStyle == 2){ // dark mode enabled
-		return [UIColor colorWithRed:16.0f/255.0f green:16.0f/255.0f blue:16.0f/255.0f alpha:1.0f];
-	}
-	else{
-		return [UIColor colorWithRed:247.0f/255.0f green:249.0f/255.0f blue:250.0f/255.0f alpha:1.0];
-	}
+	return [UIColor colorWithRed:16.0f/255.0f green:16.0f/255.0f blue:16.0f/255.0f alpha:1.0f];
 }
 
 -(UIColor *)accentColor{
-	if(self.traitCollection.userInterfaceStyle == 2){ // dark mode enabled
-		return [UIColor colorWithRed:247.0f/255.0f green:249.0f/255.0f blue:250.0f/255.0f alpha:1.0];
-	}
-	else{
-		return [UIColor colorWithRed:16.0f/255.0f green:16.0f/255.0f blue:16.0f/255.0f alpha:1.0f];
-	}
+	return [UIColor colorWithRed:247.0f/255.0f green:249.0f/255.0f blue:250.0f/255.0f alpha:1.0];
 }
 
 @end

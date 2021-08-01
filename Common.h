@@ -14,4 +14,3 @@
 @interface UIApplication (Private)
 -(double)statusBarHeight;
 @end
-

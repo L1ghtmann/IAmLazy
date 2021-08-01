@@ -1,5 +1,5 @@
-#import "IALOptionsTableViewController.h"
 #import <AudioToolbox/AudioToolbox.h>
+#import "IALOptionsViewController.h"
 #import "IALTableViewCell.h"
 #import "IALManager.h"
 #import "Common.h"
@@ -8,14 +8,14 @@
 // Made during covid
 // IAmLazy
 
-@implementation IALOptionsTableViewController
+@implementation IALOptionsViewController
 
 -(void)loadView{
 	[super loadView];
 
 	[self setTitle:@"Options"];
 
-    UIBarButtonItem *backButton = [[UIBarButtonItem alloc] initWithTitle:@"‹ Back" style:UIBarButtonItemStyleDone target:self action:@selector(returnToMain)];
+    UIBarButtonItem *backButton = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"xmark"] style:UIBarButtonItemStylePlain target:self action:@selector(returnToMain)];
     [self.navigationItem setLeftBarButtonItem:backButton];
 }
 
@@ -28,7 +28,7 @@
 }
 
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-	return 2;
+	return 3;
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -48,7 +48,7 @@
 	}
 	else{
 		function = @"";
-		functionDescriptor = @"";
+		functionDescriptor = @"Made By Lightmann";
 	}
 
 	if(!cell){
@@ -59,7 +59,14 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return cellHeight;
+    // first two cells
+	if(indexPath.row < 2){
+		return cellHeight;
+	}
+	// last cell ("made by" cell)
+	else{
+		return cellHeight/3;
+	}
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -76,6 +83,8 @@
 
 	[tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
+
+#pragma mark Secondary Options
 
 -(void)exportBackup{
     // post list of available backups

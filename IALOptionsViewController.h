@@ -1,6 +1,6 @@
 #import <UIKit/UIKit.h>
 
-@interface IALOptionsTableViewController : UITableViewController
+@interface IALOptionsViewController : UITableViewController
 -(void)exportBackup;
 -(void)deleteBackup;
 @end

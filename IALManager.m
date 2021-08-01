@@ -16,6 +16,8 @@
     return sharedInstance;
 }
 
+#pragma mark Backup
+
 -(void)makeTweakBackupWithFilter:(BOOL)filter{
 	// reset errors
 	[self setEncounteredError:NO];
@@ -310,13 +312,13 @@
 
 	// craft new backup name
 	NSString *backupName;
-	if(filter) backupName = [NSString stringWithFormat:@"IAmLazy-%d.tar.xz", latestBackup+1];
-	else backupName = [NSString stringWithFormat:@"IAmLazy-%du.tar.xz", latestBackup+1];
+	if(filter) backupName = [NSString stringWithFormat:@"IAmLazy-%d.tar.gz", latestBackup+1];
+	else backupName = [NSString stringWithFormat:@"IAmLazy-%du.tar.gz", latestBackup+1];
 
 	// make tarball (excludes subdirs in tmp dir)
 	// note: bourne shell doesn't support glob qualifiers (hence the "find ...." ugliness)
 	// ensure file structure is only me.lightmann.iamlazy/ not /var/tmp/me.lightmann.iamlazy/ (having --strip-components=2 on the restore end breaks compatibility w older backups)
-	[self executeCommand:[NSString stringWithFormat:@"cd /var/tmp && find ./me.lightmann.iamlazy -maxdepth 1 ! -type d -print0 | xargs -0 tar -cJf %@%@", backupDir, backupName]];
+	[self executeCommand:[NSString stringWithFormat:@"cd /var/tmp && find ./me.lightmann.iamlazy -maxdepth 1 ! -type d -print0 | xargs -0 tar -czf %@%@", backupDir, backupName]];
 
 	[self cleanupTmp];
 	[self verifyBackup:backupName];
@@ -335,6 +337,8 @@
 	NSTimeInterval duration = [self.endTime timeIntervalSinceDate:self.startTime];
 	return [NSString stringWithFormat:@"%.02f", duration];
 }
+
+#pragma mark Restore
 
 -(void)restoreFromBackup:(NSString *)backupName{
 	// reset errors
@@ -378,7 +382,7 @@
 				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
 
 				BOOL compatible = YES;
-				if([backupName containsString:@"u.tar.xz"]){
+				if([backupName containsString:@"u.tar"]){
 					compatible = [self verifyBootstrap];
 				}
 
@@ -430,6 +434,8 @@
 	[self cleanupTmp];
 }
 
+#pragma mark General
+
 -(void)cleanupTmp{
 	// has to be done as root since some files have root ownership
 	[self executeCommandAsRoot:@"cleanup-tmp"];
@@ -446,8 +452,7 @@
 	}
 
 	for(NSString *filename in backupDirContents){
-		NSString *extension = [[filename pathExtension] lowercaseString];
-		if([filename containsString:@"IAmLazy-"] && [extension isEqualToString:@"xz"]){
+		if([filename containsString:@"IAmLazy-"] && [filename containsString:@".tar."]){
 			[backups addObject:filename];
 		}
 	}

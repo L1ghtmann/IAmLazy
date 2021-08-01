@@ -57,7 +57,7 @@
 
 		[_label setTranslatesAutoresizingMaskIntoConstraints:NO];
 		[_label.widthAnchor constraintEqualToConstant:kWidth].active = YES;
-		[_label.heightAnchor constraintEqualToConstant:20].active = YES;
+		[_label.heightAnchor constraintEqualToConstant:25].active = YES;
 		[_label.centerXAnchor constraintEqualToAnchor:self.centerXAnchor].active = YES;
 		[_label.bottomAnchor constraintEqualToAnchor:self.bottomAnchor constant:-(cellHeight/8)].active = YES;
 

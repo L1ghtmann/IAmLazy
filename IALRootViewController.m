@@ -1,7 +1,7 @@
-#import "IALOptionsTableViewController.h"
-#import "IALProgressViewController.h"
-#import "IALRootViewController.h"
 #import <AudioToolbox/AudioToolbox.h>
+#import "IALProgressViewController.h"
+#import "IALOptionsViewController.h"
+#import "IALRootViewController.h"
 #import "IALTableViewCell.h"
 #import "IALManager.h"
 #import "Common.h"
@@ -92,6 +92,8 @@ static IALManager *manager;
 
 	[tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
+
+#pragma mark Root Options
 
 -(void)showBackupSelection{
 	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Choose how you'd like to backup:" preferredStyle:UIAlertControllerStyleAlert];
@@ -324,7 +326,7 @@ static IALManager *manager;
 }
 
 -(void)showOptions{
-	UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:[[IALOptionsTableViewController alloc] init]];
+	UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:[[IALOptionsViewController alloc] init]];
  	[navigationController setModalPresentationStyle:UIModalPresentationFullScreen];
 	[self presentViewController:navigationController animated:YES completion:nil];
 }
