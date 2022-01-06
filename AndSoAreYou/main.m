@@ -66,6 +66,14 @@ int main(int argc, char *argv[]) {
         executeCommand(cmd);
     }
 
+    else if(strcmp(argv[1], "make-dirs") == 0){
+        NSString *tweakDir = [NSString stringWithContentsOfFile:targetDirectory encoding:NSUTF8StringEncoding error:NULL];
+
+        // make dirs
+        NSString *cmd = [NSString stringWithFormat:@"xargs -d '\n' -a %@ -I %% mkdir -p %@%%", dirsToMake, tweakDir];
+        executeCommand(cmd);
+    }
+
     else if(strcmp(argv[1], "copy-files") == 0){
         NSString *tweakDir = [NSString stringWithContentsOfFile:targetDirectory encoding:NSUTF8StringEncoding error:NULL];
 
@@ -95,17 +103,19 @@ int main(int argc, char *argv[]) {
         // Note: the default compression for dpkg-deb is xz (as of 1.15.6), which will occassionally cause an error:
         // "unexpected end of file in archive member header in packageName.deb" upon extraction/installation if there
         // is a dpkg version conflict. in order to fix this, we need to use gzip compression
-        NSString *cmd = [NSString stringWithFormat:@"cd %@ && find . -maxdepth 1 -type d | xargs -I %% dpkg-deb -b -Zgzip -z9 %%", tmpDir];
+        // build debs from collected files and then remove the respective file dir when done
+        NSString *cmd = [NSString stringWithFormat:@"find %@ -maxdepth 1 -type d -exec dpkg-deb -b -Zgzip -z9 {} \\; -exec rm -r {} \\; > %@build_log.txt", tmpDir, logDir];
         executeCommand(cmd);
     }
 
     else if(strcmp(argv[1], "install-debs") == 0){
-        // force install debs
-        NSString *cmd = [NSString stringWithFormat:@"dpkg -iR %@", tmpDir];
+        // install debs and resolve missing dependencies
+        // doing each deb individually to ensure that the entire process isn't nuked if a totally unconfigurable package (e.g., incompatible iOS vers, unmeetable dependencies, etc) is met
+        NSString *cmd = [NSString stringWithFormat:@"find %@ -name '*.deb' -exec apt-get install -y --allow-unauthenticated {} \\; > %@restore_log.txt", tmpDir, logDir];
         executeCommand(cmd);
 
-        // resolve dependencies and remove unconfirgurable packages (e.g., incompatible iOS vers, etc)
-        NSString *cmd2 = [NSString stringWithFormat:@"apt-get install -fy --allow-unauthenticated"];
+        // resolve any lingering things (e.g., partial installs due to dependencies)
+        NSString *cmd2 = [NSString stringWithFormat:@"find %@ -name '*.deb' -exec apt-get install -fy --allow-unauthenticated {} \\; > %@fixup_log.txt", tmpDir, logDir];
         executeCommand(cmd2);
     }
 

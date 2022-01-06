@@ -79,6 +79,17 @@
 	[self gatherPackageFiles];
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
 
+	// make backup and log dirs if they don't exist already
+	if(![[NSFileManager defaultManager] fileExistsAtPath:logDir]){
+		NSError *error = NULL;
+		[[NSFileManager defaultManager] createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&error];
+		if(error){
+			NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, error.localizedDescription];
+			[self popErrorAlertWithReason:reason];
+			return;
+		}
+	}
+
 	// build debs from bits
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
 	[self buildDebs];
@@ -86,17 +97,6 @@
 
 	// for unfiltered backups, create hidden file specifying the bootstrap it was created on
 	if(!filter) [self makeBootstrapFile];
-
-	// make backup dir if it doesn't exist already
-	if(![[NSFileManager defaultManager] fileExistsAtPath:backupDir]){
-		NSError *error = NULL;
-		[[NSFileManager defaultManager] createDirectoryAtPath:backupDir withIntermediateDirectories:YES attributes:nil error:&error];
-		if(error){
-			NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", backupDir, error.localizedDescription];
-			[self popErrorAlertWithReason:reason];
-			return;
-		}
-	}
 
 	// make archive of all packages
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2.7"];
@@ -138,7 +138,8 @@
 	NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF contains 'Jay Freeman (saurik)'"];
 	NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF contains 'Hayden Seay'"];
 	NSPredicate *predicate4 = [NSPredicate predicateWithFormat:@"SELF contains 'CoolStar'"];
-	NSPredicate *thePredicate = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicate1, predicate2, predicate3, predicate4]];  // combine with "or"
+	NSPredicate *predicate5 = [NSPredicate predicateWithFormat:@"SELF contains 'Cameron Katri'"];
+	NSPredicate *thePredicate = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicate1, predicate2, predicate3, predicate4, predicate5]];  // combine with "or"
 	NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate]; // find the opposite of ^
 	NSArray *packages = [lines filteredArrayUsingPredicate:theAntiPredicate];
 
@@ -152,10 +153,10 @@
 
 	return userPackages;
 }
-
 -(void)gatherPackageFiles{
 	for(NSString *package in self.packages){
 		NSMutableArray *files = [NSMutableArray new];
+		NSMutableArray *dirs = [NSMutableArray new];
 
 		NSString *output = [self executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -L %@", package] andWait:NO]; // will hang if wait == YES
 		NSArray *lines = [output componentsSeparatedByString:@"\n"];
@@ -163,32 +164,33 @@
 			if(![line length] || [line isEqualToString:@"/."]){
 				continue; // disregard
 			}
-			// TODO: find a more elegant way of doing this
-			// some packages contain 1 instance of the following paths in their lists, meaning they will be picked up below and copied, which we don't want as they're general
-			else if([line isEqualToString:@"/Library/MobileSubstrate"] || [line isEqualToString:@"/Library/PreferenceBundles"] || [line isEqualToString:@"/Library/PreferenceLoader/Preferences"] || [line isEqualToString:@"/usr/bin"]){
-				continue; // disregard
+
+			NSError *readError = NULL;
+			NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:line error:&readError];
+			if(readError){
+				NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", line, readError.localizedDescription);
+				continue;
 			}
+
+			NSString *type = [fileAttributes fileType];
 
 			// check to see how many times the current filepath is present in the list output
 			// shoutout Cœur on StackOverflow for this efficient code (https://stackoverflow.com/a/57869286)
 			int count = [[NSMutableString stringWithString:output] replaceOccurrencesOfString:line withString:line options:NSLiteralSearch range:NSMakeRange(0, output.length)];
 
-			if(count == 1){ // this is good; means it's unique!
-				[files addObject:line];
+			if(count == 1){ // this is good, means it's unique!
+				if([type isEqualToString:@"NSFileTypeDirectory"]){
+					[dirs addObject:line];
+				}
+				else{
+					[files addObject:line];
+				}
 			}
 			else{
 				// sometimes files will have similar names (e.g., /usr/bin/zip, /usr/bin/zipcloak, /usr/bin/zipnote, /usr/bin/zipsplit)
 				// though /usr/bin/zip will have a count > 1, since it's present in the other filepaths, we want to avoid disregarding it
-				// since it's a valid file. instead, we want to disregard all dirs and symlinks that don't lead to files that are part of
-				// the package's list structure. in the above example, that would mean disregarding /usr and /usr/bin
-				NSError *readError = NULL;
-				NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:line error:&readError];
-				if(readError){
-					NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", line, readError.localizedDescription);
-					continue;
-				}
-
-				NSString *type = [fileAttributes fileType];
+				// since it's a valid file. instead, we want to disregard all dirs and symlinks that don't lead to files as they're simply
+				// part of the package's list structure. in the above example, that would mean disregarding /usr and /usr/bin
 				if(![type isEqualToString:@"NSFileTypeDirectory"] && ![type isEqualToString:@"NSFileTypeSymbolicLink"]){
 					[files addObject:line];
 				}
@@ -203,6 +205,12 @@
 			}
 		}
 
+		// put all the dirs we want to make in a list for easier writing
+		NSString *dirPaths = [[dirs valueForKey:@"description"] componentsJoinedByString:@"\n"];
+		if(![dirPaths length]){
+			NSLog(@"[IAmLazyLog] dirPaths list is blank for %@!", package);
+		}
+
 		// put all the files we want copied in a list for easier writing
 		NSString *filePaths = [[files valueForKey:@"description"] componentsJoinedByString:@"\n"];
 		if(![filePaths length]){
@@ -211,9 +219,16 @@
 
 		// this is nice because it overwrites the file's content, unlike the write method from NSFileManager
 		NSError *writeError = NULL;
-		[filePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
+		[dirPaths writeToFile:dirsToMake atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
 		if(writeError){
-			NSLog(@"[IAmLazyLog] Failed to write filePaths to %@ for %@! Error: %@", filesToCopy, package, writeError.localizedDescription);
+			NSLog(@"[IAmLazyLog] Failed to write dirPaths to %@ for %@! Error: %@", dirsToMake, package, writeError.localizedDescription);
+			continue;
+		}
+
+		NSError *writeError2 = NULL;
+		[filePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&writeError2];
+		if(writeError2){
+			NSLog(@"[IAmLazyLog] Failed to write filePaths to %@ for %@! Error: %@", filesToCopy, package, writeError2.localizedDescription);
 			continue;
 		}
 
@@ -230,29 +245,41 @@
 		}
 
 		// again, this is nice because it overwrites the file's content, unlike the write method from NSFileManager
-		NSError *writeError2 = NULL;
-		[tweakDir writeToFile:targetDirectory atomically:YES encoding:NSUTF8StringEncoding error:&writeError2];
-		if(writeError2){
-			NSLog(@"[IAmLazyLog] Failed to write tweakDir to %@ for %@! Error: %@", targetDirectory, package, writeError2.localizedDescription);
+		NSError *writeError3 = NULL;
+		[tweakDir writeToFile:targetDirectory atomically:YES encoding:NSUTF8StringEncoding error:&writeError3];
+		if(writeError3){
+			NSLog(@"[IAmLazyLog] Failed to write tweakDir to %@ for %@! Error: %@", targetDirectory, package, writeError3.localizedDescription);
 			continue;
 		}
 
+		[self makeDirsInTargetDirectory];
 		[self copyFilesToTargetDirectory];
 		[self makeControlForPackage:package inDirectory:tweakDir];
 	}
 
-	// remove .filesToCopy and .targetDirectory now that we're done w them
+	// remove .dirsToMake, .filesToCopy, and .targetDirectory now that we're done w them
 	NSError *error = NULL;
-	[[NSFileManager defaultManager] removeItemAtPath:filesToCopy error:&error];
+	[[NSFileManager defaultManager] removeItemAtPath:dirsToMake error:&error];
 	if(error){
-		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", filesToCopy, error.localizedDescription);
+		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", dirsToMake, error.localizedDescription);
 	}
 
 	NSError *error2 = NULL;
-	[[NSFileManager defaultManager] removeItemAtPath:targetDirectory error:&error2];
+	[[NSFileManager defaultManager] removeItemAtPath:filesToCopy error:&error2];
 	if(error2){
-		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", targetDirectory, error2.localizedDescription);
+		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", filesToCopy, error2.localizedDescription);
 	}
+
+	NSError *error3 = NULL;
+	[[NSFileManager defaultManager] removeItemAtPath:targetDirectory error:&error3];
+	if(error3){
+		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", targetDirectory, error3.localizedDescription);
+	}
+}
+
+-(void)makeDirsInTargetDirectory{
+	// Note: have to make as root due to some parent dirs' attributes (ownership, etc)
+	[self executeCommandAsRoot:@"make-dirs"];
 }
 
 -(void)copyFilesToTargetDirectory{
@@ -315,12 +342,12 @@
 	if(filter) backupName = [NSString stringWithFormat:@"IAmLazy-%d.tar.gz", latestBackup+1];
 	else backupName = [NSString stringWithFormat:@"IAmLazy-%du.tar.gz", latestBackup+1];
 
-	// make tarball (excludes subdirs in tmp dir)
-	// note: bourne shell doesn't support glob qualifiers (hence the "find ...." ugliness)
-	// ensure file structure is only me.lightmann.iamlazy/ not /var/tmp/me.lightmann.iamlazy/ (having --strip-components=2 on the restore end breaks compatibility w older backups)
-	[self executeCommand:[NSString stringWithFormat:@"cd /var/tmp && find ./me.lightmann.iamlazy -maxdepth 1 ! -type d -print0 | xargs -0 tar -czf %@%@", backupDir, backupName]];
+	// make tarball
+	// ensure file structure is ONLY me.lightmann.iamlazy/ not /var/tmp/me.lightmann.iamlazy/
+	// having --strip-components=2 on the restore end breaks compatibility w older backups
+	[self executeCommand:[NSString stringWithFormat:@"cd /var/tmp && tar -czf %@%@ me.lightmann.iamlazy/ --remove-files \\;", backupDir, backupName]];
 
-	[self cleanupTmp];
+	// confirm the backup now exists where expected
 	[self verifyBackup:backupName];
 }
 
@@ -344,68 +371,64 @@
 	// reset errors
 	[self setEncounteredError:NO];
 
-	BOOL check1 = YES;
-	BOOL check2 = YES;
-	BOOL check3 = YES;
-
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"null"];
 
 	// check for backup dir
 	if(![[NSFileManager defaultManager] fileExistsAtPath:backupDir]){
-		check1 = NO;
-	}
-
-	if(check1){
-		int backupCount = [[self getBackups] count];
-
-		// check for backups
-		if(!backupCount){
-			check2 = NO;
-		}
-
-		if(check2){
-			// check for target backup
-			if(![[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithFormat:@"%@%@", backupDir, backupName]]){
-				check3 = NO;
-			}
-
-			if(check3){
-				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0"];
-
-				// check for old tmp files
-				if([[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
-					[self cleanupTmp];
-				}
-
-				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
-				[self unpackArchive:backupName];
-				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
-
-				BOOL compatible = YES;
-				if([backupName containsString:@"u.tar"]){
-					compatible = [self verifyBootstrap];
-				}
-
-				if(compatible){
-					[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
-					[self installDebs];
-					[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
-				}
-			}
-			else{
-				NSString *reason = [NSString stringWithFormat:@"The target backup -- %@ -- could not be found!", backupName];
-				[self popErrorAlertWithReason:reason];
-			}
-		}
-		else{
-			NSString *reason = @"No backups were found!";
-			[self popErrorAlertWithReason:reason];
-		}
-	}
-	else{
 		NSString *reason = @"The backup dir does not exist!";
 		[self popErrorAlertWithReason:reason];
+		return;
 	}
+
+	// check for backups
+	int backupCount = [[self getBackups] count];
+	if(!backupCount){
+		NSString *reason = @"No backups were found!";
+		[self popErrorAlertWithReason:reason];
+		return;
+	}
+
+	// check for target backup
+	if(![[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithFormat:@"%@%@", backupDir, backupName]]){
+		NSString *reason = [NSString stringWithFormat:@"The target backup -- %@ -- could not be found!", backupName];
+		[self popErrorAlertWithReason:reason];
+		return;
+	}
+
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0"];
+
+	// check for old tmp files
+	if([[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
+		[self cleanupTmp];
+	}
+
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
+	[self unpackArchive:backupName];
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
+
+	// make log dir if it doesn't exist already
+	if(![[NSFileManager defaultManager] fileExistsAtPath:logDir]){
+		NSError *error = NULL;
+		[[NSFileManager defaultManager] createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&error];
+		if(error){
+			NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, error.localizedDescription];
+			[self popErrorAlertWithReason:reason];
+			return;
+		}
+	}
+
+	BOOL compatible = YES;
+	if([backupName containsString:@"u.tar"]){
+		compatible = [self verifyBootstrap];
+	}
+
+	if(compatible){
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
+		[self installDebs];
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
+	}
+
+	[self cleanupTmp];
 }
 
 -(void)unpackArchive:(NSString *)backupName{
@@ -431,7 +454,6 @@
 
 -(void)installDebs{
 	[self executeCommandAsRoot:@"install-debs"];
-	[self cleanupTmp];
 }
 
 #pragma mark General
@@ -452,7 +474,7 @@
 	}
 
 	for(NSString *filename in backupDirContents){
-		if([filename containsString:@"IAmLazy-"] && [filename containsString:@".tar."]){
+		if([filename containsString:@"IAmLazy-"] && [filename containsString:@".tar.gz"]){
 			[backups addObject:filename];
 		}
 	}

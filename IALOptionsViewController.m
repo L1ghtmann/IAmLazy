@@ -101,7 +101,7 @@
             NSURL *fileURL = [NSURL URLWithString:localPath]; // to actually export the file, needs to be an NSURL
 
             UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
-            activityViewController.modalTransitionStyle = UIModalTransitionStyleCoverVertical;
+            [activityViewController setModalTransitionStyle:UIModalTransitionStyleCoverVertical];
 
             [self presentViewController:activityViewController animated:YES completion:nil];
         }];

@@ -166,7 +166,7 @@ static IALManager *manager;
 		NSURL *fileURL = [NSURL URLWithString:localPath]; // to actually export the file, needs to be an NSURL
 
 		UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
-		activityViewController.modalTransitionStyle = UIModalTransitionStyleCoverVertical;
+		[activityViewController setModalTransitionStyle:UIModalTransitionStyleCoverVertical];
 
 		[self presentViewController:activityViewController animated:YES completion:nil];
 	}];
@@ -297,6 +297,7 @@ static IALManager *manager;
     UIAlertAction *uicache = [UIAlertAction actionWithTitle:@"UICache" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
 		NSTask *task = [[NSTask alloc] init];
 		[task setLaunchPath:@"/usr/bin/uicache"];
+		[task setArguments:@[@"-a"]];
 		[task launch];
 	}];
 
@@ -309,7 +310,7 @@ static IALManager *manager;
     UIAlertAction *both = [UIAlertAction actionWithTitle:@"UICache & Respring" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
 		NSTask *task = [[NSTask alloc] init];
 		[task setLaunchPath:@"/usr/bin/uicache"];
-		[task setArguments:@[@"--respring"]];
+		[task setArguments:@[@"-a", @"-r"]];
 		[task launch];
 	}];
 
