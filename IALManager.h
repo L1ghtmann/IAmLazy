@@ -8,8 +8,6 @@
 @property (nonatomic) BOOL encounteredError;
 +(instancetype)sharedInstance;
 -(void)makeTweakBackupWithFilter:(BOOL)filter;
--(NSArray *)getAllPackages;
--(NSArray *)getUserPackages;
 -(void)gatherPackageFiles;
 -(void)buildDebs;
 -(void)makeTarballWithFilter:(BOOL)filter;

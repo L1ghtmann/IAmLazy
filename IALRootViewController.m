@@ -162,7 +162,7 @@ static IALManager *manager;
 	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Tweak backup completed successfully in %@ seconds! \n\nYour backup can be found in\n %@", [manager getDuration], backupDir] preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *export = [UIAlertAction actionWithTitle:@"Export" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-		NSString *localPath = [NSString stringWithFormat:@"file://%@%@", backupDir, [[manager getBackups] firstObject]];
+		NSString *localPath = [NSString stringWithFormat:@"file:/%@%@", backupDir, [[manager getBackups] firstObject]];
 		NSURL *fileURL = [NSURL URLWithString:localPath]; // to actually export the file, needs to be an NSURL
 
 		UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];

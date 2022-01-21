@@ -62,20 +62,13 @@ int main(int argc, char *argv[]) {
     setuid(0);
 
     if(strcmp(argv[1], "cleanup-tmp") == 0){
+        // delete temporary directory
         NSString *cmd = [NSString stringWithFormat:@"rm -rf %@", tmpDir];
         executeCommand(cmd);
     }
 
-    else if(strcmp(argv[1], "make-dirs") == 0){
-        NSString *tweakDir = [NSString stringWithContentsOfFile:targetDirectory encoding:NSUTF8StringEncoding error:NULL];
-
-        // make dirs
-        NSString *cmd = [NSString stringWithFormat:@"xargs -d '\n' -a %@ -I %% mkdir -p %@%%", dirsToMake, tweakDir];
-        executeCommand(cmd);
-    }
-
-    else if(strcmp(argv[1], "copy-files") == 0){
-        NSString *tweakDir = [NSString stringWithContentsOfFile:targetDirectory encoding:NSUTF8StringEncoding error:NULL];
+    else if(strcmp(argv[1], "copy-generic-files") == 0){
+        NSString *tweakDir = [NSString stringWithContentsOfFile:targetDir encoding:NSUTF8StringEncoding error:NULL];
 
         /*
             There are three main approaches to copying files:
@@ -94,9 +87,23 @@ int main(int argc, char *argv[]) {
             alternatively, we can use xargs' -a flag, where it will read from a file and properly divvy up the args into mutliple cmds if ARG_MAX is exceeded
         */
 
-        // copy files
-        NSString *cmd = [NSString stringWithFormat:@"xargs -d '\n' -a %@ cp -a --parents -t %@", filesToCopy, tweakDir];
+        // copy files and file structure
+        NSString *cmd = [NSString stringWithFormat:@"xargs -d '\n' -a %@ cp -a --parents -t %@", gFilesToCopy, tweakDir];
         executeCommand(cmd);
+    }
+
+    else if(strcmp(argv[1], "copy-debian-files") == 0){
+        NSString *tweakDir = [NSString stringWithContentsOfFile:targetDir encoding:NSUTF8StringEncoding error:NULL];
+        NSString *tweakName = [tweakDir stringByReplacingOccurrencesOfString:tmpDir withString:@""];
+        NSString *debian = [NSString stringWithFormat:@"%@/DEBIAN/", tweakDir];
+
+        // copy files
+        NSString *cmd = [NSString stringWithFormat:@"xargs -d '\n' -a %@ cp -a -t %@", dFilesToCopy, debian];
+        executeCommand(cmd);
+
+        // rename files (remove tweakName prefix)
+        NSString *cmd2 = [NSString stringWithFormat:@"cd %@ && find . -name '%@.*' | while read f; do mv $f ${f##*.}; done", debian, tweakName];
+        executeCommand(cmd2);
     }
 
     else if(strcmp(argv[1], "build-debs") == 0){

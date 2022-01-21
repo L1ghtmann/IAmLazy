@@ -97,7 +97,7 @@
     for(int i = 0; i < [backupNames count]; i++){
         NSString *backupName = backupNames[i];
         UIAlertAction *action = [UIAlertAction actionWithTitle:backupName style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-            NSString *localPath = [NSString stringWithFormat:@"file://%@%@", backupDir, backupName];
+            NSString *localPath = [NSString stringWithFormat:@"file:/%@%@", backupDir, backupName];
             NSURL *fileURL = [NSURL URLWithString:localPath]; // to actually export the file, needs to be an NSURL
 
             UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];

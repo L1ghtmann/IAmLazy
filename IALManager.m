@@ -153,11 +153,13 @@
 
 	return userPackages;
 }
+
 -(void)gatherPackageFiles{
 	for(NSString *package in self.packages){
-		NSMutableArray *files = [NSMutableArray new];
-		NSMutableArray *dirs = [NSMutableArray new];
+		NSMutableArray *genericFiles = [NSMutableArray new];
+		NSMutableArray *directories = [NSMutableArray new];
 
+		// get generic files and directories and sort into respective arrays
 		NSString *output = [self executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -L %@", package] andWait:NO]; // will hang if wait == YES
 		NSArray *lines = [output componentsSeparatedByString:@"\n"];
 		for(NSString *line in lines){
@@ -180,10 +182,10 @@
 
 			if(count == 1){ // this is good, means it's unique!
 				if([type isEqualToString:@"NSFileTypeDirectory"]){
-					[dirs addObject:line];
+					[directories addObject:line];
 				}
 				else{
-					[files addObject:line];
+					[genericFiles addObject:line];
 				}
 			}
 			else{
@@ -192,43 +194,49 @@
 				// since it's a valid file. instead, we want to disregard all dirs and symlinks that don't lead to files as they're simply
 				// part of the package's list structure. in the above example, that would mean disregarding /usr and /usr/bin
 				if(![type isEqualToString:@"NSFileTypeDirectory"] && ![type isEqualToString:@"NSFileTypeSymbolicLink"]){
-					[files addObject:line];
+					[genericFiles addObject:line];
 				}
 				else if([type isEqualToString:@"NSFileTypeSymbolicLink"]){
 					// want to grab any symlniks that lead to files, but ignore those that lead to dirs
 					// this will traverse any links and check for the existence of a file at the link's final destination
 					BOOL isDir = NO;
 					if([[NSFileManager defaultManager] fileExistsAtPath:line isDirectory:&isDir] && !isDir){
-						[files addObject:line];
+						[genericFiles addObject:line];
 					}
 				}
 			}
 		}
 
-		// put all the dirs we want to make in a list for easier writing
-		NSString *dirPaths = [[dirs valueForKey:@"description"] componentsJoinedByString:@"\n"];
-		if(![dirPaths length]){
-			NSLog(@"[IAmLazyLog] dirPaths list is blank for %@!", package);
+		// get DEBIAN files (e.g., pre/post scripts) and put into an array
+		NSString *output2 = [self executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -c %@", package] andWait:YES];
+		NSArray *lines2 = [output2 componentsSeparatedByString:@"\n"];
+		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF contains '.md5sums'"]; // dpkg generates this dynamically at installation
+		NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate]; // find the opposite of ^
+		NSArray *debianFiles = [lines2 filteredArrayUsingPredicate:theAntiPredicate];
+
+		// put the files we want to copy into lists for easier writing
+		NSString *gFilePaths = [[genericFiles valueForKey:@"description"] componentsJoinedByString:@"\n"];
+		if(![gFilePaths length]){
+			NSLog(@"[IAmLazyLog] gFilePaths list is blank for %@!", package);
 		}
 
-		// put all the files we want copied in a list for easier writing
-		NSString *filePaths = [[files valueForKey:@"description"] componentsJoinedByString:@"\n"];
-		if(![filePaths length]){
-			NSLog(@"[IAmLazyLog] filePaths list is blank for %@!", package);
+		NSString *dFilePaths = [[debianFiles valueForKey:@"description"] componentsJoinedByString:@"\n"];
+		if(![dFilePaths length]){
+			NSLog(@"[IAmLazyLog] dFilePaths list is blank for %@!", package);
 		}
 
 		// this is nice because it overwrites the file's content, unlike the write method from NSFileManager
 		NSError *writeError = NULL;
-		[dirPaths writeToFile:dirsToMake atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
+		[gFilePaths writeToFile:gFilesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
 		if(writeError){
-			NSLog(@"[IAmLazyLog] Failed to write dirPaths to %@ for %@! Error: %@", dirsToMake, package, writeError.localizedDescription);
+			NSLog(@"[IAmLazyLog] Failed to write gFilePaths to %@ for %@! Error: %@", gFilesToCopy, package, writeError.localizedDescription);
 			continue;
 		}
 
 		NSError *writeError2 = NULL;
-		[filePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&writeError2];
+		[dFilePaths writeToFile:dFilesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&writeError2];
 		if(writeError2){
-			NSLog(@"[IAmLazyLog] Failed to write filePaths to %@ for %@! Error: %@", filesToCopy, package, writeError2.localizedDescription);
+			NSLog(@"[IAmLazyLog] Failed to write dFilePaths to %@ for %@! Error: %@", dFilesToCopy, package, writeError2.localizedDescription);
 			continue;
 		}
 
@@ -239,52 +247,62 @@
 			NSError *error = NULL;
 			[[NSFileManager defaultManager] createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&error];
 			if(error){
-				NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", tweakDir, writeError.localizedDescription);
+				NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", tweakDir, error.localizedDescription);
 				continue;
 			}
 		}
 
 		// again, this is nice because it overwrites the file's content, unlike the write method from NSFileManager
 		NSError *writeError3 = NULL;
-		[tweakDir writeToFile:targetDirectory atomically:YES encoding:NSUTF8StringEncoding error:&writeError3];
+		[tweakDir writeToFile:targetDir atomically:YES encoding:NSUTF8StringEncoding error:&writeError3];
 		if(writeError3){
-			NSLog(@"[IAmLazyLog] Failed to write tweakDir to %@ for %@! Error: %@", targetDirectory, package, writeError3.localizedDescription);
+			NSLog(@"[IAmLazyLog] Failed to write tweakDir to %@ for %@! Error: %@", targetDir, package, writeError3.localizedDescription);
 			continue;
 		}
 
-		[self makeDirsInTargetDirectory];
-		[self copyFilesToTargetDirectory];
+		[self makeSubDirectories:directories inDirectory:tweakDir];
+		[self copyGenericFiles];
 		[self makeControlForPackage:package inDirectory:tweakDir];
+		[self copyDEBIANFiles];
 	}
 
-	// remove .dirsToMake, .filesToCopy, and .targetDirectory now that we're done w them
+	// remove list files now that we're done w them
 	NSError *error = NULL;
-	[[NSFileManager defaultManager] removeItemAtPath:dirsToMake error:&error];
+	[[NSFileManager defaultManager] removeItemAtPath:gFilesToCopy error:&error];
 	if(error){
-		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", dirsToMake, error.localizedDescription);
+		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", gFilesToCopy, error.localizedDescription);
 	}
 
 	NSError *error2 = NULL;
-	[[NSFileManager defaultManager] removeItemAtPath:filesToCopy error:&error2];
+	[[NSFileManager defaultManager] removeItemAtPath:dFilesToCopy error:&error2];
 	if(error2){
-		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", filesToCopy, error2.localizedDescription);
+		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", dFilesToCopy, error2.localizedDescription);
 	}
 
 	NSError *error3 = NULL;
-	[[NSFileManager defaultManager] removeItemAtPath:targetDirectory error:&error3];
+	[[NSFileManager defaultManager] removeItemAtPath:targetDir error:&error3];
 	if(error3){
-		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", targetDirectory, error3.localizedDescription);
+		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", targetDir, error3.localizedDescription);
 	}
 }
 
--(void)makeDirsInTargetDirectory{
-	// Note: have to make as root due to some parent dirs' attributes (ownership, etc)
-	[self executeCommandAsRoot:@"make-dirs"];
+-(void)makeSubDirectories:(NSArray *)directories inDirectory:(NSString *)tweakDir{
+	for(NSString *dir in directories){
+		NSString *path = [NSString stringWithFormat:@"%@%@", tweakDir, dir];
+		if(![[NSFileManager defaultManager] fileExistsAtPath:path]){
+			NSError *error = NULL;
+			[[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&error];
+			if(error){
+				NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", path, error.localizedDescription);
+				continue;
+			}
+		}
+	}
 }
 
--(void)copyFilesToTargetDirectory{
-	// Note: have to copy as root in order to retain attributes (ownership, etc)
-	[self executeCommandAsRoot:@"copy-files"];
+-(void)copyGenericFiles{
+	// have to run as root in order to retain file attributes (ownership, etc)
+	[self executeCommandAsRoot:@"copy-generic-files"];
 }
 
 -(void)makeControlForPackage:(NSString *)package inDirectory:(NSString *)tweakDir{
@@ -311,8 +329,13 @@
 	[[NSFileManager defaultManager] createFileAtPath:control contents:data attributes:nil];
 }
 
+-(void)copyDEBIANFiles{
+	// have to copy as root in order to retain file attributes (ownership, etc)
+	[self executeCommandAsRoot:@"copy-debian-files"];
+}
+
 -(void)buildDebs{
-	// Note: have to run as root for some packages to be built correctly (e.g., sudo, openssh-client, etc)
+	// have to run as root for some packages to be built correctly (e.g., sudo, openssh-client, etc)
 	// if this isn't done as root, said packages will be corrupt and produce the error:
 	// "unexpected end of file in archive member header in packageName.deb" upon extraction/installation
 	[self executeCommandAsRoot:@"build-debs"];
@@ -453,6 +476,7 @@
 }
 
 -(void)installDebs{
+	// installing via apt/dpkg requires root
 	[self executeCommandAsRoot:@"install-debs"];
 }
 
