@@ -136,10 +136,11 @@
 
 	NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF contains 'Sam Bingner'"]; // filter out bootstrap packages
 	NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF contains 'Jay Freeman (saurik)'"];
-	NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF contains 'Hayden Seay'"];
-	NSPredicate *predicate4 = [NSPredicate predicateWithFormat:@"SELF contains 'CoolStar'"];
+	NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF contains 'CoolStar'"];
+	NSPredicate *predicate4 = [NSPredicate predicateWithFormat:@"SELF contains 'Hayden Seay'"];
 	NSPredicate *predicate5 = [NSPredicate predicateWithFormat:@"SELF contains 'Cameron Katri'"];
-	NSPredicate *thePredicate = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicate1, predicate2, predicate3, predicate4, predicate5]];  // combine with "or"
+	NSPredicate *predicate6 = [NSPredicate predicateWithFormat:@"SELF contains 'Procursus Team'"];
+	NSPredicate *thePredicate = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicate1, predicate2, predicate3, predicate4, predicate5, predicate6]];  // combine with "or"
 	NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate]; // find the opposite of ^
 	NSArray *packages = [lines filteredArrayUsingPredicate:theAntiPredicate];
 
