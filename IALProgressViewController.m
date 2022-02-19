@@ -1,9 +1,12 @@
+//
+//	IALProgressViewController.m
+//	IAmLazy
+//
+//	Created by Lightmann during COVID-19
+//
+
 #include "IALProgressViewController.h"
 #import "Common.h"
-
-// Lightmann
-// Made during covid
-// IAmLazy
 
 @implementation IALProgressViewController
 

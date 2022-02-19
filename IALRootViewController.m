@@ -1,3 +1,10 @@
+//
+//	IALRootViewController.m
+//	IAmLazy
+//
+//	Created by Lightmann during COVID-19
+//
+
 #import <AudioToolbox/AudioToolbox.h>
 #import "IALProgressViewController.h"
 #import "IALOptionsViewController.h"
@@ -5,10 +12,6 @@
 #import "IALTableViewCell.h"
 #import "IALManager.h"
 #import "Common.h"
-
-// Lightmann
-// Made during covid
-// IAmLazy
 
 static IALManager *manager;
 
@@ -171,7 +174,7 @@ static IALManager *manager;
 		[self presentViewController:activityViewController animated:YES completion:nil];
 	}];
 
-    UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
+	UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
 		[self dismissViewControllerAnimated:YES completion:nil];
 	}];
 
@@ -294,33 +297,33 @@ static IALManager *manager;
 -(void)popPostRestore{
 	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Choose a post-restore command:" preferredStyle:UIAlertControllerStyleAlert];
 
-    UIAlertAction *uicache = [UIAlertAction actionWithTitle:@"UICache" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
+	UIAlertAction *uicache = [UIAlertAction actionWithTitle:@"UICache" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
 		NSTask *task = [[NSTask alloc] init];
 		[task setLaunchPath:@"/usr/bin/uicache"];
 		[task setArguments:@[@"-a"]];
 		[task launch];
 	}];
 
-    UIAlertAction *respring = [UIAlertAction actionWithTitle:@"Respring" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
+	UIAlertAction *respring = [UIAlertAction actionWithTitle:@"Respring" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
 		NSTask *task = [[NSTask alloc] init];
 		[task setLaunchPath:@"/usr/bin/sbreload"];
 		[task launch];
 	}];
 
-    UIAlertAction *both = [UIAlertAction actionWithTitle:@"UICache & Respring" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
+	UIAlertAction *both = [UIAlertAction actionWithTitle:@"UICache & Respring" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
 		NSTask *task = [[NSTask alloc] init];
 		[task setLaunchPath:@"/usr/bin/uicache"];
 		[task setArguments:@[@"-a", @"-r"]];
 		[task launch];
 	}];
 
-    UIAlertAction *none = [UIAlertAction actionWithTitle:@"None" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
+	UIAlertAction *none = [UIAlertAction actionWithTitle:@"None" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
 		[self dismissViewControllerAnimated:YES completion:nil];
 	}];
 
-    [alert addAction:uicache];
+	[alert addAction:uicache];
 	[alert addAction:respring];
-    [alert addAction:both];
+	[alert addAction:both];
 	[alert addAction:none];
 
  	[self presentViewController:alert animated:YES completion:nil];

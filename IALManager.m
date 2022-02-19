@@ -1,19 +1,22 @@
+//
+//	IALManager.m
+//	IAmLazy
+//
+//	Created by Lightmann during COVID-19
+//
+
 #import "IALManager.h"
 #import "Common.h"
-
-// Lightmann
-// Made during covid
-// IAmLazy
 
 @implementation IALManager
 
 +(instancetype)sharedInstance{
 	static dispatch_once_t p = 0;
-    __strong static IALManager* sharedInstance = nil;
-    dispatch_once(&p, ^{
-        sharedInstance = [[self alloc] init];
-    });
-    return sharedInstance;
+	__strong static IALManager* sharedInstance = nil;
+	dispatch_once(&p, ^{
+		sharedInstance = [[self alloc] init];
+	});
+	return sharedInstance;
 }
 
 #pragma mark Backup
@@ -560,7 +563,7 @@
 		[self.rootVC dismissViewControllerAnimated:YES completion:nil];
 	}];
 
-    [alert addAction:okay];
+	[alert addAction:okay];
 
 	[self.rootVC dismissViewControllerAnimated:YES completion:^ {
 		[self.rootVC presentViewController:alert animated:YES completion:nil];

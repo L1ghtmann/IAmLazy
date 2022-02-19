@@ -1,9 +1,12 @@
+//
+//	IALTableViewCell.m
+//	IAmLazy
+//
+//	Created by Lightmann during COVID-19
+//
+
 #include "IALTableViewCell.h"
 #import "Common.h"
-
-// Lightmann
-// Made during covid
-// IAmLazy
 
 @implementation IALTableViewCell
 
