@@ -137,12 +137,12 @@
 	NSString *output = [self executeCommandWithOutput:@"dpkg-query -Wf '${Package;-50}${Maintainer}\n'"];
 	NSArray *lines = [output componentsSeparatedByString:@"\n"];
 
-	NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF contains 'Sam Bingner'"]; // filter out bootstrap packages
-	NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF contains 'Jay Freeman (saurik)'"];
-	NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF contains 'CoolStar'"];
-	NSPredicate *predicate4 = [NSPredicate predicateWithFormat:@"SELF contains 'Hayden Seay'"];
-	NSPredicate *predicate5 = [NSPredicate predicateWithFormat:@"SELF contains 'Cameron Katri'"];
-	NSPredicate *predicate6 = [NSPredicate predicateWithFormat:@"SELF contains 'Procursus Team'"];
+	NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF CONTAINS 'Sam Bingner'"]; // filter out bootstrap packages
+	NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF CONTAINS 'Jay Freeman (saurik)'"];
+	NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF CONTAINS 'CoolStar'"];
+	NSPredicate *predicate4 = [NSPredicate predicateWithFormat:@"SELF CONTAINS 'Hayden Seay'"];
+	NSPredicate *predicate5 = [NSPredicate predicateWithFormat:@"SELF CONTAINS 'Cameron Katri'"];
+	NSPredicate *predicate6 = [NSPredicate predicateWithFormat:@"SELF CONTAINS 'Procursus Team'"];
 	NSPredicate *thePredicate = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicate1, predicate2, predicate3, predicate4, predicate5, predicate6]];  // combine with "or"
 	NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate]; // find the opposite of ^
 	NSArray *packages = [lines filteredArrayUsingPredicate:theAntiPredicate];
@@ -214,7 +214,7 @@
 		// get DEBIAN files (e.g., pre/post scripts) and put into an array
 		NSString *output2 = [self executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -c %@", package]];
 		NSArray *lines2 = [output2 componentsSeparatedByString:@"\n"];
-		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF contains '.md5sums'"]; // dpkg generates this dynamically at installation
+		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS '.md5sums'"]; // dpkg generates this dynamically at installation
 		NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate]; // find the opposite of ^
 		NSArray *debianFiles = [lines2 filteredArrayUsingPredicate:theAntiPredicate];
 
@@ -343,6 +343,24 @@
 	// if this isn't done as root, said packages will be corrupt and produce the error:
 	// "unexpected end of file in archive member header in packageName.deb" upon extraction/installation
 	[self executeCommandAsRoot:@"build-debs"];
+
+	// confirm that we successfully built debs
+	[self verifyDebs];
+}
+
+-(void)verifyDebs{
+	NSError *readError = NULL;
+	NSArray *tmp = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:&readError];
+	if(readError){
+		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", tmpDir, readError.localizedDescription);
+	}
+
+	NSArray *debs = [tmp filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"SELF endswith '.deb'"]];
+	if(![debs count]){
+		NSString *reason = [NSString stringWithFormat:@"Failed to build debs! Please check %@build_log.txt.", logDir];
+		[self popErrorAlertWithReason:reason];
+		return;
+	}
 }
 
 -(void)makeBootstrapFile{
@@ -492,8 +510,6 @@
 }
 
 -(NSArray *)getBackups{
-	NSMutableArray *backups = [NSMutableArray new];
-
 	NSError *readError = NULL;
 	NSArray *backupDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:backupDir error:&readError];
 	if(readError){
@@ -501,11 +517,10 @@
 		return [NSArray new];
 	}
 
-	for(NSString *filename in backupDirContents){
-		if([filename containsString:@"IAmLazy-"] && [filename containsString:@".tar.gz"]){
-			[backups addObject:filename];
-		}
-	}
+	NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '.tar.gz'"];
+	NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'IAmLazy-'"];
+	NSPredicate *thePredicate = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicate1, predicate2]];  // combine with "or"
+	NSArray *backups = [backupDirContents filteredArrayUsingPredicate:thePredicate];
 
 	// sort backups (https://stackoverflow.com/a/43096808)
 	NSSortDescriptor *nameDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self" ascending:YES comparator:^NSComparisonResult(id obj1, id obj2) {
