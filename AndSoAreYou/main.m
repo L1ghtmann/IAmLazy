@@ -5,7 +5,10 @@
 //	Created by Lightmann during COVID-19
 //
 
+#include <sys/stat.h>
 #import "../Common.h"
+
+int proc_pidpath(int pid, void *buffer, uint32_t buffersize); // libproc.h
 
 void executeCommand(NSString *cmd){
 	NSTask *task = [[NSTask alloc] init];
@@ -18,6 +21,33 @@ void executeCommand(NSString *cmd){
 int main(int argc, char *argv[]) {
 	if(argc != 2){
 		printf("Houston, we have a problem: an invalid argument (or arguments) was provided!\n");
+		return 1;
+	}
+
+	// get attributes of IAmLazy
+	struct stat iamlazy;
+	if(lstat("/Applications/IAmLazy.app/IAmLazy", &iamlazy) != 0){
+		printf("Wut?\n");
+		return 1;
+	}
+
+	// get current process' parent PID
+	pid_t pid = getppid();
+
+	// get absolute path of the command running at 'pid'
+	char buffer[PATH_MAX]; // limits.h
+	int ret = proc_pidpath(pid, buffer, sizeof(buffer));
+
+	// get attributes of parent process' command
+	struct stat parent;
+	lstat(buffer, &parent);
+
+	// "The st_ino and st_dev, taken together, uniquely identify the file" - GNU
+	// st_ino - The file's serial number
+	// st_dev - Identifies the device containing the file
+	// https://www.gnu.org/software/libc/manual/html_node/Attribute-Meanings.html
+	if(ret < 0 || (parent.st_dev != iamlazy.st_dev || parent.st_ino != iamlazy.st_ino)){
+		printf("Oh HELL nah!\n");
 		return 1;
 	}
 
