@@ -5,7 +5,7 @@
 //	Created by Lightmann during COVID-19
 //
 
-#include <sys/stat.h>
+#import <sys/stat.h>
 #import "../Common.h"
 
 int proc_pidpath(int pid, void *buffer, uint32_t buffersize); // libproc.h

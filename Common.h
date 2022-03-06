@@ -1,10 +1,10 @@
 #import <UIKit/UIApplication.h>
 #import <NSTask.h>
 
-#define tmpDir @"/var/tmp/me.lightmann.iamlazy/"
-#define gFilesToCopy @"/var/tmp/me.lightmann.iamlazy/.gfilesToCopy"
-#define dFilesToCopy @"/var/tmp/me.lightmann.iamlazy/.dfilesToCopy"
-#define targetDir @"/var/tmp/me.lightmann.iamlazy/.targetDir"
+#define tmpDir @"/tmp/me.lightmann.iamlazy/"
+#define gFilesToCopy @"/tmp/me.lightmann.iamlazy/.gfilesToCopy"
+#define dFilesToCopy @"/tmp/me.lightmann.iamlazy/.dfilesToCopy"
+#define targetDir @"/tmp/me.lightmann.iamlazy/.targetDir"
 #define logDir @"/var/mobile/Documents/me.lightmann.iamlazy/logs/"
 #define backupDir @"/var/mobile/Documents/me.lightmann.iamlazy/"
 

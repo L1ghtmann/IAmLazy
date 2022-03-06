@@ -388,9 +388,9 @@
 	else backupName = [NSString stringWithFormat:@"IAmLazy-%du.tar.gz", latestBackup+1];
 
 	// make tarball
-	// ensure file structure is ONLY me.lightmann.iamlazy/ not /var/tmp/me.lightmann.iamlazy/
+	// ensure file structure is ONLY me.lightmann.iamlazy/ not /tmp/me.lightmann.iamlazy/
 	// having --strip-components=2 on the restore end breaks compatibility w older backups
-	[self executeCommand:[NSString stringWithFormat:@"cd /var/tmp && tar -czf %@%@ me.lightmann.iamlazy/ --remove-files \\;", backupDir, backupName]];
+	[self executeCommand:[NSString stringWithFormat:@"cd /tmp && tar -czf %@%@ me.lightmann.iamlazy/ --remove-files \\;", backupDir, backupName]];
 
 	// confirm the backup now exists where expected
 	[self verifyBackup:backupName];
@@ -477,7 +477,7 @@
 }
 
 -(void)unpackArchive:(NSString *)backupName{
-	[self executeCommand:[NSString stringWithFormat:@"tar -xf %@%@ -C /var/tmp", backupDir, backupName]];
+	[self executeCommand:[NSString stringWithFormat:@"tar -xf %@%@ -C /tmp", backupDir, backupName]];
 }
 
 -(BOOL)verifyBootstrap{

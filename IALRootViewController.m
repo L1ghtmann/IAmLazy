@@ -34,10 +34,10 @@ static IALManager *manager;
 	[self.navigationItem setTitleView:[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"AppIcon40x40@2x-clear"]]];
 
 	UIBarButtonItem *menuItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"line.horizontal.3"] style:UIBarButtonItemStylePlain target:self action:@selector(popMenu)];
-    [self.navigationItem setLeftBarButtonItem:menuItem];
+	[self.navigationItem setLeftBarButtonItem:menuItem];
 
 	UIBarButtonItem *infoItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"info.circle.fill"] style:UIBarButtonItemStylePlain target:self action:@selector(popInfo)];
-    [self.navigationItem setRightBarButtonItem:infoItem];
+	[self.navigationItem setRightBarButtonItem:infoItem];
 }
 
 -(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
