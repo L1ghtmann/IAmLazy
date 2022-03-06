@@ -4,50 +4,8 @@
 //
 //	Created by Lightmann during COVID-19
 //
-//  platformize_me() and patch_setuid() from Electra
-//  https://github.com/coolstar/electra/blob/cydia/docs/getting-started.md#setting-uid-0
-//
 
-#import <stdio.h>
-#import <string.h>
-#import <dlfcn.h>
-#import <unistd.h>
-#import <stdlib.h>
 #import "../Common.h"
-
-#define FLAG_PLATFORMIZE (1 << 1)
-
-// Platformize binary
-void platformize_me() {
-	void* handle = dlopen("/usr/lib/libjailbreak.dylib", RTLD_LAZY);
-	if (!handle) return;
-
-	// Reset errors
-	dlerror();
-	typedef void (*fix_entitle_prt_t)(pid_t pid, uint32_t what);
-	fix_entitle_prt_t ptr = (fix_entitle_prt_t)dlsym(handle, "jb_oneshot_entitle_now");
-
-	const char *dlsym_error = dlerror();
-	if (dlsym_error) return;
-
-	ptr(getpid(), FLAG_PLATFORMIZE);
-}
-
-// Patch setuid
-void patch_setuid() {
-	void* handle = dlopen("/usr/lib/libjailbreak.dylib", RTLD_LAZY);
-	if (!handle) return;
-
-	// Reset errors
-	dlerror();
-	typedef void (*fix_setuid_prt_t)(pid_t pid);
-	fix_setuid_prt_t ptr = (fix_setuid_prt_t)dlsym(handle, "jb_oneshot_fix_setuid_now");
-
-	const char *dlsym_error = dlerror();
-	if (dlsym_error) return;
-
-	ptr(getpid());
-}
 
 void executeCommand(NSString *cmd){
 	NSTask *task = [[NSTask alloc] init];
@@ -60,11 +18,9 @@ void executeCommand(NSString *cmd){
 int main(int argc, char *argv[]) {
 	if(argc != 2){
 		printf("Houston, we have a problem: an invalid argument (or arguments) was provided!\n");
-		exit(EXIT_FAILURE);
+		return 1;
 	}
 
-	patch_setuid();
-	platformize_me();
 	setuid(0);
 	setuid(0);
 
@@ -135,8 +91,8 @@ int main(int argc, char *argv[]) {
 
 	else{
 		printf("Houston, we have a problem: an invalid argument was provided!\n");
-		exit(EXIT_FAILURE);
+		return 1;
 	}
 
-	exit(EXIT_SUCCESS);
+	return 0;
 }

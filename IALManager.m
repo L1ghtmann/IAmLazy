@@ -113,7 +113,7 @@
 -(NSArray *)getAllPackages{
 	NSMutableArray *allPackages = [NSMutableArray new];
 
-	NSString *output = [self executeCommandWithOutput:@"dpkg-query -Wf '${Package;-50}${Priority}\n'" andWait:YES];
+	NSString *output = [self executeCommandWithOutput:@"dpkg-query -Wf '${Package;-50}${Priority}\n'"];
 	NSArray *lines = [output componentsSeparatedByString:@"\n"];
 
 	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF endswith 'required'"]; // filter out local packages
@@ -134,7 +134,7 @@
 -(NSArray *)getUserPackages{
 	NSMutableArray *userPackages = [NSMutableArray new];
 
-	NSString *output = [self executeCommandWithOutput:@"dpkg-query -Wf '${Package;-50}${Maintainer}\n'" andWait:YES];
+	NSString *output = [self executeCommandWithOutput:@"dpkg-query -Wf '${Package;-50}${Maintainer}\n'"];
 	NSArray *lines = [output componentsSeparatedByString:@"\n"];
 
 	NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF contains 'Sam Bingner'"]; // filter out bootstrap packages
@@ -164,7 +164,7 @@
 		NSMutableArray *directories = [NSMutableArray new];
 
 		// get generic files and directories and sort into respective arrays
-		NSString *output = [self executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -L %@", package] andWait:NO]; // will hang if wait == YES
+		NSString *output = [self executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -L %@", package]];
 		NSArray *lines = [output componentsSeparatedByString:@"\n"];
 		for(NSString *line in lines){
 			if(![line length] || [line isEqualToString:@"/."]){
@@ -212,7 +212,7 @@
 		}
 
 		// get DEBIAN files (e.g., pre/post scripts) and put into an array
-		NSString *output2 = [self executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -c %@", package] andWait:YES];
+		NSString *output2 = [self executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -c %@", package]];
 		NSArray *lines2 = [output2 componentsSeparatedByString:@"\n"];
 		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF contains '.md5sums'"]; // dpkg generates this dynamically at installation
 		NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate]; // find the opposite of ^
@@ -311,7 +311,7 @@
 
 -(void)makeControlForPackage:(NSString *)package inDirectory:(NSString *)tweakDir{
 	// get info for package
-	NSString *output = [self executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -s %@", package] andWait:YES];
+	NSString *output = [self executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -s %@", package]];
 	NSString *noStatusLine = [output stringByReplacingOccurrencesOfString:@"Status: install ok installed\n" withString:@""];
 	NSString *info = [noStatusLine stringByAppendingString:@"\n"]; // ensure final newline (deb will fail to build if missing)
 
@@ -526,7 +526,7 @@
 	[task waitUntilExit];
 }
 
--(NSString *)executeCommandWithOutput:(NSString *)cmd andWait:(BOOL)wait{
+-(NSString *)executeCommandWithOutput:(NSString *)cmd{
 	NSTask *task = [[NSTask alloc] init];
 	[task setLaunchPath:@"/bin/sh"];
 	[task setArguments:@[@"-c", cmd]];
@@ -535,11 +535,11 @@
 	[task setStandardOutput:pipe];
 
 	[task launch];
-	if(wait) [task waitUntilExit];
 
 	NSFileHandle *handle = [pipe fileHandleForReading];
 	NSData *data = [handle readDataToEndOfFile];
 	[handle closeFile];
+
 	NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 
 	return output;

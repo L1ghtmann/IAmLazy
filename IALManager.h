@@ -17,6 +17,6 @@
 -(void)installDebs;
 -(NSArray *)getBackups;
 -(void)executeCommand:(NSString *)cmd;
--(NSString *)executeCommandWithOutput:(NSString *)cmd andWait:(BOOL)wait;
+-(NSString *)executeCommandWithOutput:(NSString *)cmd;
 -(void)executeCommandAsRoot:(NSString *)cmd;
 @end
