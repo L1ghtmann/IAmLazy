@@ -68,10 +68,10 @@
 
 	// make fresh tmp directory
 	if(![[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
-		NSError *error = NULL;
-		[[NSFileManager defaultManager] createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&error];
-		if(error){
-			NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", tmpDir, error.localizedDescription];
+		NSError *writeError = NULL;
+		[[NSFileManager defaultManager] createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&writeError];
+		if(writeError){
+			NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", tmpDir, writeError.localizedDescription];
 			[self popErrorAlertWithReason:reason];
 			return;
 		}
@@ -84,10 +84,10 @@
 
 	// make backup and log dirs if they don't exist already
 	if(![[NSFileManager defaultManager] fileExistsAtPath:logDir]){
-		NSError *error = NULL;
-		[[NSFileManager defaultManager] createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&error];
-		if(error){
-			NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, error.localizedDescription];
+		NSError *writeError = NULL;
+		[[NSFileManager defaultManager] createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
+		if(writeError){
+			NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError.localizedDescription];
 			[self popErrorAlertWithReason:reason];
 			return;
 		}
@@ -248,19 +248,19 @@
 
 		// make dir to hold stuff for the tweak
 		if(![[NSFileManager defaultManager] fileExistsAtPath:tweakDir]){
-			NSError *error = NULL;
-			[[NSFileManager defaultManager] createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&error];
-			if(error){
-				NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", tweakDir, error.localizedDescription);
+			NSError *writeError3 = NULL;
+			[[NSFileManager defaultManager] createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&writeError3];
+			if(writeError3){
+				NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", tweakDir, writeError3.localizedDescription);
 				continue;
 			}
 		}
 
 		// again, this is nice because it overwrites the file's content, unlike the write method from NSFileManager
-		NSError *writeError3 = NULL;
-		[tweakDir writeToFile:targetDir atomically:YES encoding:NSUTF8StringEncoding error:&writeError3];
-		if(writeError3){
-			NSLog(@"[IAmLazyLog] Failed to write tweakDir to %@ for %@! Error: %@", targetDir, package, writeError3.localizedDescription);
+		NSError *writeError4 = NULL;
+		[tweakDir writeToFile:targetDir atomically:YES encoding:NSUTF8StringEncoding error:&writeError4];
+		if(writeError4){
+			NSLog(@"[IAmLazyLog] Failed to write tweakDir to %@ for %@! Error: %@", targetDir, package, writeError4.localizedDescription);
 			continue;
 		}
 
@@ -271,22 +271,22 @@
 	}
 
 	// remove list files now that we're done w them
-	NSError *error = NULL;
-	[[NSFileManager defaultManager] removeItemAtPath:gFilesToCopy error:&error];
-	if(error){
-		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", gFilesToCopy, error.localizedDescription);
+	NSError *deleteError = NULL;
+	[[NSFileManager defaultManager] removeItemAtPath:gFilesToCopy error:&deleteError];
+	if(deleteError){
+		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", gFilesToCopy, deleteError.localizedDescription);
 	}
 
-	NSError *error2 = NULL;
-	[[NSFileManager defaultManager] removeItemAtPath:dFilesToCopy error:&error2];
-	if(error2){
-		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", dFilesToCopy, error2.localizedDescription);
+	NSError *deleteError2 = NULL;
+	[[NSFileManager defaultManager] removeItemAtPath:dFilesToCopy error:&deleteError2];
+	if(deleteError2){
+		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", dFilesToCopy, deleteError2.localizedDescription);
 	}
 
-	NSError *error3 = NULL;
-	[[NSFileManager defaultManager] removeItemAtPath:targetDir error:&error3];
-	if(error3){
-		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", targetDir, error3.localizedDescription);
+	NSError *deleteError3 = NULL;
+	[[NSFileManager defaultManager] removeItemAtPath:targetDir error:&deleteError3];
+	if(deleteError3){
+		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", targetDir, deleteError3.localizedDescription);
 	}
 }
 
@@ -294,10 +294,10 @@
 	for(NSString *dir in directories){
 		NSString *path = [NSString stringWithFormat:@"%@%@", tweakDir, dir];
 		if(![[NSFileManager defaultManager] fileExistsAtPath:path]){
-			NSError *error = NULL;
-			[[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&error];
-			if(error){
-				NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", path, error.localizedDescription);
+			NSError *writeError = NULL;
+			[[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&writeError];
+			if(writeError){
+				NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", path, writeError.localizedDescription);
 				continue;
 			}
 		}
@@ -319,10 +319,10 @@
 
 	// make DEBIAN dir
 	if(![[NSFileManager defaultManager] fileExistsAtPath:debian]){
-		NSError *error = NULL;
-		[[NSFileManager defaultManager] createDirectoryAtPath:debian withIntermediateDirectories:YES attributes:nil error:&error];
-		if(error){
-			NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", debian, error.localizedDescription);
+		NSError *writeError = NULL;
+		[[NSFileManager defaultManager] createDirectoryAtPath:debian withIntermediateDirectories:YES attributes:nil error:&writeError];
+		if(writeError){
+			NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", debian, writeError.localizedDescription);
 			return;
 		}
 	}
@@ -453,10 +453,10 @@
 
 	// make log dir if it doesn't exist already
 	if(![[NSFileManager defaultManager] fileExistsAtPath:logDir]){
-		NSError *error = NULL;
-		[[NSFileManager defaultManager] createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&error];
-		if(error){
-			NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, error.localizedDescription];
+		NSError *writeError = NULL;
+		[[NSFileManager defaultManager] createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
+		if(writeError){
+			NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError.localizedDescription];
 			[self popErrorAlertWithReason:reason];
 			return;
 		}

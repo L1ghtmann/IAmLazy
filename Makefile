@@ -10,7 +10,7 @@ APPLICATION_NAME = IAmLazy
 
 IAmLazy_FILES = $(wildcard *.m)
 IAmLazy_FRAMEWORKS = UIKit CoreGraphics
-IAmLazy_CFLAGS = -fobjc-arc
+IAmLazy_CFLAGS = -fobjc-arc -Wno-unguarded-availability-new # since can't use @available on Linux
 IAmLazy_CODESIGN_FLAGS = -Sentitlements.plist
 
 include $(THEOS_MAKE_PATH)/application.mk

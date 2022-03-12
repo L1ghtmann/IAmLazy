@@ -1,9 +1,7 @@
 #import <UIKit/UIKit.h>
 
-@interface IALRootViewController : UITableViewController
--(void)showBackupSelection;
--(void)makeTweakBackupWithFilter:(BOOL)filter;
--(void)showRestoreSelection;
--(void)restoreFromBackup:(NSString *)backupName;
--(void)showOptions;
+@interface IALRootViewController : UITableViewController <UITabBarDelegate>
+-(void)selectedBackupWithFormat:(NSString *)format andFilter:(BOOL)filter;
+-(void)makeDebBackupWithFilter:(BOOL)filter;
+-(void)makeListBackupWithFilter:(BOOL)filter;
 @end

@@ -1,6 +1,6 @@
 Package: me.lightmann.andsoareyou
 Name: AndSoAreYou
-Version: 1.0.0
+Version: 2.0.0
 Architecture: iphoneos-arm
 Description: Get root and run commands for IAmLazy
 Maintainer: Lightmann
