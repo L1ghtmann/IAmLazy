@@ -21,7 +21,7 @@ static IALManager *manager;
 
 	if(self){
 		manager = [IALManager sharedInstance];
-		// [manager setRootVC:self];
+		[manager setRootVC:self];
 	}
 
 	return self;
@@ -107,7 +107,7 @@ static IALManager *manager;
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-	return cellHeight/4;
+	return cellHeight/3.25;
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
