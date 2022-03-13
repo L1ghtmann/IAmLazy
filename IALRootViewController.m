@@ -6,10 +6,10 @@
 //
 
 #import <AudioToolbox/AudioToolbox.h>
-#import "IALAppDelegate.h"
 #import "IALProgressViewController.h"
 #import "IALRootViewController.h"
 #import "IALTableViewCell.h"
+#import "IALAppDelegate.h"
 #import "IALManager.h"
 #import "Common.h"
 
@@ -192,7 +192,7 @@ static IALManager *manager;
 	if(filter) [self presentViewController:[[IALProgressViewController alloc] initWithPurpose:@"standard-backup"] animated:YES completion:nil];
 	else [self presentViewController:[[IALProgressViewController alloc] initWithPurpose:@"unfiltered-backup"] animated:YES completion:nil];
 	[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
-	[manager makeTweakBackupWithFilter:filter];
+	[manager makeDebBackup:YES WithFilter:filter];
 	[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer
 	if(![manager encounteredError]){
 		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
@@ -204,7 +204,16 @@ static IALManager *manager;
 }
 
 -(void)makeListBackupWithFilter:(BOOL)filter{
-	// TODO
+	[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
+	[manager makeDebBackup:NO WithFilter:filter];
+	[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer
+	if(![manager encounteredError]){
+		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+			[self dismissViewControllerAnimated:YES completion:^{
+				[self popPostBackup];
+			}];
+		});
+	}
 }
 
 -(void)popPostBackup{

@@ -119,6 +119,23 @@ int main(int argc, char *argv[]) {
 		executeCommand(cmd2);
 	}
 
+	else if(strcmp(argv[1], "restore-tweaks") == 0){
+		NSString *tweakList = [NSString stringWithContentsOfFile:targetList encoding:NSUTF8StringEncoding error:NULL];
+
+		// make sure info on available packages is up-to-date
+		NSString *cmd = [NSString stringWithFormat:@"apt-get update"];
+		executeCommand(cmd);
+
+		// install packages from tweak list
+		// doing one package at a time to ensure that the entire process isn't nuked if an unknown, unfindable, and/or incompatible package is met
+		NSString *cmd2 = [NSString stringWithFormat:@"xargs -n 1 -a %@ apt-get install -y --allow-unauthenticated > %@restore_log.txt", tweakList, logDir];
+		executeCommand(cmd2);
+
+		// resolve any lingering things (e.g., partial installs due to apt/dependency weirdness)
+		NSString *cmd3 = [NSString stringWithFormat:@"xargs -n 1 -a %@ apt-get install -fy --allow-unauthenticated > %@fixup_log.txt", tweakList, logDir];
+		executeCommand(cmd3);
+	}
+
 	else{
 		printf("Houston, we have a problem: an invalid argument was provided!\n");
 		return 1;

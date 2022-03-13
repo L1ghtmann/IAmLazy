@@ -6,7 +6,6 @@
 //
 
 #import <AudioToolbox/AudioToolbox.h>
-#import "IALAppDelegate.h"
 #import "IALProgressViewController.h"
 #import "IALRestoreViewController.h"
 #import "IALTableViewCell.h"
@@ -22,7 +21,7 @@ static IALManager *manager;
 
 	if(self){
 		manager = [IALManager sharedInstance];
-		[manager setRootVC:self];
+		// [manager setRootVC:self];
 	}
 
 	return self;
@@ -139,7 +138,16 @@ static IALManager *manager;
 
 -(void)restoreDebBackupWithLatest:(BOOL)latest{
 	if(latest){
-		NSString *backupName = [[manager getBackups] firstObject];
+		NSArray *backups = [manager getBackups];
+		__block NSString *backupName;
+		[backups enumerateObjectsUsingBlock: ^(id obj, NSUInteger idx, BOOL *stop) {
+			NSString *name = (NSString*)obj;
+			if([name containsString:@".tar.gz"]){
+				backupName = name;
+				*stop = YES;    // Stop enumerating
+				return;
+			}
+		}];
 		UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName] preferredStyle:UIAlertControllerStyleAlert];
 
 		UIAlertAction *yes = [UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
@@ -157,7 +165,14 @@ static IALManager *manager;
 	}
 	else{
 		// get (sorted) backup filenames
-		NSArray *backupNames = [manager getBackups];
+		NSArray *backups = [manager getBackups];
+		NSMutableArray *backupNames = [NSMutableArray new];
+		[backups enumerateObjectsUsingBlock: ^(id obj, NSUInteger idx, BOOL *stop) {
+			NSString *name = (NSString*)obj;
+			if([name containsString:@".tar.gz"]){
+				[backupNames addObject:obj];
+			}
+		}];
 
 		// get backup creation dates
 		NSMutableArray *backupDates = [NSMutableArray new];
@@ -220,7 +235,101 @@ static IALManager *manager;
 }
 
 -(void)restoreListBackupWithLatest:(BOOL)latest{
-	// TODO
+	if(latest){
+		NSArray *backups = [manager getBackups];
+		__block NSString *backupName;
+		[backups enumerateObjectsUsingBlock: ^(id obj, NSUInteger idx, BOOL *stop) {
+			NSString *name = (NSString*)obj;
+			if([name containsString:@".txt"]){
+				backupName = name;
+				*stop = YES;    // Stop enumerating
+				return;
+			}
+		}];
+		UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName] preferredStyle:UIAlertControllerStyleAlert];
+
+		UIAlertAction *yes = [UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
+			[self restoreFromBackup:backupName];
+		}];
+
+		UIAlertAction *no = [UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
+			[self dismissViewControllerAnimated:YES completion:nil];
+		}];
+
+		[alert addAction:yes];
+		[alert addAction:no];
+
+		[self presentViewController:alert animated:YES completion:nil];
+	}
+	else{
+		// get (sorted) backup filenames
+		NSArray *backups = [manager getBackups];
+		NSMutableArray *backupNames = [NSMutableArray new];
+		[backups enumerateObjectsUsingBlock: ^(id obj, NSUInteger idx, BOOL *stop) {
+			NSString *name = (NSString*)obj;
+			if([name containsString:@".txt"]){
+				[backupNames addObject:obj];
+			}
+		}];
+
+		// get backup creation dates
+		NSMutableArray *backupDates = [NSMutableArray new];
+		NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
+		[formatter setDateFormat:@"MMM dd, yyyy"];
+		for(NSString *backup in backupNames){
+			NSString *dateString = nil;
+
+			NSError *readError = NULL;
+			NSString *path = [backupDir stringByAppendingPathComponent:backup];
+			NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:&readError];
+			if(readError){
+				NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", path, readError.localizedDescription);
+				dateString = @"Error";
+			}
+			else{
+				NSDate *creationDate = [fileAttributes fileCreationDate];
+				dateString = [formatter stringFromDate:creationDate];
+			}
+
+			[backupDates addObject:dateString];
+		}
+
+		// post list of available backups
+		UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Choose the backup you'd like to restore from:" preferredStyle:UIAlertControllerStyleAlert];
+
+		// make each available backup its own action
+		for(int i = 0; i < [backupNames count]; i++){
+			NSString *backupName = backupNames[i];
+			NSString *backupDate = backupDates[i];
+			NSString *backup = [NSString stringWithFormat:@"%@ [%@]", backupName, backupDate];
+			UIAlertAction *action = [UIAlertAction actionWithTitle:backup style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
+				UIAlertController *subalert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName] preferredStyle:UIAlertControllerStyleAlert];
+
+				UIAlertAction *yes = [UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
+					[self restoreFromBackup:backupName];
+				}];
+
+				UIAlertAction *no = [UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
+					[self dismissViewControllerAnimated:YES completion:nil];
+				}];
+
+				[subalert addAction:yes];
+				[subalert addAction:no];
+
+				[self presentViewController:subalert animated:YES completion:nil];
+			}];
+
+			[alert addAction:action];
+		}
+
+		UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
+			[self dismissViewControllerAnimated:YES completion:nil];
+		}];
+
+		[alert addAction:cancel];
+
+		[self presentViewController:alert animated:YES completion:nil];
+	}
 }
 
 -(void)restoreFromBackup:(NSString *)backupName{

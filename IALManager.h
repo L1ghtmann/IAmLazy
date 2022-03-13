@@ -7,7 +7,7 @@
 @property (nonatomic, retain) NSDate *endTime;
 @property (nonatomic) BOOL encounteredError;
 +(instancetype)sharedInstance;
--(void)makeTweakBackupWithFilter:(BOOL)filter;
+-(void)makeDebBackup:(BOOL)deb WithFilter:(BOOL)filter;
 -(void)gatherPackageFiles;
 -(void)buildDebs;
 -(void)makeTarballWithFilter:(BOOL)filter;

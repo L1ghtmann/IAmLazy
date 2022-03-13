@@ -21,7 +21,7 @@
 
 #pragma mark Backup
 
--(void)makeTweakBackupWithFilter:(BOOL)filter{
+-(void)makeDebBackup:(BOOL)deb WithFilter:(BOOL)filter{
 	// reset errors
 	[self setEncounteredError:NO];
 
@@ -66,45 +66,79 @@
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0"];
 	}
 
-	// make fresh tmp directory
-	if(![[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
-		NSError *writeError = NULL;
-		[[NSFileManager defaultManager] createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&writeError];
-		if(writeError){
-			NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", tmpDir, writeError.localizedDescription];
-			[self popErrorAlertWithReason:reason];
+	if(deb){
+		// make fresh tmp directory
+		if(![[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
+			NSError *writeError = NULL;
+			[[NSFileManager defaultManager] createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&writeError];
+			if(writeError){
+				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", tmpDir, writeError.localizedDescription];
+				[self popErrorAlertWithReason:reason];
+				return;
+			}
+		}
+
+		// gather bits for packages
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
+		[self gatherPackageFiles];
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
+
+		// make backup and log dirs if they don't exist already
+		if(![[NSFileManager defaultManager] fileExistsAtPath:logDir]){
+			NSError *writeError = NULL;
+			[[NSFileManager defaultManager] createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
+			if(writeError){
+				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError.localizedDescription];
+				[self popErrorAlertWithReason:reason];
+				return;
+			}
+		}
+
+		// build debs from bits
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
+		[self buildDebs];
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
+
+		// for unfiltered backups, create hidden file specifying the bootstrap it was created on
+		if(!filter) [self makeBootstrapFile];
+
+		// make archive of all packages
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2.7"];
+		[self makeTarballWithFilter:filter];
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"3"];
+	}
+	else{
+		// put all packages in a list for easier writing
+		NSString *fileContent = [[self.packages valueForKey:@"description"] componentsJoinedByString:@"\n"];
+		if(![fileContent length]){
+			NSLog(@"[IAmLazyLog] fileContent is blank!");
 			return;
 		}
-	}
 
-	// gather bits for packages
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
-	[self gatherPackageFiles];
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
+		// get latest backup name and append the text file extension
+		NSString *listName = [[self getLatestBackup] stringByAppendingString:@".txt"];
 
-	// make backup and log dirs if they don't exist already
-	if(![[NSFileManager defaultManager] fileExistsAtPath:logDir]){
-		NSError *writeError = NULL;
-		[[NSFileManager defaultManager] createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
-		if(writeError){
-			NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError.localizedDescription];
-			[self popErrorAlertWithReason:reason];
-			return;
+		// write to file
+		NSString *file = [NSString stringWithFormat:@"%@%@", backupDir, listName];
+		[[NSFileManager defaultManager] createFileAtPath:file contents:[fileContent dataUsingEncoding:NSUTF8StringEncoding] attributes:nil];
+
+		// make note of the bootstrap that the list was made on
+		if(!filter){
+			NSString *bootstrap = @"bingner_elucubratus";
+			if([[NSFileManager defaultManager] fileExistsAtPath:@"/.procursus_strapped"]){
+				bootstrap = @"procursus";
+			}
+
+			NSString *madeOn = [NSString stringWithFormat:@"\n\n## made on %@ ##", bootstrap];
+
+			NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:file];
+			[fileHandle seekToEndOfFile];
+			[fileHandle writeData:[madeOn dataUsingEncoding:NSUTF8StringEncoding]];
+			[fileHandle closeFile];
 		}
+
+		[self verifyList:listName];
 	}
-
-	// build debs from bits
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
-	[self buildDebs];
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
-
-	// for unfiltered backups, create hidden file specifying the bootstrap it was created on
-	if(!filter) [self makeBootstrapFile];
-
-	// make archive of all packages
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2.7"];
-	[self makeTarballWithFilter:filter];
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"3"];
 
 	// make note of end time
 	[self setEndTime:[NSDate date]];
@@ -374,18 +408,8 @@
 }
 
 -(void)makeTarballWithFilter:(BOOL)filter{
-	// get number from latest backup
-	NSString *numberString;
-	NSCharacterSet *numbers = [NSCharacterSet characterSetWithCharactersInString:@"0123456789"];
-	NSScanner *scanner = [NSScanner scannerWithString:[[self getBackups] firstObject]]; // get latest backup filename
-	[scanner scanUpToCharactersFromSet:numbers intoString:NULL]; // remove bit before the number(s)
-	[scanner scanCharactersFromSet:numbers intoString:&numberString]; // get number(s)
-	int latestBackup = [numberString intValue];
-
-	// craft new backup name
-	NSString *backupName;
-	if(filter) backupName = [NSString stringWithFormat:@"IAmLazy-%d.tar.gz", latestBackup+1];
-	else backupName = [NSString stringWithFormat:@"IAmLazy-%du.tar.gz", latestBackup+1];
+	// get latest backup name and append the gzip tar extension
+	NSString *backupName = [[self getLatestBackup] stringByAppendingString:@".tar.gz"];
 
 	// make tarball
 	// ensure file structure is ONLY me.lightmann.iamlazy/ not /tmp/me.lightmann.iamlazy/
@@ -398,6 +422,15 @@
 
 -(void)verifyBackup:(NSString *)backupName{
 	NSString *path = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
+	if(![[NSFileManager defaultManager] fileExistsAtPath:path]){
+		NSString *reason = [NSString stringWithFormat:@"%@ DNE!", path];
+		[self popErrorAlertWithReason:reason];
+		return;
+	}
+}
+
+-(void)verifyList:(NSString *)listName{
+	NSString *path = [NSString stringWithFormat:@"%@%@", backupDir, listName];
 	if(![[NSFileManager defaultManager] fileExistsAtPath:path]){
 		NSString *reason = [NSString stringWithFormat:@"%@ DNE!", path];
 		[self popErrorAlertWithReason:reason];
@@ -434,7 +467,8 @@
 	}
 
 	// check for target backup
-	if(![[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithFormat:@"%@%@", backupDir, backupName]]){
+	NSString *target = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
+	if(![[NSFileManager defaultManager] fileExistsAtPath:target]){
 		NSString *reason = [NSString stringWithFormat:@"The target backup -- %@ -- could not be found!", backupName];
 		[self popErrorAlertWithReason:reason];
 		return;
@@ -442,38 +476,64 @@
 
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0"];
 
-	// check for old tmp files
-	if([[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
+	if([backupName containsString:@".tar.gz"]){
+		// check for old tmp files
+		if([[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
+			[self cleanupTmp];
+		}
+
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
+		[self unpackArchive:backupName];
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
+
+		// make log dir if it doesn't exist already
+		if(![[NSFileManager defaultManager] fileExistsAtPath:logDir]){
+			NSError *writeError = NULL;
+			[[NSFileManager defaultManager] createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
+			if(writeError){
+				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError.localizedDescription];
+				[self popErrorAlertWithReason:reason];
+				return;
+			}
+		}
+
+		BOOL compatible = YES;
+		if([backupName containsString:@"u.tar"]){
+			compatible = [self verifyBootstrap];
+		}
+
+		if(compatible){
+			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
+			[self installDebs];
+			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
+		}
+
 		[self cleanupTmp];
 	}
-
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
-	[self unpackArchive:backupName];
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
-
-	// make log dir if it doesn't exist already
-	if(![[NSFileManager defaultManager] fileExistsAtPath:logDir]){
+	else{
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
+		// write new target list to file
 		NSError *writeError = NULL;
-		[[NSFileManager defaultManager] createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
+		[target writeToFile:targetList atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
 		if(writeError){
-			NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError.localizedDescription];
-			[self popErrorAlertWithReason:reason];
+			NSLog(@"[IAmLazyLog] Failed to write target to %@! Error: %@", targetList, writeError.localizedDescription);
 			return;
 		}
-	}
 
-	BOOL compatible = YES;
-	if([backupName containsString:@"u.tar"]){
-		compatible = [self verifyBootstrap];
-	}
+		BOOL compatible = YES;
+		if([backupName containsString:@"u.txt"]){
+			compatible = [self verifyBootstrapOfList:target];
+		}
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
 
-	if(compatible){
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
-		[self installDebs];
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
-	}
+		if(compatible){
+			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
+			[self restoreTweaks];
+			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
+		}
 
-	[self cleanupTmp];
+		[self cleanupTargetList];
+	}
 }
 
 -(void)unpackArchive:(NSString *)backupName{
@@ -497,9 +557,31 @@
 	return YES;
 }
 
+-(BOOL)verifyBootstrapOfList:(NSString *)list{
+	NSString *bootstrap = @"bingner_elucubratus";
+	NSString *oppBootstrap = @"procursus";
+	if([[NSFileManager defaultManager] fileExistsAtPath:@"/.procursus_strapped"]){
+		bootstrap = @"procursus";
+		oppBootstrap = @"bingner_elucubratus";
+	}
+
+	if(![[NSString stringWithContentsOfFile:list encoding:NSUTF8StringEncoding error:NULL] containsString:bootstrap]){
+		NSString *reason = [NSString stringWithFormat:@"The list you're trying to restore from was made for jailbreaks running the %@ bootstrap. \n\nYour current jailbreak is using %@!", oppBootstrap, bootstrap];
+		[self popErrorAlertWithReason:reason];
+		return NO;
+	}
+
+	return YES;
+}
+
 -(void)installDebs{
 	// installing via apt/dpkg requires root
 	[self executeCommandAsRoot:@"install-debs"];
+}
+
+-(void)restoreTweaks{
+	// installing via apt/dpkg requires root
+	[self executeCommandAsRoot:@"restore-tweaks"];
 }
 
 #pragma mark General
@@ -507,6 +589,29 @@
 -(void)cleanupTmp{
 	// has to be done as root since some files have root ownership
 	[self executeCommandAsRoot:@"cleanup-tmp"];
+}
+
+-(void)cleanupTargetList{
+	// remove list file now that we're done with it
+	NSError *error = NULL;
+	[[NSFileManager defaultManager] removeItemAtPath:targetList error:&error];
+	if(error){
+		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", targetList, error.localizedDescription);
+	}
+}
+
+-(NSString *)getLatestBackup{
+	// get number from latest backup
+	NSString *numberString;
+	NSCharacterSet *numbers = [NSCharacterSet characterSetWithCharactersInString:@"0123456789"];
+	NSScanner *scanner = [NSScanner scannerWithString:[[self getBackups] firstObject]]; // get latest backup filename
+	[scanner scanUpToCharactersFromSet:numbers intoString:NULL]; // remove bit before the number(s)
+	[scanner scanCharactersFromSet:numbers intoString:&numberString]; // get number(s)
+	int latestBackup = [numberString intValue];
+
+	// craft new backup name
+	NSString *backupName = [NSString stringWithFormat:@"IAmLazy-%d", latestBackup+1];
+	return backupName;
 }
 
 -(NSArray *)getBackups{
@@ -518,8 +623,10 @@
 	}
 
 	NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '.tar.gz'"];
-	NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'IAmLazy-'"];
-	NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate1, predicate2]];  // combine with "and"
+	NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '.txt'"];
+	NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'IAmLazy-'"];
+	NSPredicate *predicate12 = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicate1, predicate2]];  // combine with "or"
+	NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate12, predicate3]];  // combine with "and"
 	NSArray *backups = [backupDirContents filteredArrayUsingPredicate:thePredicate];
 
 	// sort backups (https://stackoverflow.com/a/43096808)
