@@ -194,8 +194,7 @@
 }
 
 -(void)makeBackupOfType:(NSInteger)type withFilter:(BOOL)filter{
-	if(filter) [self presentViewController:[[IALProgressViewController alloc] initWithPurpose:@"standard-backup"] animated:YES completion:nil];
-	else [self presentViewController:[[IALProgressViewController alloc] initWithPurpose:@"unfiltered-backup"] animated:YES completion:nil];
+	[self presentViewController:[[IALProgressViewController alloc] initWithPurpose:0 ofType:type withFilter:filter] animated:YES completion:nil];
 	[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
 	[_manager makeBackupOfType:type withFilter:filter];
 	[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer

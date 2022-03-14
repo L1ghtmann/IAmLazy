@@ -266,8 +266,7 @@
 }
 
 -(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type{
-	if(type == 0) [self presentViewController:[[IALProgressViewController alloc] initWithPurpose:@"restore-deb"] animated:YES completion:nil];
-	else [self presentViewController:[[IALProgressViewController alloc] initWithPurpose:@"restore-list"] animated:YES completion:nil];
+	[self presentViewController:[[IALProgressViewController alloc] initWithPurpose:1 ofType:type withFilter:nil] animated:YES completion:nil];
 	[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
 	[_manager restoreFromBackup:backupName ofType:type];
 	[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer

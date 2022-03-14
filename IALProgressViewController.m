@@ -8,14 +8,19 @@
 #include "IALProgressViewController.h"
 #import "Common.h"
 
+#define fillColor [UIColor colorWithRed:16.0f/255.0f green:16.0f/255.0f blue:16.0f/255.0f alpha:1.0f]
+#define accentColor [UIColor colorWithRed:247.0f/255.0f green:249.0f/255.0f blue:250.0f/255.0f alpha:1.0f]
+
 @implementation IALProgressViewController
 
--(instancetype)initWithPurpose:(NSString *)purpose{
-
+-(instancetype)initWithPurpose:(NSInteger)purpose ofType:(NSInteger)type withFilter:(BOOL)filter{
 	self = [super init];
 
 	if(self){
-		if([purpose containsString:@"backup"]){
+		// purpose: 0 == backup | 1 == restore
+		// type: 0 == deb | 1 == list
+		// filter: 0 == standard | 1 == unfiltered
+		if(purpose == 0 && type != 1){
 			self.itemCount = 4;
 		}
 		else{
@@ -23,9 +28,9 @@
 		}
 
 		[self makeTitleWithPurpose:purpose];
-		[self setItemIcons:[self iconsForPurpose:purpose]];
+		[self setItemIcons:[self iconsForPurpose:purpose ofType:type]];
 		[self makeListWithItems:self.itemCount];
-		[self setItemDescriptions:[self itemDescriptionsForPurpose:purpose]];
+		[self setItemDescriptions:[self itemDescriptionsForPurpose:purpose ofType:type withFilter:filter]];
 		[self elaborateItemsList];
 		[self makeLoadingWheel];
 
@@ -40,41 +45,48 @@
 	[super viewDidLoad];
 
 	self.view = [[UIView alloc] initWithFrame:CGRectMake(0,0,kWidth,kHeight)];
-	[self.view setBackgroundColor:[self fillColor]];
+	[self.view setBackgroundColor:fillColor];
 }
 
--(void)makeTitleWithPurpose:(NSString *)purpose{
-	NSString *refinedPurpose;
-	if([purpose containsString:@"backup"]){
-		refinedPurpose = @"backup";
+-(void)makeTitleWithPurpose:(NSInteger)purpose{
+	NSString *purposeString;
+	if(purpose == 0){
+		purposeString = @"backup";
 	}
 	else{
-		refinedPurpose = purpose;
+		purposeString = @"restore";
 	}
 
-	NSString *text = [NSString stringWithFormat:@"%@ Progress", refinedPurpose];
+	NSString *text = [NSString stringWithFormat:@"%@ Progress", purposeString];
 
 	UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(0,35,kWidth,30)];
-	title.font = [UIFont systemFontOfSize:30 weight:0.60];
+	[title setFont:[UIFont systemFontOfSize:30 weight:0.60]];
 	[title setText:[text uppercaseString]];
-	[title setTextColor:[self accentColor]];
+	[title setTextColor:accentColor];
 	[title setTextAlignment:NSTextAlignmentCenter];
 
 	[self.view addSubview:title];
 }
 
--(NSMutableArray *)iconsForPurpose:(NSString *)purpose{
+-(NSMutableArray *)iconsForPurpose:(NSInteger)purpose ofType:(NSInteger)type{
 	NSMutableArray *icons = [NSMutableArray new];
 
-	if([purpose containsString:@"backup"]){
+	if(purpose == 0){
 		[icons addObject:@"list.number"];
-		[icons addObject:@"rectangle.on.rectangle.angled"];
-		[icons addObject:@"rectangle.3.offgrid"];
+		if(type == 0){
+			[icons addObject:@"rectangle.on.rectangle.angled"];
+			[icons addObject:@"rectangle.3.offgrid"];
+		}
+		else{
+			[icons addObject:@"increase.indent"];
+			[icons addObject:@"pencil"];
+		}
 		[icons addObject:@"folder.badge.plus"];
 	}
 	else{
 		[icons addObject:@"text.badge.checkmark"];
-		[icons addObject:@"wrench"];
+		if(type == 0) [icons addObject:@"wrench"];
+		else [icons addObject:@"magnifyingglass.circle"];
 		[icons addObject:@"arrow.down.circle"];
 	}
 
@@ -89,11 +101,11 @@
 		CGFloat y = 90+(i*100);
 
 		UIView *background = [[UIView alloc] initWithFrame:CGRectMake(10,y,60,60)];
-		[background setBackgroundColor:[self accentColor]];
+		[background setBackgroundColor:accentColor];
 		[background.layer setCornerRadius:background.frame.size.height/2];
 
 		UIView *fill = [[UIView alloc] initWithFrame:CGRectInset(background.bounds, 1, 1)];
-		[fill setBackgroundColor:[self fillColor]];
+		[fill setBackgroundColor:fillColor];
 		[fill.layer setCornerRadius:background.frame.size.height/2];
 		[background addSubview:fill];
 
@@ -114,25 +126,44 @@
 	}
 }
 
--(NSMutableArray *)itemDescriptionsForPurpose:(NSString *)purpose{
+-(NSMutableArray *)itemDescriptionsForPurpose:(NSInteger)purpose ofType:(NSInteger)type withFilter:(BOOL)filter{
 	NSMutableArray *itemDescs = [NSMutableArray new];
 
-	if([purpose isEqualToString:@"standard-backup"]){
-		[itemDescs addObject:@"Generating list of user packages"];
-		[itemDescs addObject:@"Gathering files for user packages"];
-		[itemDescs addObject:@"Building debs from gathered files"];
-		[itemDescs addObject:@"Creating backup from debs"];
-	}
-	else if([purpose isEqualToString:@"unfiltered-backup"]){
-		[itemDescs addObject:@"Generating list of installed packages"];
-		[itemDescs addObject:@"Gathering files for installed packages"];
-		[itemDescs addObject:@"Building debs from gathered files"];
-		[itemDescs addObject:@"Creating backup from debs"];
+	if(purpose == 0){
+		if(type == 0){
+			if(filter){
+				[itemDescs addObject:@"Generating list of user packages"];
+				[itemDescs addObject:@"Gathering files for user packages"];
+			}
+			else {
+				[itemDescs addObject:@"Generating list of installed packages"];
+				[itemDescs addObject:@"Gathering files for installed packages"];
+			}
+			[itemDescs addObject:@"Building debs from gathered files"];
+			[itemDescs addObject:@"Creating backup from debs"];
+		}
+		else{
+			if(filter){
+				[itemDescs addObject:@"Generating list of user packages"];
+				[itemDescs addObject:@"Formatting list of user packages"];
+			}
+			else{
+				[itemDescs addObject:@"Generating list of installed packages"];
+				[itemDescs addObject:@"Formatting list of installed packages"];
+			}
+			[itemDescs addObject:@"Writing list to file"];
+		}
 	}
 	else{
 		[itemDescs addObject:@"Completing pre-restore checks"];
-		[itemDescs addObject:@"Unpacking backup"];
-		[itemDescs addObject:@"Installing debs"];
+		if(type == 0){
+			[itemDescs addObject:@"Unpacking backup"];
+			[itemDescs addObject:@"Installing debs"];
+		}
+		else{
+			[itemDescs addObject:@"Making note of target list"];
+			[itemDescs addObject:@"Installing packages from list"];
+		}
 	}
 
 	return itemDescs;
@@ -156,12 +187,12 @@
 
 		UILabel *itemDesc = [[UILabel alloc] initWithFrame:CGRectMake(x,position.y-28,kWidth,20)];
 		[itemDesc setText:self.itemDescriptions[i]];
-		[itemDesc setTextColor:[self accentColor]];
+		[itemDesc setTextColor:accentColor];
 
 		UILabel *itemStatus = [[UILabel alloc] initWithFrame:CGRectMake(x,position.y-8,kWidth,20)];
 		itemStatus.font = [UIFont systemFontOfSize:14 weight:-0.60];
 		[itemStatus setText:@"Waiting"];
-		[itemStatus setTextColor:[self accentColor]];
+		[itemStatus setTextColor:accentColor];
 		[itemStatus setAlpha:.75];
 
 		[self.view addSubview:itemDesc];
@@ -174,7 +205,7 @@
 -(void)makeLoadingWheel{
 	self.loading = [[UIActivityIndicatorView alloc] initWithFrame:CGRectMake((kWidth/2)-25,((kHeight*5)/6)+12.5,50,50)];
 	[self.loading setActivityIndicatorViewStyle:UIActivityIndicatorViewStyleLarge];
-	[self.loading setColor:[self accentColor]];
+	[self.loading setColor:accentColor];
 	[self.loading setHidesWhenStopped:YES];
 	[self.loading startAnimating];
 	[self.view addSubview:self.loading];
@@ -203,14 +234,6 @@
 	if(item+1 == [self.items count]){
 		[self.loading stopAnimating];
 	}
-}
-
--(UIColor *)fillColor{
-	return [UIColor colorWithRed:16.0f/255.0f green:16.0f/255.0f blue:16.0f/255.0f alpha:1.0f];
-}
-
--(UIColor *)accentColor{
-	return [UIColor colorWithRed:247.0f/255.0f green:249.0f/255.0f blue:250.0f/255.0f alpha:1.0];
 }
 
 @end

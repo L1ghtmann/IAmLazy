@@ -8,5 +8,5 @@
 @property (nonatomic) NSMutableArray *itemStatusIcons;
 @property (nonatomic) NSMutableArray *itemStatusText;
 @property (nonatomic, retain) UIActivityIndicatorView *loading;
--(instancetype)initWithPurpose:(NSString *)purpose;
+-(instancetype)initWithPurpose:(NSInteger)purpose ofType:(NSInteger)type withFilter:(BOOL)filter;
 @end

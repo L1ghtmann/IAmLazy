@@ -108,13 +108,16 @@
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"3"];
 	}
 	else{
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
 		// put all packages in a list for easier writing
 		NSString *fileContent = [[self.packages valueForKey:@"description"] componentsJoinedByString:@"\n"];
 		if(![fileContent length]){
 			NSLog(@"[IAmLazyLog] fileContent is blank!");
 			return;
 		}
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
 
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
 		// get latest backup name and append the text file extension
 		NSString *listName = [[self getLatestBackup] stringByAppendingString:@".txt"];
 
@@ -136,6 +139,7 @@
 			[fileHandle writeData:[madeOn dataUsingEncoding:NSUTF8StringEncoding]];
 			[fileHandle closeFile];
 		}
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
 
 		[self verifyList:listName];
 	}
@@ -519,12 +523,12 @@
 			NSLog(@"[IAmLazyLog] Failed to write target to %@! Error: %@", targetList, writeError.localizedDescription);
 			return;
 		}
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
 
 		BOOL compatible = YES;
 		if([backupName containsString:@"u.txt"]){
 			compatible = [self verifyBootstrapOfList:target];
 		}
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
 
 		if(compatible){
 			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
