@@ -21,7 +21,7 @@
 
 #pragma mark Backup
 
--(void)makeDebBackup:(BOOL)deb WithFilter:(BOOL)filter{
+-(void)makeBackupOfType:(NSInteger)type withFilter:(BOOL)filter{
 	// reset errors
 	[self setEncounteredError:NO];
 
@@ -66,7 +66,7 @@
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0"];
 	}
 
-	if(deb){
+	if(type == 0){
 		// make fresh tmp directory
 		if(![[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
 			NSError *writeError = NULL;
@@ -445,7 +445,7 @@
 
 #pragma mark Restore
 
--(void)restoreFromBackup:(NSString *)backupName{
+-(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type{
 	// reset errors
 	[self setEncounteredError:NO];
 
@@ -476,7 +476,7 @@
 
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0"];
 
-	if([backupName containsString:@".tar.gz"]){
+	if(type == 0){
 		// check for old tmp files
 		if([[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
 			[self cleanupTmp];
@@ -499,7 +499,7 @@
 
 		BOOL compatible = YES;
 		if([backupName containsString:@"u.tar"]){
-			compatible = [self verifyBootstrap];
+			compatible = [self verifyBootstrapOfTarball];
 		}
 
 		if(compatible){
@@ -528,7 +528,7 @@
 
 		if(compatible){
 			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
-			[self restoreTweaks];
+			[self installList];
 			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
 		}
 
@@ -540,7 +540,7 @@
 	[self executeCommand:[NSString stringWithFormat:@"tar -xf %@%@ -C /tmp", backupDir, backupName]];
 }
 
--(BOOL)verifyBootstrap{
+-(BOOL)verifyBootstrapOfTarball{
 	NSString *bootstrap = @"bingner_elucubratus";
 	NSString *oppBootstrap = @"procursus";
 	if([[NSFileManager defaultManager] fileExistsAtPath:@"/.procursus_strapped"]){
@@ -579,9 +579,9 @@
 	[self executeCommandAsRoot:@"install-debs"];
 }
 
--(void)restoreTweaks{
+-(void)installList{
 	// installing via apt/dpkg requires root
-	[self executeCommandAsRoot:@"restore-tweaks"];
+	[self executeCommandAsRoot:@"install-list"];
 }
 
 #pragma mark General
@@ -679,11 +679,17 @@
 -(void)popErrorAlertWithReason:(NSString *)reason{
 	[self setEncounteredError:YES];
 
-	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy Error:" message:reason preferredStyle:UIAlertControllerStyleAlert];
+	UIAlertController *alert = [UIAlertController
+								alertControllerWithTitle:@"IAmLazy Error:"
+								message:reason
+								preferredStyle:UIAlertControllerStyleAlert];
 
-	UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
-		[self.rootVC dismissViewControllerAnimated:YES completion:nil];
-	}];
+	UIAlertAction *okay = [UIAlertAction
+							actionWithTitle:@"Okay"
+							style:UIAlertActionStyleDefault
+							handler:^(UIAlertAction * action) {
+								[self.rootVC dismissViewControllerAnimated:YES completion:nil];
+							}];
 
 	[alert addAction:okay];
 

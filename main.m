@@ -3,6 +3,6 @@
 
 int main(int argc, char *argv[]) {
 	@autoreleasepool {
-		return UIApplicationMain(argc, argv, nil, NSStringFromClass(IALAppDelegate.class));
+		return UIApplicationMain(argc, argv, nil, NSStringFromClass([IALAppDelegate class]));
 	}
 }

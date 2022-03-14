@@ -9,19 +9,17 @@
 #import "IALProgressViewController.h"
 #import "IALRestoreViewController.h"
 #import "IALTableViewCell.h"
-#import "IALManager.h"
 #import "Common.h"
 
-static IALManager *manager;
-
 @implementation IALRestoreViewController
+
+#pragma mark Setup
 
 -(instancetype)init{
 	self = [super initWithStyle:UITableViewStyleGrouped];
 
 	if(self){
-		manager = [IALManager sharedInstance];
-		[manager setRootVC:self];
+		_manager = [IALManager sharedInstance];
 	}
 
 	return self;
@@ -66,11 +64,10 @@ static IALManager *manager;
 	return sectionName;
 }
 
--(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UIView *)view forSection:(NSInteger)section {
-	UITableViewHeaderFooterView *header = (UITableViewHeaderFooterView *)view;
-	header.textLabel.textColor = [UIColor whiteColor];
-	header.textLabel.font = [UIFont systemFontOfSize:20 weight:0.56];
-	header.textLabel.text = [header.textLabel.text capitalizedString];
+-(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UITableViewHeaderFooterView *)header forSection:(NSInteger)section {
+	[header.textLabel setTextColor:[UIColor whiteColor]];
+	[header.textLabel setFont:[UIFont systemFontOfSize:20 weight:0.56]];
+	[header.textLabel setText:[header.textLabel.text capitalizedString]];
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -81,6 +78,7 @@ static IALManager *manager;
 	NSString *function;
 	NSString *functionDescriptor;
 
+	// eval sections
 	if(indexPath.section == 0){
 		type = @"deb";
 		functionDescriptor = @" Backup";
@@ -90,6 +88,7 @@ static IALManager *manager;
 		functionDescriptor = @" List";
 	}
 
+	// eval rows
 	if(indexPath.row == 0){
 		function = @"latest-restore";
 		functionDescriptor = [@"From Latest" stringByAppendingString:functionDescriptor];
@@ -113,50 +112,67 @@ static IALManager *manager;
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
 	AudioServicesPlaySystemSound(1520); // haptic feedback
 
-	BOOL latest;
-	if(indexPath.row == 0) latest = YES;
-	else latest = NO;
+	NSInteger type = 0;
+	if(indexPath.section != 0) type = 1;
 
-	if(indexPath.section == 0){
-		[self selectedRestoreWithFormat:@"deb" andLatest:latest];
-	}
-	else{
-		[self selectedRestoreWithFormat:@"list" andLatest:latest];
-	}
+	BOOL latest = YES;
+	if(indexPath.row != 0) latest = NO;
+
+	[self restoreLatestBackup:latest ofType:type];
 
 	[tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
--(void)selectedRestoreWithFormat:(NSString *)format andLatest:(BOOL)latest{
-	if([format isEqualToString:@"deb"]){
-		[self restoreDebBackupWithLatest:latest];
-	}
-	else{
-		[self restoreListBackupWithLatest:latest];
-	}
-}
+#pragma mark Functionality
 
--(void)restoreDebBackupWithLatest:(BOOL)latest{
+-(void)restoreLatestBackup:(BOOL)latest ofType:(NSInteger)type{
+	// set extension based on type
+	NSString *extension;
+	switch(type){
+		case 0:
+			extension = @".tar.gz";
+			break;
+		case 1:
+			extension = @".txt";
+			break;
+		default:
+			extension = @"";
+			break;
+	}
+
+	NSArray *backups = [_manager getBackups];
+
 	if(latest){
-		NSArray *backups = [manager getBackups];
+		// get latest backup
 		__block NSString *backupName;
 		[backups enumerateObjectsUsingBlock: ^(id obj, NSUInteger idx, BOOL *stop) {
 			NSString *name = (NSString*)obj;
-			if([name containsString:@".tar.gz"]){
+			if([name containsString:extension]){
 				backupName = name;
-				*stop = YES;    // Stop enumerating
+				*stop = YES; // stop enumerating
 				return;
 			}
 		}];
-		UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName] preferredStyle:UIAlertControllerStyleAlert];
 
-		UIAlertAction *yes = [UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-			[self restoreFromBackup:backupName];
-		}];
+		// get confirmation before proceeding
+		UIAlertController *alert = [UIAlertController
+									alertControllerWithTitle:@"IAmLazy"
+									message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName]
+									preferredStyle:UIAlertControllerStyleAlert];
 
-		UIAlertAction *no = [UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-			[self dismissViewControllerAnimated:YES completion:nil];
-		}];
+		UIAlertAction *yes = [UIAlertAction
+								actionWithTitle:@"Yes"
+								style:UIAlertActionStyleDefault
+								handler:^(UIAlertAction * action){
+									[self restoreFromBackup:backupName ofType:type];
+								}];
+
+		UIAlertAction *no = [UIAlertAction
+								actionWithTitle:@"No"
+								style:UIAlertActionStyleDefault
+								handler:^(UIAlertAction * action){
+									[self dismissViewControllerAnimated:YES completion:nil];
+								}];
 
 		[alert addAction:yes];
 		[alert addAction:no];
@@ -165,11 +181,10 @@ static IALManager *manager;
 	}
 	else{
 		// get (sorted) backup filenames
-		NSArray *backups = [manager getBackups];
 		NSMutableArray *backupNames = [NSMutableArray new];
 		[backups enumerateObjectsUsingBlock: ^(id obj, NSUInteger idx, BOOL *stop) {
 			NSString *name = (NSString*)obj;
-			if([name containsString:@".tar.gz"]){
+			if([name containsString:extension]){
 				[backupNames addObject:obj];
 			}
 		}];
@@ -204,29 +219,45 @@ static IALManager *manager;
 			NSString *backupName = backupNames[i];
 			NSString *backupDate = backupDates[i];
 			NSString *backup = [NSString stringWithFormat:@"%@ [%@]", backupName, backupDate];
-			UIAlertAction *action = [UIAlertAction actionWithTitle:backup style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-				UIAlertController *subalert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName] preferredStyle:UIAlertControllerStyleAlert];
+			// get confirmation before proceeding
+			UIAlertAction *action = [UIAlertAction
+										actionWithTitle:backup
+										style:UIAlertActionStyleDefault
+										handler:^(UIAlertAction * action){
+											UIAlertController *subalert = [UIAlertController
+																			alertControllerWithTitle:@"IAmLazy"
+																			message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName]
+																			preferredStyle:UIAlertControllerStyleAlert];
 
-				UIAlertAction *yes = [UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-					[self restoreFromBackup:backupName];
-				}];
+											UIAlertAction *yes = [UIAlertAction
+																	actionWithTitle:@"Yes"
+																	style:UIAlertActionStyleDefault
+																	handler:^(UIAlertAction * action){
+																		[self restoreFromBackup:backupName ofType:type];
+																	}];
 
-				UIAlertAction *no = [UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-					[self dismissViewControllerAnimated:YES completion:nil];
-				}];
+											UIAlertAction *no = [UIAlertAction
+																	actionWithTitle:@"No"
+																	style:UIAlertActionStyleDefault
+																	handler:^(UIAlertAction * action){
+																		[self dismissViewControllerAnimated:YES completion:nil];
+																	}];
 
-				[subalert addAction:yes];
-				[subalert addAction:no];
+											[subalert addAction:yes];
+											[subalert addAction:no];
 
-				[self presentViewController:subalert animated:YES completion:nil];
-			}];
+											[self presentViewController:subalert animated:YES completion:nil];
+										}];
 
 			[alert addAction:action];
 		}
 
-		UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-			[self dismissViewControllerAnimated:YES completion:nil];
-		}];
+		UIAlertAction *cancel = [UIAlertAction
+									actionWithTitle:@"Cancel"
+									style:UIAlertActionStyleDefault
+									handler:^(UIAlertAction * action){
+										[self dismissViewControllerAnimated:YES completion:nil];
+									}];
 
 		[alert addAction:cancel];
 
@@ -234,110 +265,13 @@ static IALManager *manager;
 	}
 }
 
--(void)restoreListBackupWithLatest:(BOOL)latest{
-	if(latest){
-		NSArray *backups = [manager getBackups];
-		__block NSString *backupName;
-		[backups enumerateObjectsUsingBlock: ^(id obj, NSUInteger idx, BOOL *stop) {
-			NSString *name = (NSString*)obj;
-			if([name containsString:@".txt"]){
-				backupName = name;
-				*stop = YES;    // Stop enumerating
-				return;
-			}
-		}];
-		UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName] preferredStyle:UIAlertControllerStyleAlert];
-
-		UIAlertAction *yes = [UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-			[self restoreFromBackup:backupName];
-		}];
-
-		UIAlertAction *no = [UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-			[self dismissViewControllerAnimated:YES completion:nil];
-		}];
-
-		[alert addAction:yes];
-		[alert addAction:no];
-
-		[self presentViewController:alert animated:YES completion:nil];
-	}
-	else{
-		// get (sorted) backup filenames
-		NSArray *backups = [manager getBackups];
-		NSMutableArray *backupNames = [NSMutableArray new];
-		[backups enumerateObjectsUsingBlock: ^(id obj, NSUInteger idx, BOOL *stop) {
-			NSString *name = (NSString*)obj;
-			if([name containsString:@".txt"]){
-				[backupNames addObject:obj];
-			}
-		}];
-
-		// get backup creation dates
-		NSMutableArray *backupDates = [NSMutableArray new];
-		NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
-		[formatter setDateFormat:@"MMM dd, yyyy"];
-		for(NSString *backup in backupNames){
-			NSString *dateString = nil;
-
-			NSError *readError = NULL;
-			NSString *path = [backupDir stringByAppendingPathComponent:backup];
-			NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:&readError];
-			if(readError){
-				NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", path, readError.localizedDescription);
-				dateString = @"Error";
-			}
-			else{
-				NSDate *creationDate = [fileAttributes fileCreationDate];
-				dateString = [formatter stringFromDate:creationDate];
-			}
-
-			[backupDates addObject:dateString];
-		}
-
-		// post list of available backups
-		UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Choose the backup you'd like to restore from:" preferredStyle:UIAlertControllerStyleAlert];
-
-		// make each available backup its own action
-		for(int i = 0; i < [backupNames count]; i++){
-			NSString *backupName = backupNames[i];
-			NSString *backupDate = backupDates[i];
-			NSString *backup = [NSString stringWithFormat:@"%@ [%@]", backupName, backupDate];
-			UIAlertAction *action = [UIAlertAction actionWithTitle:backup style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-				UIAlertController *subalert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName] preferredStyle:UIAlertControllerStyleAlert];
-
-				UIAlertAction *yes = [UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-					[self restoreFromBackup:backupName];
-				}];
-
-				UIAlertAction *no = [UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-					[self dismissViewControllerAnimated:YES completion:nil];
-				}];
-
-				[subalert addAction:yes];
-				[subalert addAction:no];
-
-				[self presentViewController:subalert animated:YES completion:nil];
-			}];
-
-			[alert addAction:action];
-		}
-
-		UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-			[self dismissViewControllerAnimated:YES completion:nil];
-		}];
-
-		[alert addAction:cancel];
-
-		[self presentViewController:alert animated:YES completion:nil];
-	}
-}
-
--(void)restoreFromBackup:(NSString *)backupName{
-	[self presentViewController:[[IALProgressViewController alloc] initWithPurpose:@"restore"] animated:YES completion:nil];
+-(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type{
+	if(type == 0) [self presentViewController:[[IALProgressViewController alloc] initWithPurpose:@"restore-deb"] animated:YES completion:nil];
+	else [self presentViewController:[[IALProgressViewController alloc] initWithPurpose:@"restore-list"] animated:YES completion:nil];
 	[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
-	[manager restoreFromBackup:backupName];
+	[_manager restoreFromBackup:backupName ofType:type];
 	[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer
-	if(![manager encounteredError]){
+	if(![_manager encounteredError]){
 		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
 			[self dismissViewControllerAnimated:YES completion:^{
 				[self popPostRestore];
@@ -346,32 +280,49 @@ static IALManager *manager;
 	}
 }
 
+#pragma mark Popups
+
 -(void)popPostRestore{
-	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Choose a post-restore command:" preferredStyle:UIAlertControllerStyleAlert];
+	UIAlertController *alert = [UIAlertController
+								alertControllerWithTitle:@"IAmLazy"
+								message:@"Choose a post-restore command:"
+								preferredStyle:UIAlertControllerStyleAlert];
 
-	UIAlertAction *uicache = [UIAlertAction actionWithTitle:@"UICache" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-		NSTask *task = [[NSTask alloc] init];
-		[task setLaunchPath:@"/usr/bin/uicache"];
-		[task setArguments:@[@"-a"]];
-		[task launch];
-	}];
+	UIAlertAction *uicache = [UIAlertAction
+								actionWithTitle:@"UICache"
+								style:UIAlertActionStyleDefault
+								handler:^(UIAlertAction * action){
+									NSTask *task = [[NSTask alloc] init];
+									[task setLaunchPath:@"/usr/bin/uicache"];
+									[task setArguments:@[@"-a"]];
+									[task launch];
+								}];
 
-	UIAlertAction *respring = [UIAlertAction actionWithTitle:@"Respring" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-		NSTask *task = [[NSTask alloc] init];
-		[task setLaunchPath:@"/usr/bin/sbreload"];
-		[task launch];
-	}];
+	UIAlertAction *respring = [UIAlertAction
+								actionWithTitle:@"Respring"
+								style:UIAlertActionStyleDefault
+								handler:^(UIAlertAction * action){
+									NSTask *task = [[NSTask alloc] init];
+									[task setLaunchPath:@"/usr/bin/sbreload"];
+									[task launch];
+								}];
 
-	UIAlertAction *both = [UIAlertAction actionWithTitle:@"UICache & Respring" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-		NSTask *task = [[NSTask alloc] init];
-		[task setLaunchPath:@"/usr/bin/uicache"];
-		[task setArguments:@[@"-a", @"-r"]];
-		[task launch];
-	}];
+	UIAlertAction *both = [UIAlertAction
+							actionWithTitle:@"UICache & Respring"
+							style:UIAlertActionStyleDefault
+							handler:^(UIAlertAction * action){
+								NSTask *task = [[NSTask alloc] init];
+								[task setLaunchPath:@"/usr/bin/uicache"];
+								[task setArguments:@[@"-a", @"-r"]];
+								[task launch];
+							}];
 
-	UIAlertAction *none = [UIAlertAction actionWithTitle:@"None" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-		[self dismissViewControllerAnimated:YES completion:nil];
-	}];
+	UIAlertAction *none = [UIAlertAction
+							actionWithTitle:@"None"
+							style:UIAlertActionStyleDefault
+							handler:^(UIAlertAction * action){
+								[self dismissViewControllerAnimated:YES completion:nil];
+							}];
 
 	[alert addAction:uicache];
 	[alert addAction:respring];
@@ -383,23 +334,23 @@ static IALManager *manager;
 
 -(void)openSrc{
 	UIAlertController *alert = [UIAlertController
-						alertControllerWithTitle:@"URL Open Request"
-						message:@"IAmLazy.app is requesting to open 'https://github.com/L1ghtmann/IAmLazy'\n\nWould you like to proceed?"
-						preferredStyle:UIAlertControllerStyleAlert];
+								alertControllerWithTitle:@"URL Open Request"
+								message:@"IAmLazy.app is requesting to open 'https://github.com/L1ghtmann/IAmLazy'\n\nWould you like to proceed?"
+								preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *yes = [UIAlertAction
-							   actionWithTitle:@"Yes"
-							   style:UIAlertActionStyleDefault
-							   handler:^(UIAlertAction * action) {
-									[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://github.com/L1ghtmann/IAmLazy"] options:@{} completionHandler:nil];
-							   }];
+							actionWithTitle:@"Yes"
+							style:UIAlertActionStyleDefault
+							handler:^(UIAlertAction * action) {
+								[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://github.com/L1ghtmann/IAmLazy"] options:@{} completionHandler:nil];
+							}];
 
 	UIAlertAction *no = [UIAlertAction
-							   actionWithTitle:@"No"
-							   style:UIAlertActionStyleDefault
-							   handler:^(UIAlertAction * action) {
-									[self dismissViewControllerAnimated:YES completion:nil];
-							   }];
+							actionWithTitle:@"No"
+							style:UIAlertActionStyleDefault
+							handler:^(UIAlertAction * action) {
+								[self dismissViewControllerAnimated:YES completion:nil];
+							}];
 
 	[alert addAction:yes];
 	[alert addAction:no];
@@ -409,16 +360,16 @@ static IALManager *manager;
 
 -(void)popInfo{
 	UIAlertController *alert = [UIAlertController
-							alertControllerWithTitle:@"General Info"
-							message:@"IAmLazy.app\nVersion: 2.0.0\n\nMade by Lightmann"
-							preferredStyle:UIAlertControllerStyleAlert];
+								alertControllerWithTitle:@"General Info"
+								message:@"IAmLazy.app\nVersion: 2.0.0\n\nMade by Lightmann"
+								preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *okay = [UIAlertAction
-							   actionWithTitle:@"Okay"
-							   style:UIAlertActionStyleDefault
-							   handler:^(UIAlertAction * action) {
-									[self dismissViewControllerAnimated:YES completion:nil];
-							   }];
+							actionWithTitle:@"Okay"
+							style:UIAlertActionStyleDefault
+							handler:^(UIAlertAction * action) {
+								[self dismissViewControllerAnimated:YES completion:nil];
+							}];
 
 	[alert addAction:okay];
 

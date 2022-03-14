@@ -7,16 +7,9 @@
 @property (nonatomic, retain) NSDate *endTime;
 @property (nonatomic) BOOL encounteredError;
 +(instancetype)sharedInstance;
--(void)makeDebBackup:(BOOL)deb WithFilter:(BOOL)filter;
--(void)gatherPackageFiles;
--(void)buildDebs;
--(void)makeTarballWithFilter:(BOOL)filter;
+-(void)makeBackupOfType:(NSInteger)type withFilter:(BOOL)filter;
 -(NSString *)getDuration;
--(void)restoreFromBackup:(NSString *)backupName;
--(void)unpackArchive:(NSString *)backupName;
--(void)installDebs;
+-(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type;
+-(NSString *)getLatestBackup;
 -(NSArray *)getBackups;
--(void)executeCommand:(NSString *)cmd;
--(NSString *)executeCommandWithOutput:(NSString *)cmd;
--(void)executeCommandAsRoot:(NSString *)cmd;
 @end

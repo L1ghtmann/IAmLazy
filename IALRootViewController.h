@@ -1,7 +1,8 @@
 #import <UIKit/UIKit.h>
+#import "IALManager.h"
 
 @interface IALRootViewController : UITableViewController <UITabBarDelegate>
--(void)selectedBackupWithFormat:(NSString *)format andFilter:(BOOL)filter;
--(void)makeDebBackupWithFilter:(BOOL)filter;
--(void)makeListBackupWithFilter:(BOOL)filter;
+@property (nonatomic, retain) IALManager *manager;
+-(void)selectedBackupOfType:(NSInteger)type withFilter:(BOOL)filter;
+-(void)makeBackupOfType:(NSInteger)type withFilter:(BOOL)filter;
 @end

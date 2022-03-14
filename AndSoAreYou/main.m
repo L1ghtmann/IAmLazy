@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
 		executeCommand(cmd2);
 	}
 
-	else if(strcmp(argv[1], "restore-tweaks") == 0){
+	else if(strcmp(argv[1], "install-list") == 0){
 		NSString *tweakList = [NSString stringWithContentsOfFile:targetList encoding:NSUTF8StringEncoding error:NULL];
 
 		// make sure info on available packages is up-to-date
@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
 		NSString *cmd2 = [NSString stringWithFormat:@"xargs -n 1 -a %@ apt-get install -y --allow-unauthenticated > %@restore_log.txt", tweakList, logDir];
 		executeCommand(cmd2);
 
-		// resolve any lingering things (e.g., partial installs due to apt/dependency weirdness)
+		// resolve any lingering things (e.g., partial installs due to dependencies)
 		NSString *cmd3 = [NSString stringWithFormat:@"xargs -n 1 -a %@ apt-get install -fy --allow-unauthenticated > %@fixup_log.txt", tweakList, logDir];
 		executeCommand(cmd3);
 	}

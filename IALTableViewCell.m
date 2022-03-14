@@ -5,7 +5,7 @@
 //	Created by Lightmann during COVID-19
 //
 
-#include "IALTableViewCell.h"
+#import "IALTableViewCell.h"
 #import "Common.h"
 
 @implementation IALTableViewCell

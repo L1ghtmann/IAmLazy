@@ -11,7 +11,12 @@
 #import "IALManager.h"
 #import "Common.h"
 
+// https://stackoverflow.com/a/5337804
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
+
 @implementation IALBackupsViewController
+
+#pragma mark Setup
 
 -(instancetype)init{
 	self = [super initWithStyle:UITableViewStyleGrouped];
@@ -62,11 +67,10 @@
 	return sectionName;
 }
 
--(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UIView *)view forSection:(NSInteger)section {
-	UITableViewHeaderFooterView *header = (UITableViewHeaderFooterView *)view;
-	header.textLabel.textColor = [UIColor whiteColor];
-	header.textLabel.font = [UIFont systemFontOfSize:20 weight:0.56];
-	header.textLabel.text = [header.textLabel.text capitalizedString];
+-(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UITableViewHeaderFooterView *)header forSection:(NSInteger)section {
+	[header.textLabel setTextColor:[UIColor whiteColor]];
+	[header.textLabel setFont:[UIFont systemFontOfSize:20 weight:0.56]];
+	[header.textLabel setText:[header.textLabel.text capitalizedString]];
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -77,7 +81,7 @@
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdentifier];
 	}
 
-	cell.textLabel.text = _backups[indexPath.row];
+	[cell.textLabel setText:_backups[indexPath.row]];
 
 	return cell;
 }
@@ -132,31 +136,19 @@
 	return YES;
 }
 
--(void)openSrc{
-	UIAlertController *alert = [UIAlertController
-						alertControllerWithTitle:@"URL Open Request"
-						message:@"IAmLazy.app is requesting to open 'https://github.com/L1ghtmann/IAmLazy'\n\nWould you like to proceed?"
-						preferredStyle:UIAlertControllerStyleAlert];
-
-	UIAlertAction *yes = [UIAlertAction
-							   actionWithTitle:@"Yes"
-							   style:UIAlertActionStyleDefault
-							   handler:^(UIAlertAction * action) {
-									[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://github.com/L1ghtmann/IAmLazy"] options:@{} completionHandler:nil];
-							   }];
-
-	UIAlertAction *no = [UIAlertAction
-							   actionWithTitle:@"No"
-							   style:UIAlertActionStyleDefault
-							   handler:^(UIAlertAction * action) {
-									[self dismissViewControllerAnimated:YES completion:nil];
-							   }];
-
-	[alert addAction:yes];
-	[alert addAction:no];
-
-	[self presentViewController:alert animated:YES completion:nil];
+-(void)refreshTable{
+	if(self.tableView.refreshControl.refreshing){
+		[self.tableView.refreshControl endRefreshing];
+	}
+	[self getBackups];
+	[self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
 }
+
+-(void)getBackups{
+	_backups = [[[IALManager sharedInstance] getBackups] mutableCopy];
+}
+
+#pragma mark Functionality
 
 -(void)importBackup{
 	UIDocumentPickerViewController *importer;
@@ -188,24 +180,46 @@
 	[self refreshTable];
 }
 
--(void)refreshTable{
-	if(self.tableView.refreshControl.refreshing){
-		[self.tableView.refreshControl endRefreshing];
-	}
-	[self getBackups];
-	[self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
-}
+#pragma mark Popups
 
--(void)getBackups{
-	_backups = [[[IALManager sharedInstance] getBackups] mutableCopy];
+-(void)openSrc{
+	UIAlertController *alert = [UIAlertController
+								alertControllerWithTitle:@"URL Open Request"
+								message:@"IAmLazy.app is requesting to open 'https://github.com/L1ghtmann/IAmLazy'\n\nWould you like to proceed?"
+								preferredStyle:UIAlertControllerStyleAlert];
+
+	UIAlertAction *yes = [UIAlertAction
+							actionWithTitle:@"Yes"
+							style:UIAlertActionStyleDefault
+							handler:^(UIAlertAction *action){
+								[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://github.com/L1ghtmann/IAmLazy"] options:@{} completionHandler:nil];
+							}];
+
+	UIAlertAction *no = [UIAlertAction
+							actionWithTitle:@"No"
+							style:UIAlertActionStyleDefault
+							handler:^(UIAlertAction *action){
+								[self dismissViewControllerAnimated:YES completion:nil];
+							}];
+
+	[alert addAction:yes];
+	[alert addAction:no];
+
+	[self presentViewController:alert animated:YES completion:nil];
 }
 
 -(void)popErrorAlertWithReason:(NSString *)reason{
-	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy Error:" message:reason preferredStyle:UIAlertControllerStyleAlert];
+	UIAlertController *alert = [UIAlertController
+								alertControllerWithTitle:@"IAmLazy Error:"
+								message:reason
+								preferredStyle:UIAlertControllerStyleAlert];
 
-	UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
-		[alert dismissViewControllerAnimated:YES completion:nil];
-	}];
+	UIAlertAction *okay = [UIAlertAction
+							actionWithTitle:@"Okay"
+							style:UIAlertActionStyleDefault
+							handler:^(UIAlertAction * action) {
+								[alert dismissViewControllerAnimated:YES completion:nil];
+							}];
 
 	[alert addAction:okay];
 

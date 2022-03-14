@@ -10,19 +10,18 @@
 #import "IALRootViewController.h"
 #import "IALTableViewCell.h"
 #import "IALAppDelegate.h"
-#import "IALManager.h"
 #import "Common.h"
 
-static IALManager *manager;
-
 @implementation IALRootViewController
+
+#pragma mark Setup
 
 -(instancetype)init{
 	self = [super initWithStyle:UITableViewStyleGrouped];
 
 	if(self){
-		manager = [IALManager sharedInstance];
-		[manager setRootVC:self];
+		_manager = [IALManager sharedInstance];
+		[_manager setRootVC:self];
 	}
 
 	return self;
@@ -53,9 +52,9 @@ static IALManager *manager;
 	UITabBarItem *backups = [[UITabBarItem alloc] initWithTitle:@"Backups" image:[UIImage systemImageNamed:@"folder.fill"] tag:1];
 	UITabBarItem *restore = [[UITabBarItem alloc] initWithTitle:@"Restore" image:[UIImage systemImageNamed:@"arrow.counterclockwise.circle"] tag:2];
 
-	create.titlePositionAdjustment = UIOffsetMake(0.0, -2.0);
-	backups.titlePositionAdjustment = UIOffsetMake(0.0, -2.0);
-	restore.titlePositionAdjustment = UIOffsetMake(0.0, -2.0);
+	[create setTitlePositionAdjustment:UIOffsetMake(0.0, -2.0)];
+	[backups setTitlePositionAdjustment:UIOffsetMake(0.0, -2.0)];
+	[restore setTitlePositionAdjustment:UIOffsetMake(0.0, -2.0)];
 
 	[tabBarItems addObject:create];
 	[tabBarItems addObject:backups];
@@ -105,11 +104,10 @@ static IALManager *manager;
 	return sectionName;
 }
 
--(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UIView *)view forSection:(NSInteger)section {
-	UITableViewHeaderFooterView *header = (UITableViewHeaderFooterView *)view;
-	header.textLabel.textColor = [UIColor whiteColor];
-	header.textLabel.font = [UIFont systemFontOfSize:20 weight:0.56];
-	header.textLabel.text = [header.textLabel.text capitalizedString];
+-(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UITableViewHeaderFooterView *)header forSection:(NSInteger)section {
+	[header.textLabel setTextColor:[UIColor whiteColor]];
+	[header.textLabel setFont:[UIFont systemFontOfSize:20 weight:0.56]];
+	[header.textLabel setText:[header.textLabel.text capitalizedString]];
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -120,6 +118,7 @@ static IALManager *manager;
 	NSString *function;
 	NSString *functionDescriptor;
 
+	// eval section
 	if(indexPath.section == 0){
 		type = @"deb";
 		functionDescriptor = @" Backup";
@@ -129,6 +128,7 @@ static IALManager *manager;
 		functionDescriptor = @" List";
 	}
 
+	// eval row
 	if(indexPath.row == 0){
 		function = @"standard-backup";
 		functionDescriptor = [@"Standard" stringByAppendingString:functionDescriptor];
@@ -152,35 +152,40 @@ static IALManager *manager;
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
 	AudioServicesPlaySystemSound(1520); // haptic feedback
 
-	BOOL filter;
+	BOOL filter = NO;
 	if(indexPath.row == 0) filter = YES;
-	else filter = NO;
 
 	if(indexPath.section == 0){
-		[self selectedBackupWithFormat:@"deb" andFilter:filter];
+		[self selectedBackupOfType:0 withFilter:filter];
 	}
 	else{
-		[self selectedBackupWithFormat:@"list" andFilter:filter];
+		[self selectedBackupOfType:1 withFilter:filter];
 	}
 
 	[tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
--(void)selectedBackupWithFormat:(NSString *)format andFilter:(BOOL)filter{
-	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Please confirm that you have adequate free storage before proceeding" preferredStyle:UIAlertControllerStyleAlert];
+#pragma mark Functionality
 
-	UIAlertAction *confirm = [UIAlertAction actionWithTitle:@"Confirm" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-		if([format isEqualToString:@"deb"]){
-			[self makeDebBackupWithFilter:filter];
-		}
-		else{
-			[self makeListBackupWithFilter:filter];
-		}
-	}];
+-(void)selectedBackupOfType:(NSInteger)type withFilter:(BOOL)filter{
+	UIAlertController *alert = [UIAlertController
+								alertControllerWithTitle:@"IAmLazy"
+								message:@"Please confirm that you have adequate free storage before proceeding"
+								preferredStyle:UIAlertControllerStyleAlert];
 
-	UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-		[self dismissViewControllerAnimated:YES completion:nil];
-	}];
+	UIAlertAction *confirm = [UIAlertAction
+								actionWithTitle:@"Confirm"
+								style:UIAlertActionStyleDefault
+								handler:^(UIAlertAction * action){
+									[self makeBackupOfType:type withFilter:filter];
+								}];
+
+	UIAlertAction *cancel = [UIAlertAction
+								actionWithTitle:@"Cancel"
+								style:UIAlertActionStyleDefault
+								handler:^(UIAlertAction * action){
+									[self dismissViewControllerAnimated:YES completion:nil];
+								}];
 
 	[alert addAction:confirm];
 	[alert addAction:cancel];
@@ -188,13 +193,13 @@ static IALManager *manager;
 	[self presentViewController:alert animated:YES completion:nil];
 }
 
--(void)makeDebBackupWithFilter:(BOOL)filter{
+-(void)makeBackupOfType:(NSInteger)type withFilter:(BOOL)filter{
 	if(filter) [self presentViewController:[[IALProgressViewController alloc] initWithPurpose:@"standard-backup"] animated:YES completion:nil];
 	else [self presentViewController:[[IALProgressViewController alloc] initWithPurpose:@"unfiltered-backup"] animated:YES completion:nil];
 	[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
-	[manager makeDebBackup:YES WithFilter:filter];
+	[_manager makeBackupOfType:type withFilter:filter];
 	[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer
-	if(![manager encounteredError]){
+	if(![_manager encounteredError]){
 		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
 			[self dismissViewControllerAnimated:YES completion:^{
 				[self popPostBackup];
@@ -203,35 +208,33 @@ static IALManager *manager;
 	}
 }
 
--(void)makeListBackupWithFilter:(BOOL)filter{
-	[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
-	[manager makeDebBackup:NO WithFilter:filter];
-	[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer
-	if(![manager encounteredError]){
-		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-			[self dismissViewControllerAnimated:YES completion:^{
-				[self popPostBackup];
-			}];
-		});
-	}
-}
+#pragma mark Popups
 
 -(void)popPostBackup{
-	UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:[NSString stringWithFormat:@"Tweak backup completed successfully in %@ seconds! \n\nYour backup can be found in\n %@", [manager getDuration], backupDir] preferredStyle:UIAlertControllerStyleAlert];
+	UIAlertController *alert = [UIAlertController
+								alertControllerWithTitle:@"IAmLazy"
+								message:[NSString stringWithFormat:@"Tweak backup completed successfully in %@ seconds! \n\nYour backup can be found in\n %@", [_manager getDuration], backupDir]
+								preferredStyle:UIAlertControllerStyleAlert];
 
-	UIAlertAction *export = [UIAlertAction actionWithTitle:@"Export" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-		NSString *localPath = [NSString stringWithFormat:@"file://%@%@", backupDir, [[manager getBackups] firstObject]];
-		NSURL *fileURL = [NSURL URLWithString:localPath]; // to actually export the file, needs to be an NSURL
+	UIAlertAction *export = [UIAlertAction
+								actionWithTitle:@"Export"
+								style:UIAlertActionStyleDefault
+								handler:^(UIAlertAction * action){
+									NSString *localPath = [NSString stringWithFormat:@"file://%@%@", backupDir, [[_manager getBackups] firstObject]];
+									NSURL *fileURL = [NSURL URLWithString:localPath]; // to actually export the file, needs to be an NSURL
 
-		UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
-		[activityViewController setModalTransitionStyle:UIModalTransitionStyleCoverVertical];
+									UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
+									[activityViewController setModalTransitionStyle:UIModalTransitionStyleCoverVertical];
 
-		[self presentViewController:activityViewController animated:YES completion:nil];
-	}];
+									[self presentViewController:activityViewController animated:YES completion:nil];
+								}];
 
-	UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * action){
-		[self dismissViewControllerAnimated:YES completion:nil];
-	}];
+	UIAlertAction *okay = [UIAlertAction
+							actionWithTitle:@"Okay"
+							style:UIAlertActionStyleDefault
+							handler:^(UIAlertAction * action){
+								[self dismissViewControllerAnimated:YES completion:nil];
+							}];
 
 	[alert addAction:export];
 	[alert addAction:okay];
@@ -241,23 +244,23 @@ static IALManager *manager;
 
 -(void)openSrc{
 	UIAlertController *alert = [UIAlertController
-						alertControllerWithTitle:@"URL Open Request"
-						message:@"IAmLazy.app is requesting to open 'https://github.com/L1ghtmann/IAmLazy'\n\nWould you like to proceed?"
-						preferredStyle:UIAlertControllerStyleAlert];
+								alertControllerWithTitle:@"URL Open Request"
+								message:@"IAmLazy.app is requesting to open 'https://github.com/L1ghtmann/IAmLazy'\n\nWould you like to proceed?"
+								preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *yes = [UIAlertAction
-							   actionWithTitle:@"Yes"
-							   style:UIAlertActionStyleDefault
-							   handler:^(UIAlertAction * action) {
-									[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://github.com/L1ghtmann/IAmLazy"] options:@{} completionHandler:nil];
-							   }];
+							actionWithTitle:@"Yes"
+							style:UIAlertActionStyleDefault
+							handler:^(UIAlertAction * action) {
+								[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://github.com/L1ghtmann/IAmLazy"] options:@{} completionHandler:nil];
+							}];
 
 	UIAlertAction *no = [UIAlertAction
-							   actionWithTitle:@"No"
-							   style:UIAlertActionStyleDefault
-							   handler:^(UIAlertAction * action) {
-									[self dismissViewControllerAnimated:YES completion:nil];
-							   }];
+							actionWithTitle:@"No"
+							style:UIAlertActionStyleDefault
+							handler:^(UIAlertAction * action) {
+								[self dismissViewControllerAnimated:YES completion:nil];
+							}];
 
 	[alert addAction:yes];
 	[alert addAction:no];
@@ -267,16 +270,16 @@ static IALManager *manager;
 
 -(void)popInfo{
 	UIAlertController *alert = [UIAlertController
-							alertControllerWithTitle:@"General Info"
-							message:@"IAmLazy.app\nVersion: 2.0.0\n\nMade by Lightmann"
-							preferredStyle:UIAlertControllerStyleAlert];
+								alertControllerWithTitle:@"General Info"
+								message:@"IAmLazy.app\nVersion: 2.0.0\n\nMade by Lightmann"
+								preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *okay = [UIAlertAction
-							   actionWithTitle:@"Okay"
-							   style:UIAlertActionStyleDefault
-							   handler:^(UIAlertAction * action) {
-									[self dismissViewControllerAnimated:YES completion:nil];
-							   }];
+							actionWithTitle:@"Okay"
+							style:UIAlertActionStyleDefault
+							handler:^(UIAlertAction * action) {
+								[self dismissViewControllerAnimated:YES completion:nil];
+							}];
 
 	[alert addAction:okay];
 
