@@ -18,11 +18,11 @@
 		// setup top nav bar
 		[controller.navigationItem setTitleView:[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"AppIcon40x40@2x-clear"]]];
 
-		UIBarButtonItem *srcItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"line.horizontal.3"] style:UIBarButtonItemStylePlain target:self action:@selector(openSrc)];
-		[controller.navigationItem setLeftBarButtonItem:srcItem];
+		_srcItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"line.horizontal.3"] style:UIBarButtonItemStylePlain target:self action:@selector(openSrc)];
+		[controller.navigationItem setLeftBarButtonItem:_srcItem];
 
-		UIBarButtonItem *infoItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"info.circle.fill"] style:UIBarButtonItemStylePlain target:self action:@selector(popInfo)];
-		[controller.navigationItem setRightBarButtonItem:infoItem];
+		_infoItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"info.circle.fill"] style:UIBarButtonItemStylePlain target:self action:@selector(popInfo)];
+		[controller.navigationItem setRightBarButtonItem:_infoItem];
 	}
 
 	return self;
@@ -31,29 +31,40 @@
 #pragma mark Popups
 
 -(void)openSrc{
-	UIAlertController *alert = [UIAlertController
-								alertControllerWithTitle:@"URL Open Request"
-								message:@"IAmLazy.app is requesting to open 'https://github.com/L1ghtmann/IAmLazy'\n\nWould you like to proceed?"
-								preferredStyle:UIAlertControllerStyleAlert];
+	// build web view
+	_webViewConfiguration = [[WKWebViewConfiguration alloc] init];
+	_webView = [[WKWebView alloc] initWithFrame:self.view.frame configuration:_webViewConfiguration];
+	[_webView setNavigationDelegate:self];
+	NSURL *url = [NSURL URLWithString:@"https://github.com/L1ghtmann/IAmLazy"];
+	NSURLRequest *request = [NSURLRequest requestWithURL:url];
 
-	UIAlertAction *yes = [UIAlertAction
-							actionWithTitle:@"Yes"
-							style:UIAlertActionStyleDefault
-							handler:^(UIAlertAction *action){
-								[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://github.com/L1ghtmann/IAmLazy"] options:@{} completionHandler:nil];
-							}];
+	// create back and close nav bar buttons for use with webview
+	UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"arrow.left"] style:UIBarButtonItemStylePlain target:_webView action:@selector(goBack)];
+	UIBarButtonItem *closeItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"xmark"] style:UIBarButtonItemStylePlain target:self action:@selector(closeWebView)];
+	[self.visibleViewController.navigationItem setLeftBarButtonItems:@[backItem, closeItem]];
 
-	UIAlertAction *no = [UIAlertAction
-							actionWithTitle:@"No"
-							style:UIAlertActionStyleDefault
-							handler:^(UIAlertAction *action){
-								[self dismissViewControllerAnimated:YES completion:nil];
-							}];
+	// hide right nav bar button
+	[self.visibleViewController.navigationItem.rightBarButtonItem setTintColor:[UIColor clearColor]];
 
-	[alert addAction:yes];
-	[alert addAction:no];
+	// present the webview
+	[_webView loadRequest:request];
+	[self.visibleViewController.view addSubview:_webView];
+}
 
-	[self presentViewController:alert animated:YES completion:nil];
+-(void)closeWebView{
+	// dispose of webview
+	[UIView animateWithDuration:0.2
+			animations:^{[_webView setAlpha:0];}
+	 		completion:^(BOOL finished){
+				[_webView removeFromSuperview];
+			}];
+	_webViewConfiguration = nil;
+
+	// reset left nav bar buttons (set to just the src button)
+	[self.visibleViewController.navigationItem setLeftBarButtonItems:@[_srcItem]];
+
+	// unhide right nav bar button
+	[self.visibleViewController.navigationItem.rightBarButtonItem setTintColor:nil];
 }
 
 -(void)popInfo{
