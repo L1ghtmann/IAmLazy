@@ -31,12 +31,7 @@
 -(void)loadView{
 	[super loadView];
 
-	// setup top nav bar
-	[self.navigationItem setTitleView:[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"AppIcon40x40@2x-clear"]]];
-
-	UIBarButtonItem *srcItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"line.horizontal.3"] style:UIBarButtonItemStylePlain target:self action:@selector(openSrc)];
-	[self.navigationItem setLeftBarButtonItem:srcItem];
-
+	// replace info nav bar button with import button
 	UIBarButtonItem *importItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"plus.circle.fill"] style:UIBarButtonItemStylePlain target:self action:@selector(importBackup)];
 	[self.navigationItem setRightBarButtonItem:importItem];
 
@@ -181,32 +176,6 @@
 }
 
 #pragma mark Popups
-
--(void)openSrc{
-	UIAlertController *alert = [UIAlertController
-								alertControllerWithTitle:@"URL Open Request"
-								message:@"IAmLazy.app is requesting to open 'https://github.com/L1ghtmann/IAmLazy'\n\nWould you like to proceed?"
-								preferredStyle:UIAlertControllerStyleAlert];
-
-	UIAlertAction *yes = [UIAlertAction
-							actionWithTitle:@"Yes"
-							style:UIAlertActionStyleDefault
-							handler:^(UIAlertAction *action){
-								[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://github.com/L1ghtmann/IAmLazy"] options:@{} completionHandler:nil];
-							}];
-
-	UIAlertAction *no = [UIAlertAction
-							actionWithTitle:@"No"
-							style:UIAlertActionStyleDefault
-							handler:^(UIAlertAction *action){
-								[self dismissViewControllerAnimated:YES completion:nil];
-							}];
-
-	[alert addAction:yes];
-	[alert addAction:no];
-
-	[self presentViewController:alert animated:YES completion:nil];
-}
 
 -(void)popErrorAlertWithReason:(NSString *)reason{
 	UIAlertController *alert = [UIAlertController
