@@ -7,7 +7,7 @@
 
 #import "IALGeneralManager.h"
 #import "IALBackupManager.h"
-#import "Common.h"
+#import "../Common.h"
 
 @implementation IALBackupManager
 
@@ -109,7 +109,14 @@
 
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
 		// get latest backup name and append the text file extension
-		NSString *listName = [[_generalManager getLatestBackup] stringByAppendingString:@".txt"];
+		NSString *latest = [_generalManager getLatestBackup];
+		NSString *listName;
+		if(!filter){
+			listName = [latest stringByAppendingString:@"u.txt"];
+		}
+		else{
+			listName = [latest stringByAppendingString:@".txt"];
+		}
 
 		// write to file
 		NSString *file = [NSString stringWithFormat:@"%@%@", backupDir, listName];
@@ -403,7 +410,14 @@
 
 -(void)makeTarballWithFilter:(BOOL)filter{
 	// get latest backup name and append the gzip tar extension
-	NSString *backupName = [[_generalManager getLatestBackup] stringByAppendingString:@".tar.gz"];
+	NSString *latest = [_generalManager getLatestBackup];
+	NSString *backupName;
+	if(!filter){
+		backupName = [latest stringByAppendingString:@"u.tar.gz"];
+	}
+	else{
+		backupName = [latest stringByAppendingString:@".tar.gz"];
+	}
 
 	// make tarball
 	// ensure file structure is ONLY me.lightmann.iamlazy/ not /tmp/me.lightmann.iamlazy/

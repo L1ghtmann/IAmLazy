@@ -1,7 +1,7 @@
-#import "IALBackupsViewController.h"
-#import "IALRestoreViewController.h"
-#import "IALNavigationController.h"
-#import "IALRootViewController.h"
+#import "UI/IALBackupsViewController.h"
+#import "UI/IALRestoreViewController.h"
+#import "UI/IALNavigationController.h"
+#import "UI/IALRootViewController.h"
 #import "IALAppDelegate.h"
 
 @implementation IALAppDelegate

@@ -8,7 +8,7 @@ include $(THEOS)/makefiles/common.mk
 
 APPLICATION_NAME = IAmLazy
 
-IAmLazy_FILES = $(wildcard *.m)
+IAmLazy_FILES = $(wildcard Managers/*.m) $(wildcard UI/*.m) $(wildcard *.m)
 IAmLazy_FRAMEWORKS = UIKit CoreGraphics
 IAmLazy_CFLAGS = -fobjc-arc -Wno-unguarded-availability-new # since can't use @available on Linux
 IAmLazy_CODESIGN_FLAGS = -Sentitlements.plist

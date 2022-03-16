@@ -8,9 +8,9 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import "IALProgressViewController.h"
 #import "IALRestoreViewController.h"
-#import "IALGeneralManager.h"
+#import "../Managers/IALGeneralManager.h"
 #import "IALTableViewCell.h"
-#import "Common.h"
+#import "../Common.h"
 
 @implementation IALRestoreViewController
 

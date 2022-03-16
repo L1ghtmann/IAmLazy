@@ -8,8 +8,8 @@
 #import <UniformTypeIdentifiers/UTCoreTypes.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import "IALBackupsViewController.h"
-#import "IALGeneralManager.h"
-#import "Common.h"
+#import "../Managers/IALGeneralManager.h"
+#import "../Common.h"
 
 // https://stackoverflow.com/a/5337804
 #define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)

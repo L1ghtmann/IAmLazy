@@ -7,7 +7,7 @@
 
 #import "IALGeneralManager.h"
 #import "IALRestoreManager.h"
-#import "Common.h"
+#import "../Common.h"
 
 @implementation IALRestoreManager
 

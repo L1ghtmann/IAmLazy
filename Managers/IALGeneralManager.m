@@ -8,13 +8,13 @@
 #import "IALRestoreManager.h"
 #import "IALBackupManager.h"
 #import "IALGeneralManager.h"
-#import "Common.h"
+#import "../Common.h"
 
 @implementation IALGeneralManager
 
 +(instancetype)sharedInstance{
 	static dispatch_once_t p = 0;
-	__strong static IALGeneralManager* sharedInstance = nil;
+	__strong static IALGeneralManager *sharedInstance = nil;
 	dispatch_once(&p, ^{
 		sharedInstance = [[self alloc] init];
 	});
@@ -24,7 +24,7 @@
 #pragma mark Backup
 
 -(void)makeBackupOfType:(NSInteger)type withFilter:(BOOL)filter{
-	_backupManager = [[IALBackupManager alloc] init];
+	if(!_backupManager) _backupManager = [[IALBackupManager alloc] init];
 	[_backupManager setGeneralManager:self];
 	[_backupManager makeBackupOfType:type withFilter:filter];
 }
@@ -32,7 +32,7 @@
 #pragma mark Restore
 
 -(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type{
-	_restoreManager = [[IALRestoreManager alloc] init];
+	if(!_restoreManager) _restoreManager = [[IALRestoreManager alloc] init];
 	[_restoreManager setGeneralManager:self];
 	[_restoreManager restoreFromBackup:backupName ofType:type];
 }

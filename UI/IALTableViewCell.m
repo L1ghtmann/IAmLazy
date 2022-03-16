@@ -6,7 +6,7 @@
 //
 
 #import "IALTableViewCell.h"
-#import "Common.h"
+#import "../Common.h"
 
 @implementation IALTableViewCell
 

@@ -6,7 +6,7 @@
 //
 
 #include "IALProgressViewController.h"
-#import "Common.h"
+#import "../Common.h"
 
 #define fillColor [UIColor colorWithRed:16.0f/255.0f green:16.0f/255.0f blue:16.0f/255.0f alpha:1.0f]
 #define accentColor [UIColor colorWithRed:247.0f/255.0f green:249.0f/255.0f blue:250.0f/255.0f alpha:1.0f]
