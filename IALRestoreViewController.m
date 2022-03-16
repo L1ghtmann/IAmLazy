@@ -8,6 +8,7 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import "IALProgressViewController.h"
 #import "IALRestoreViewController.h"
+#import "IALGeneralManager.h"
 #import "IALTableViewCell.h"
 #import "Common.h"
 
@@ -19,7 +20,7 @@
 	self = [super initWithStyle:UITableViewStyleGrouped];
 
 	if(self){
-		_manager = [IALManager sharedInstance];
+		_manager = [IALGeneralManager sharedInstance];
 	}
 
 	return self;

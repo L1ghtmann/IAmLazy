@@ -8,6 +8,8 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import "IALProgressViewController.h"
 #import "IALRootViewController.h"
+#import "IALGeneralManager.h"
+#import "IALBackupManager.h"
 #import "IALTableViewCell.h"
 #import "IALAppDelegate.h"
 #import "Common.h"
@@ -20,7 +22,7 @@
 	self = [super initWithStyle:UITableViewStyleGrouped];
 
 	if(self){
-		_manager = [IALManager sharedInstance];
+		_manager = [IALGeneralManager sharedInstance];
 		[_manager setRootVC:self];
 	}
 
@@ -203,7 +205,7 @@
 -(void)popPostBackup{
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy"
-								message:[NSString stringWithFormat:@"Tweak backup completed successfully in %@ seconds! \n\nYour backup can be found in\n %@", [_manager getDuration], backupDir]
+								message:[NSString stringWithFormat:@"Tweak backup completed successfully in %@ seconds! \n\nYour backup can be found in\n %@", [_manager.backupManager getDuration], backupDir]
 								preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *export = [UIAlertAction

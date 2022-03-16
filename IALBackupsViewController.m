@@ -8,7 +8,7 @@
 #import <UniformTypeIdentifiers/UTCoreTypes.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import "IALBackupsViewController.h"
-#import "IALManager.h"
+#import "IALGeneralManager.h"
 #import "Common.h"
 
 // https://stackoverflow.com/a/5337804
@@ -22,7 +22,7 @@
 	self = [super initWithStyle:UITableViewStyleGrouped];
 
 	if(self){
-		_backups = [[[IALManager sharedInstance] getBackups] mutableCopy];
+		_backups = [[[IALGeneralManager sharedInstance] getBackups] mutableCopy];
 	}
 
 	return self;
@@ -140,7 +140,7 @@
 }
 
 -(void)getBackups{
-	_backups = [[[IALManager sharedInstance] getBackups] mutableCopy];
+	_backups = [[[IALGeneralManager sharedInstance] getBackups] mutableCopy];
 }
 
 #pragma mark Functionality
