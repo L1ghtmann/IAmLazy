@@ -58,6 +58,7 @@
 	 		completion:^(BOOL finished){
 				[_webView removeFromSuperview];
 			}];
+	_webView = nil;
 	_webViewConfiguration = nil;
 
 	// reset left nav bar buttons (set to just the src button)
