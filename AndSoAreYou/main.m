@@ -83,6 +83,10 @@ int main(int argc, char *argv[]) {
 		// copy files and file structure
 		NSString *cmd = [NSString stringWithFormat:@"xargs -d '\n' -a %@ cp -a --parents -t %@", gFilesToCopy, tweakDir];
 		executeCommand(cmd);
+
+		// 'reenable' tweaks that've been disabled with iCleaner Pro (i.e., change extension from .disabled back to .dylib)
+		NSString *cmd2 = [NSString stringWithFormat:@"cd %@ && find . -type f -name '*.disabled' | while read f; do mv $f ${f%%.disabled}.dylib; done", tweakDir];
+		executeCommand(cmd2);
 	}
 
 	else if(strcmp(argv[1], "copy-debian-files") == 0){
