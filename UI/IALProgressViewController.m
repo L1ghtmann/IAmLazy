@@ -17,10 +17,11 @@
 	self = [super init];
 
 	if(self){
-		// purpose: 0 == backup | 1 == restore
-		// type: 0 == deb | 1 == list
-		// filter: 0 == standard | 1 == unfiltered
-		if(purpose == 0 && type != 1){
+		/*
+			purpose: 0 = backup | 1 = restore
+			type: 0 = deb | 1 = list
+		*/
+		if(purpose == 0 && type == 0){
 			self.itemCount = 4;
 		}
 		else{
@@ -70,6 +71,11 @@
 
 -(NSMutableArray *)iconsForPurpose:(NSInteger)purpose ofType:(NSInteger)type{
 	NSMutableArray *icons = [NSMutableArray new];
+
+	/*
+		purpose: 0 = backup | 1 = restore
+		type: 0 = deb | 1 = list
+	*/
 
 	if(purpose == 0){
 		[icons addObject:@"list.number"];
@@ -128,6 +134,11 @@
 
 -(NSMutableArray *)itemDescriptionsForPurpose:(NSInteger)purpose ofType:(NSInteger)type withFilter:(BOOL)filter{
 	NSMutableArray *itemDescs = [NSMutableArray new];
+
+	/*
+		purpose: 0 = backup | 1 = restore
+		type: 0 = deb | 1 = list
+	*/
 
 	if(purpose == 0){
 		if(type == 0){
@@ -190,7 +201,7 @@
 		[itemDesc setTextColor:accentColor];
 
 		UILabel *itemStatus = [[UILabel alloc] initWithFrame:CGRectMake(x,position.y-8,kWidth,20)];
-		itemStatus.font = [UIFont systemFontOfSize:14 weight:-0.60];
+		[itemStatus setFont:[UIFont systemFontOfSize:14 weight:-0.60]];
 		[itemStatus setText:@"Waiting"];
 		[itemStatus setTextColor:accentColor];
 		[itemStatus setAlpha:.75];

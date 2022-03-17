@@ -104,35 +104,36 @@
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
-	static NSString *cellIdentifier = @"cell";
-	IALTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
+	static NSString *identifier = @"cell";
+	IALTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
 
-	NSString *type;
-	NSString *function;
+	NSInteger purpose = 0; // backup
+	NSInteger type; // 0 = deb | 1 = list
+	NSInteger function; // 0 = filtered | 1 = unfiltered
 	NSString *functionDescriptor;
 
 	// eval section
 	if(indexPath.section == 0){
-		type = @"deb";
+		type = 0;
 		functionDescriptor = @" Backup";
 	}
 	else{
-		type = @"list";
+		type = 1;
 		functionDescriptor = @" List";
 	}
 
 	// eval row
 	if(indexPath.row == 0){
-		function = @"standard-backup";
+		function = 0;
 		functionDescriptor = [@"Standard" stringByAppendingString:functionDescriptor];
 	}
 	else{
-		function = @"unfiltered-backup";
+		function = 1;
 		functionDescriptor = [@"Unfiltered" stringByAppendingString:functionDescriptor];
 	}
 
 	if(!cell){
-		cell = [[IALTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIdentifier type:type function:function functionDescriptor:functionDescriptor];
+		cell = [[IALTableViewCell alloc] initWithIdentifier:identifier purpose:purpose type:type function:function functionDescriptor:functionDescriptor];
 	}
 
 	return cell;

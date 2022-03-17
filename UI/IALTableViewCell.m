@@ -10,71 +10,30 @@
 
 @implementation IALTableViewCell
 
--(instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier type:(NSString *)type function:(NSString *)function functionDescriptor:(NSString *)functionDescriptor{
+-(instancetype)initWithIdentifier:(NSString *)identifier purpose:(NSInteger)purpose type:(NSInteger)type function:(NSInteger)function functionDescriptor:(NSString *)descriptor{
 
-	self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
+	self = [super initWithStyle:UITableViewCellStyleDefault reuseIdentifier:identifier];
 
 	if (self){
 		// icon setup
 		// helpful link for available SFSymbols: https://github.com/cyanzhong/sf-symbols-online
 		// note: SFSymbols' width and height aren't equal, so need to set the content mode accordingly
-		if([function isEqualToString:@"standard-backup"]){
-			_functionIcon = [[UIImageView alloc] initWithFrame:CGRectZero];
-			if([type isEqualToString:@"deb"]){
-				[_functionIcon setImage:[UIImage systemImageNamed:@"plus.app"]];
-			}
-			else{
-				[_functionIcon setImage:[UIImage systemImageNamed:@"line.horizontal.3.decrease.circle"]];
-			}
-			[_functionIcon setContentMode:UIViewContentModeScaleAspectFit];
-		}
-		else if([function isEqualToString:@"unfiltered-backup"]){
-			_functionIcon = [[UIImageView alloc] initWithFrame:CGRectZero];
-			if([type isEqualToString:@"deb"]){
-				[_functionIcon setImage:[UIImage systemImageNamed:@"exclamationmark.square"]];
-			}
-			else{
-				[_functionIcon setImage:[UIImage systemImageNamed:@"exclamationmark.circle"]];
-			}
-			[_functionIcon setContentMode:UIViewContentModeScaleAspectFit];
-			[_functionIcon setTintColor:[UIColor colorWithRed:1.00000 green:0.94118 blue:0.85098 alpha:1.00000]];
-		}
-		else if([function isEqualToString:@"latest-restore"]){
-			_functionIcon = [[UIImageView alloc] initWithFrame:CGRectZero];
-			if([type isEqualToString:@"deb"]){
-				[_functionIcon setImage:[UIImage systemImageNamed:@"arrow.counterclockwise.circle"]];
-			}
-			else{
-				[_functionIcon setImage:[UIImage systemImageNamed:@"pencil.and.outline"]];
-			}
-			[_functionIcon setContentMode:UIViewContentModeScaleAspectFit];
-		}
-		else if([function isEqualToString:@"specific-restore"]){
-			_functionIcon = [[UIImageView alloc] initWithFrame:CGRectZero];
-			if([type isEqualToString:@"deb"]){
-				[_functionIcon setImage:[UIImage systemImageNamed:@"questionmark.circle"]];
-			}
-			else{
-				[_functionIcon setImage:[UIImage systemImageNamed:@"pencil.tip.crop.circle"]];
-			}
-			[_functionIcon setContentMode:UIViewContentModeScaleAspectFit];
-			[_functionIcon setTintColor:[UIColor colorWithRed:1.00000 green:0.94118 blue:0.85098 alpha:1.00000]];
-		}
-		else{
-			_functionIcon = nil;
-		}
+		_icon = [[UIImageView alloc] initWithFrame:CGRectZero];
+		[self addSubview:_icon];
 
-		if(_functionIcon){
-			[self addSubview:_functionIcon];
+		[_icon setContentMode:UIViewContentModeScaleAspectFit];
+		[_icon setImage:[self imageForPurpose:purpose ofType:type andFunction:function]];
+		[_icon setUserInteractionEnabled:NO];
 
-			[_functionIcon setUserInteractionEnabled:NO];
+		// color icon for 2nd cell in section creme
+		if(function == 1) [_icon setTintColor:[UIColor colorWithRed:1.00000 green:0.94118 blue:0.85098 alpha:1.00000]];
 
-			[_functionIcon setTranslatesAutoresizingMaskIntoConstraints:NO];
-			[_functionIcon.widthAnchor constraintEqualToConstant:75].active = YES;
-			[_functionIcon.heightAnchor constraintEqualToConstant:75].active = YES;
-			[_functionIcon.leftAnchor constraintEqualToAnchor:self.leftAnchor constant:25].active = YES;
-			[_functionIcon.centerYAnchor constraintEqualToAnchor:self.centerYAnchor].active = YES;
-		}
+		[_icon setTranslatesAutoresizingMaskIntoConstraints:NO];
+		[_icon.widthAnchor constraintEqualToConstant:75].active = YES;
+		[_icon.heightAnchor constraintEqualToConstant:75].active = YES;
+		[_icon.leftAnchor constraintEqualToAnchor:self.leftAnchor constant:25].active = YES;
+		[_icon.centerYAnchor constraintEqualToAnchor:self.centerYAnchor].active = YES;
+
 
 		// (label) container setup
 		_container = [[UIView alloc] initWithFrame:CGRectZero];
@@ -91,52 +50,87 @@
 		_functionLabel = [[UILabel alloc] initWithFrame:CGRectZero];
 		[_container addSubview:_functionLabel];
 
+		[_functionLabel setFont:[UIFont systemFontOfSize:_functionLabel.font.pointSize weight:0.40]];
+		[_functionLabel setUserInteractionEnabled:NO];
+		[_functionLabel setText:descriptor];
+
 		[_functionLabel setTranslatesAutoresizingMaskIntoConstraints:NO];
 		[_functionLabel.widthAnchor constraintEqualToConstant:kWidth].active = YES;
 		[_functionLabel.heightAnchor constraintEqualToConstant:25].active = YES;
 		[_functionLabel.topAnchor constraintEqualToAnchor:_container.topAnchor constant:2].active = YES;
 
-		_functionLabel.font = [UIFont systemFontOfSize:_functionLabel.font.pointSize weight:0.40];
-		[_functionLabel setUserInteractionEnabled:NO];
-		[_functionLabel setText:functionDescriptor];
 
 		// function descriptor label setup
-		_functionDescriptorLabel = [[UILabel alloc] initWithFrame:CGRectZero];
-		[_container addSubview:_functionDescriptorLabel];
+		_descriptorLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+		[_container addSubview:_descriptorLabel];
 
-		[_functionDescriptorLabel setTranslatesAutoresizingMaskIntoConstraints:NO];
-		[_functionDescriptorLabel.widthAnchor constraintEqualToConstant:kWidth].active = YES;
-		[_functionDescriptorLabel.heightAnchor constraintEqualToConstant:25].active = YES;
-		[_functionDescriptorLabel.topAnchor constraintEqualToAnchor:_container.topAnchor constant:22].active = YES;
+		[_descriptorLabel setFont:[UIFont systemFontOfSize:_descriptorLabel.font.pointSize*.75 weight:-0.40]];
+		[_descriptorLabel setUserInteractionEnabled:NO];
+		[_descriptorLabel setNumberOfLines:0];
+		[_descriptorLabel setText:[self descriptionForPurpose:purpose andFunction:function]];
 
-		_functionDescriptorLabel.font = [UIFont systemFontOfSize:_functionDescriptorLabel.font.pointSize*.75 weight:-0.40];
-		[_functionDescriptorLabel setUserInteractionEnabled:NO];
-		[_functionDescriptorLabel setNumberOfLines:0];
-		[_functionDescriptorLabel setText:[[self descriptionForFunction:function] firstObject]];
+		[_descriptorLabel setTranslatesAutoresizingMaskIntoConstraints:NO];
+		[_descriptorLabel.widthAnchor constraintEqualToConstant:kWidth].active = YES;
+		[_descriptorLabel.heightAnchor constraintEqualToConstant:25].active = YES;
+		[_descriptorLabel.topAnchor constraintEqualToAnchor:_container.topAnchor constant:22].active = YES;
 	}
 
 	return self;
 }
 
--(NSMutableArray *)descriptionForFunction:(NSString *)function{
-	NSMutableArray *functionDescs = [NSMutableArray new];
+-(UIImage *)imageForPurpose:(NSInteger)purpose ofType:(NSInteger)type andFunction:(NSInteger)function{
+	UIImage *image;
 
-	if([function isEqualToString:@"standard-backup"]){
-		[functionDescs addObject:@"Excludes developer packages"];
+	/*
+		purpose: 0 = backup | 1 = restore
+		type: 0 = deb | 1 = list
+		function: 0 = standard|latest | unfiltered|specific
+	*/
+
+	// backup cell
+	if(purpose == 0){
+		if(type == 0){ // deb
+			if(function == 0) image = [UIImage systemImageNamed:@"plus.app"];
+			else image = [UIImage systemImageNamed:@"exclamationmark.square"];
+		}
+		else{ // list
+			if(function == 0) image = [UIImage systemImageNamed:@"line.horizontal.3.decrease.circle"];
+			else image = [UIImage systemImageNamed:@"exclamationmark.circle"];
+		}
 	}
-	else if([function isEqualToString:@"unfiltered-backup"]){
-		[functionDescs addObject:@"Includes all packages"];
+	// restore cell
+	else{
+		if(type == 0){ // deb
+			if(function == 0) image = [UIImage systemImageNamed:@"arrow.counterclockwise.circle"];
+			else image = [UIImage systemImageNamed:@"questionmark.circle"];
+		}
+		else{ // list
+			if(function == 0) image = [UIImage systemImageNamed:@"pencil.and.outline"];
+			else image = [UIImage systemImageNamed:@"pencil.tip.crop.circle"];
+		}
 	}
-	else if([function isEqualToString:@"latest-restore"]){
-		[functionDescs addObject:@"The most recent backup"];
-	}
-	else if([function isEqualToString:@"specific-restore"]){
-		[functionDescs addObject:@"A backup of your choosing"];
+
+	return image;
+}
+
+-(NSString *)descriptionForPurpose:(NSInteger)purpose andFunction:(NSInteger)function{
+	NSString *description;
+
+	/*
+		purpose: 0 = backup | 1 = restore
+		function: 0 = standard|latest | unfiltered|specific
+	*/
+
+	if(purpose == 0){
+		if(function == 0) description = @"Excludes developer packages";
+		else description = @"Includes all packages";
 	}
 	else{
+		if(function == 0) description = @"The most recent backup";
+		else description = @"A backup of your choosing";
 	}
 
-	return functionDescs;
+	return description;
 }
 
 @end
