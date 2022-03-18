@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
 		executeCommand(cmd);
 
 		// 'reenable' tweaks that've been disabled with iCleaner Pro (i.e., change extension from .disabled back to .dylib)
-		NSString *cmd2 = [NSString stringWithFormat:@"cd %@ && find . -type f -name '*.disabled' | while read f; do mv $f ${f%%.disabled}.dylib; done", tweakDir];
+		NSString *cmd2 = [NSString stringWithFormat:@"cd %@ && find . -type f -name '*.disabled' | while read f; do mv \"$f\" \"${f%%.disabled}.dylib\"; done", tweakDir];
 		executeCommand(cmd2);
 	}
 
@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
 		executeCommand(cmd);
 
 		// rename files (remove tweakName prefix)
-		NSString *cmd2 = [NSString stringWithFormat:@"cd %@ && find . -name '%@.*' | while read f; do mv $f ${f##*.}; done", debian, tweakName];
+		NSString *cmd2 = [NSString stringWithFormat:@"cd %@ && find . -name '%@.*' | while read f; do mv \"$f\" \"${f##*.}\"; done", debian, tweakName];
 		executeCommand(cmd2);
 	}
 
