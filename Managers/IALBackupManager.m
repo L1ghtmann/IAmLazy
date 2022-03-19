@@ -185,7 +185,7 @@
 	NSMutableArray *packagesToIgnore = [NSMutableArray new];
 	for(NSString *repo in [self getReposToFilter]){
 		NSError *readError = NULL;
-		NSString* content = [NSString stringWithContentsOfFile:[NSString stringWithFormat:@"/var/lib/apt/lists/%@_._Packages", repo] encoding:NSUTF8StringEncoding error:&readError];
+		NSString *content = [NSString stringWithContentsOfFile:[NSString stringWithFormat:@"/var/lib/apt/lists/%@_._Packages", repo] encoding:NSUTF8StringEncoding error:&readError];
 		if(readError){
 			NSLog(@"[IAmLazyLog] Failed to get contents of %@'s apt list! Error: %@", repo, readError.localizedDescription);
 			continue;
@@ -198,7 +198,7 @@
 
 		for(NSString *line in packagesWithNoDups){
 			if(![line length]) continue;
-			NSString* cleanLine = [line stringByReplacingOccurrencesOfString:@"Package: " withString:@""];
+			NSString *cleanLine = [line stringByReplacingOccurrencesOfString:@"Package: " withString:@""];
 			if([cleanLine length]) [packagesToIgnore addObject:cleanLine];
 		}
 	}

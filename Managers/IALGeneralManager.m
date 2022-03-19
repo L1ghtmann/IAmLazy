@@ -115,6 +115,10 @@
 	NSData *data = [handle readDataToEndOfFile];
 	[handle closeFile];
 
+	// have to call after ^ to ensure that the output pipe doesn't fill
+	// if it does, the process will hang and block waitUntilExit from returning
+	[task waitUntilExit];
+
 	NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 
 	return output;
