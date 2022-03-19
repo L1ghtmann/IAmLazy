@@ -148,16 +148,19 @@
 -(NSArray *)getAllPackages{
 	NSMutableArray *allPackages = [NSMutableArray new];
 
+	// get list of all installed packages and their priorities
 	NSString *output = [_generalManager executeCommandWithOutput:@"dpkg-query -Wf '${Package;-50}${Priority}\n'"];
 	NSArray *lines = [output componentsSeparatedByString:@"\n"];
 
-	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH 'required'"]; // filter out local packages
-	NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate]; // find the opposite of ^
+	// filter out packages with the 'requried' priorty
+	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH 'required'"];
+	NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate];
 	NSArray *packages = [lines filteredArrayUsingPredicate:theAntiPredicate];
 
 	for(NSString *line in packages){
 		// filter out IAmLazy since it'll be installed by the user anyway
 		if([line length] && ![line containsString:@"me.lightmann.iamlazy"]){
+			// split the package name from its priority and then add the package name to the allPackages array
 			NSArray *bits = [line componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 			if([bits count]) [allPackages addObject:bits.firstObject];
 		}
@@ -166,29 +169,43 @@
 	return allPackages;
 }
 
+-(NSArray *)getReposToFilter{
+	NSArray *reposToFilter = @[
+		@"apt.bingner.com",
+		@"apt.procurs.us",
+		@"repo.theodyssey.dev"
+	];
+	return reposToFilter;
+}
+
 -(NSArray *)getUserPackages{
-	NSMutableArray *userPackages = [NSMutableArray new];
+	NSMutableArray *userPackages;
 
-	NSString *output = [_generalManager executeCommandWithOutput:@"dpkg-query -Wf '${Package;-50}${Maintainer}\n'"];
-	NSArray *lines = [output componentsSeparatedByString:@"\n"];
+	// get packages to ignore
+	NSMutableArray *packagesToIgnore = [NSMutableArray new];
+	for(NSString *repo in [self getReposToFilter]){
+		NSError *readError = NULL;
+		NSString* content = [NSString stringWithContentsOfFile:[NSString stringWithFormat:@"/var/lib/apt/lists/%@_._Packages", repo] encoding:NSUTF8StringEncoding error:&readError];
+		if(readError){
+			NSLog(@"[IAmLazyLog] Failed to get contents of %@'s apt list! Error: %@", repo, readError.localizedDescription);
+			continue;
+		}
+		NSArray *lines = [content componentsSeparatedByString:@"\n"];
 
-	NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF CONTAINS 'Sam Bingner'"]; // filter out bootstrap repo packages
-	NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF CONTAINS 'Jay Freeman (saurik)'"];
-	NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF CONTAINS 'CoolStar'"];
-	NSPredicate *predicate4 = [NSPredicate predicateWithFormat:@"SELF CONTAINS 'Hayden Seay'"];
-	NSPredicate *predicate5 = [NSPredicate predicateWithFormat:@"SELF CONTAINS 'Cameron Katri'"];
-	NSPredicate *predicate6 = [NSPredicate predicateWithFormat:@"SELF CONTAINS 'Procursus Team'"];
-	NSPredicate *thePredicate = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicate1, predicate2, predicate3, predicate4, predicate5, predicate6]];  // combine with "or"
-	NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate]; // find the opposite of ^
-	NSArray *packages = [lines filteredArrayUsingPredicate:theAntiPredicate];
+		NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'Package:'"];
+		NSArray *packages = [lines filteredArrayUsingPredicate:predicate];
+		NSArray *packagesWithNoDups = [[NSOrderedSet orderedSetWithArray:packages] array]; // remove dups and retain order
 
-	for(NSString *line in packages){
-		// filter out IAmLazy since it'll be installed by the user anyway
-		if([line length] && ![line containsString:@"me.lightmann.iamlazy"]){
-			NSArray *bits = [line componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-			if([bits count]) [userPackages addObject:bits.firstObject];
+		for(NSString *line in packagesWithNoDups){
+			if(![line length]) continue;
+			NSString* cleanLine = [line stringByReplacingOccurrencesOfString:@"Package: " withString:@""];
+			if([cleanLine length]) [packagesToIgnore addObject:cleanLine];
 		}
 	}
+
+	// grab all installed packages and remove the ones we want to ignore
+	userPackages = [[self getAllPackages] mutableCopy];
+	[userPackages removeObjectsInArray:packagesToIgnore];
 
 	return userPackages;
 }
