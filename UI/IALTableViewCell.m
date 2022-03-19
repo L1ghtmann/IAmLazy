@@ -64,7 +64,7 @@
 		_descriptorLabel = [[UILabel alloc] initWithFrame:CGRectZero];
 		[_container addSubview:_descriptorLabel];
 
-		[_descriptorLabel setFont:[UIFont systemFontOfSize:_descriptorLabel.font.pointSize*.75 weight:-0.40]];
+		[_descriptorLabel setFont:[UIFont systemFontOfSize:_descriptorLabel.font.pointSize*0.75 weight:-0.40]];
 		[_descriptorLabel setUserInteractionEnabled:NO];
 		[_descriptorLabel setNumberOfLines:0];
 		[_descriptorLabel setText:[self descriptionForPurpose:purpose andFunction:function]];

@@ -6,9 +6,9 @@
 //
 
 #import <UniformTypeIdentifiers/UTCoreTypes.h>
+#import "../Managers/IALGeneralManager.h"
 #import <AudioToolbox/AudioToolbox.h>
 #import "IALBackupsViewController.h"
-#import "../Managers/IALGeneralManager.h"
 #import "../Common.h"
 
 // https://stackoverflow.com/a/5337804
@@ -97,6 +97,11 @@
 	[tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
+// requried for method below
+-(BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath{
+	return YES;
+}
+
 -(void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath{
 	AudioServicesPlaySystemSound(1520); // haptic feedback
 
@@ -125,10 +130,6 @@
 		[tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
 		[tableView endUpdates];
 	}
-}
-
--(BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath{
-	return YES;
 }
 
 -(void)refreshTable{

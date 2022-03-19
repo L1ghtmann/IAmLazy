@@ -59,12 +59,11 @@ int main(int argc, char *argv[]) {
 		NSString *cmd = [NSString stringWithFormat:@"rm -rf %@", tmpDir];
 		executeCommand(cmd);
 	}
-
 	else if(strcmp(argv[1], "copy-generic-files") == 0){
 		NSString *tweakDir = [NSString stringWithContentsOfFile:targetDir encoding:NSUTF8StringEncoding error:NULL];
 
 		/*
-			There are three main approaches to copying files:
+			There are three worthwile approaches to copying files:
 				1) one massive copy cmd with all desired source files specified
 				2) running a cmd for each file individually
 				3) read files to copy from a file
@@ -73,7 +72,7 @@ int main(int argc, char *argv[]) {
 			this occurs because the cmd's arg length > arg length limit for posix defined by KERN_ARGMAX, which can be checked with "sysctl kern.argmax"
 			from what I can tell, the limit is ~262144 (including spaces), which can be exceeded by themes with thousands of files and complex dir structures
 
-			2 -- works, but is really slow compared to 1 & 3
+			2 -- works, but is really slow compared to 1 and 3
 
 			3 -- solid and quick af (so we're going with this)
 			rsync has this functionality built-in with the --files-from flag, but rsync isn't preinstalled, so that means we'd have yet another dependency
@@ -88,10 +87,8 @@ int main(int argc, char *argv[]) {
 		NSString *cmd2 = [NSString stringWithFormat:@"cd %@ && find . -type f -name '*.disabled' | while read f; do mv \"$f\" \"${f%%.disabled}.dylib\"; done", tweakDir];
 		executeCommand(cmd2);
 	}
-
 	else if(strcmp(argv[1], "copy-debian-files") == 0){
 		NSString *tweakDir = [NSString stringWithContentsOfFile:targetDir encoding:NSUTF8StringEncoding error:NULL];
-		NSString *tweakName = [tweakDir stringByReplacingOccurrencesOfString:tmpDir withString:@""];
 		NSString *debian = [NSString stringWithFormat:@"%@/DEBIAN/", tweakDir];
 
 		// copy files
@@ -99,19 +96,19 @@ int main(int argc, char *argv[]) {
 		executeCommand(cmd);
 
 		// rename files (remove tweakName prefix)
+		NSString *tweakName = [tweakDir stringByReplacingOccurrencesOfString:tmpDir withString:@""];
 		NSString *cmd2 = [NSString stringWithFormat:@"cd %@ && find . -name '%@.*' | while read f; do mv \"$f\" \"${f##*.}\"; done", debian, tweakName];
 		executeCommand(cmd2);
 	}
-
 	else if(strcmp(argv[1], "build-debs") == 0){
 		// Note: the default compression for dpkg-deb is xz (as of 1.15.6), which will occassionally cause an error:
 		// "unexpected end of file in archive member header in packageName.deb" upon extraction/installation if there
 		// is a dpkg version conflict. in order to fix this, we need to use gzip compression
+
 		// build debs from collected files and then remove the respective file dir when done
 		NSString *cmd = [NSString stringWithFormat:@"find %@ -maxdepth 1 -type d -exec dpkg-deb -b -Zgzip -z9 {} \\; -exec rm -r {} \\; > %@build_log.txt", tmpDir, logDir];
 		executeCommand(cmd);
 	}
-
 	else if(strcmp(argv[1], "install-debs") == 0){
 		// install debs and resolve missing dependencies
 		// doing each deb individually to ensure that the entire process isn't nuked if a totally unconfigurable package (e.g., incompatible iOS vers, unmeetable dependencies, etc) is met
@@ -122,7 +119,6 @@ int main(int argc, char *argv[]) {
 		NSString *cmd2 = [NSString stringWithFormat:@"find %@ -name '*.deb' -exec apt-get install -fy --allow-unauthenticated {} \\; > %@fixup_log.txt", tmpDir, logDir];
 		executeCommand(cmd2);
 	}
-
 	else if(strcmp(argv[1], "install-list") == 0){
 		NSString *tweakList = [NSString stringWithContentsOfFile:targetList encoding:NSUTF8StringEncoding error:NULL];
 
@@ -139,7 +135,6 @@ int main(int argc, char *argv[]) {
 		NSString *cmd3 = [NSString stringWithFormat:@"xargs -n 1 -a %@ apt-get install -fy --allow-unauthenticated > %@fixup_log.txt", tweakList, logDir];
 		executeCommand(cmd3);
 	}
-
 	else{
 		printf("Houston, we have a problem: an invalid argument was provided!\n");
 		return 1;

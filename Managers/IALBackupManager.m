@@ -156,13 +156,12 @@
 	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH 'required'"];
 	NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate];
 	NSArray *packages = [lines filteredArrayUsingPredicate:theAntiPredicate];
-
 	for(NSString *line in packages){
 		// filter out IAmLazy since it'll be installed by the user anyway
 		if([line length] && ![line containsString:@"me.lightmann.iamlazy"]){
 			// split the package name from its priority and then add the package name to the allPackages array
 			NSArray *bits = [line componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-			if([bits count]) [allPackages addObject:bits.firstObject];
+			if([bits count]) [allPackages addObject:[bits firstObject]];
 		}
 	}
 
@@ -195,7 +194,6 @@
 		NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'Package:'"];
 		NSArray *packages = [lines filteredArrayUsingPredicate:predicate];
 		NSArray *packagesWithNoDups = [[NSOrderedSet orderedSetWithArray:packages] array]; // remove dups and retain order
-
 		for(NSString *line in packagesWithNoDups){
 			if(![line length]) continue;
 			NSString *cleanLine = [line stringByReplacingOccurrencesOfString:@"Package: " withString:@""];
@@ -266,6 +264,7 @@
 		// get DEBIAN files (e.g., pre/post scripts) and put into an array
 		NSString *output2 = [_generalManager executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -c %@", package]];
 		NSArray *lines2 = [output2 componentsSeparatedByString:@"\n"];
+
 		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS '.md5sums'"]; // dpkg generates this dynamically at installation
 		NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate]; // find the opposite of ^
 		NSArray *debianFiles = [lines2 filteredArrayUsingPredicate:theAntiPredicate];

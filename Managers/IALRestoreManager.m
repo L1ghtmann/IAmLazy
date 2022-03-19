@@ -25,8 +25,7 @@
 	}
 
 	// check for backups
-	int backupCount = [[_generalManager getBackups] count];
-	if(!backupCount){
+	if(![[_generalManager getBackups] count]){
 		NSString *reason = @"No backups were found!";
 		[_generalManager popErrorAlertWithReason:reason];
 		return;
@@ -86,6 +85,17 @@
 			return;
 		}
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
+
+		// make log dir if it doesn't exist already
+		if(![[NSFileManager defaultManager] fileExistsAtPath:logDir]){
+			NSError *writeError2 = NULL;
+			[[NSFileManager defaultManager] createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError2];
+			if(writeError2){
+				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError2.localizedDescription];
+				[_generalManager popErrorAlertWithReason:reason];
+				return;
+			}
+		}
 
 		BOOL compatible = YES;
 		if([backupName containsString:@"u.txt"]){

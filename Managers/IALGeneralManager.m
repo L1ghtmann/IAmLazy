@@ -5,9 +5,9 @@
 //	Created by Lightmann during COVID-19
 //
 
+#import "IALGeneralManager.h"
 #import "IALRestoreManager.h"
 #import "IALBackupManager.h"
-#import "IALGeneralManager.h"
 #import "../Common.h"
 
 @implementation IALGeneralManager
@@ -21,15 +21,13 @@
 	return sharedInstance;
 }
 
-#pragma mark Backup
+#pragma mark Functionality
 
 -(void)makeBackupOfType:(NSInteger)type withFilter:(BOOL)filter{
 	if(!_backupManager) _backupManager = [[IALBackupManager alloc] init];
 	[_backupManager setGeneralManager:self];
 	[_backupManager makeBackupOfType:type withFilter:filter];
 }
-
-#pragma mark Restore
 
 -(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type{
 	if(!_restoreManager) _restoreManager = [[IALRestoreManager alloc] init];
@@ -46,10 +44,10 @@
 
 -(void)cleanupTargetList{
 	// remove list file now that we're done with it
-	NSError *error = NULL;
-	[[NSFileManager defaultManager] removeItemAtPath:targetList error:&error];
-	if(error){
-		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", targetList, error.localizedDescription);
+	NSError *deleteError = NULL;
+	[[NSFileManager defaultManager] removeItemAtPath:targetList error:&deleteError];
+	if(deleteError){
+		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", targetList, deleteError.localizedDescription);
 	}
 }
 

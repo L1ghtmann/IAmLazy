@@ -41,11 +41,9 @@
 	return self;
 }
 
-// create primary (background) view
--(void)viewDidLoad{
-	[super viewDidLoad];
+-(void)loadView{
+	[super loadView];
 
-	self.view = [[UIView alloc] initWithFrame:CGRectMake(0,0,kWidth,kHeight)];
 	[self.view setBackgroundColor:fillColor];
 }
 
@@ -110,12 +108,12 @@
 		[background setBackgroundColor:accentColor];
 		[background.layer setCornerRadius:background.frame.size.height/2];
 
-		UIView *fill = [[UIView alloc] initWithFrame:CGRectInset(background.bounds, 1, 1)];
+		UIView *fill = [[UIView alloc] initWithFrame:CGRectInset(background.bounds,1,1)];
 		[fill setBackgroundColor:fillColor];
 		[fill.layer setCornerRadius:background.frame.size.height/2];
 		[background addSubview:fill];
 
-		UIImageView *item = [[UIImageView alloc] initWithFrame:CGRectInset(fill.bounds, 7.5, 7.5)];
+		UIImageView *item = [[UIImageView alloc] initWithFrame:CGRectInset(fill.bounds,7.5,7.5)];
 		[item setImage:[UIImage systemImageNamed:self.itemIcons[i]]];
 		[item setContentMode:UIViewContentModeScaleAspectFit];
 
@@ -204,7 +202,7 @@
 		[itemStatus setFont:[UIFont systemFontOfSize:14 weight:-0.60]];
 		[itemStatus setText:@"Waiting"];
 		[itemStatus setTextColor:accentColor];
-		[itemStatus setAlpha:.75];
+		[itemStatus setAlpha:0.75];
 
 		[self.view addSubview:itemDesc];
 		[self.view addSubview:itemStatus];
