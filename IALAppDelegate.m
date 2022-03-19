@@ -1,3 +1,10 @@
+//
+//	IALAppDelegate.m
+//	IAmLazy
+//
+//	Created by Lightmann during COVID-19
+//
+
 #import "UI/IALBackupsViewController.h"
 #import "UI/IALRestoreViewController.h"
 #import "UI/IALNavigationController.h"

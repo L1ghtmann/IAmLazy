@@ -180,24 +180,39 @@
 -(NSArray *)getUserPackages{
 	NSMutableArray *userPackages;
 
+	// get apt lists
+	NSError *readError = NULL;
+	NSString *aptListsDir = @"/var/lib/apt/lists/";
+	NSArray *aptLists = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:aptListsDir error:&readError];
+	if(readError){
+		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", aptListsDir, readError.localizedDescription);
+		return nil;
+	}
+
 	// get packages to ignore
 	NSMutableArray *packagesToIgnore = [NSMutableArray new];
 	for(NSString *repo in [self getReposToFilter]){
-		NSError *readError = NULL;
-		NSString *content = [NSString stringWithContentsOfFile:[NSString stringWithFormat:@"/var/lib/apt/lists/%@_._Packages", repo] encoding:NSUTF8StringEncoding error:&readError];
-		if(readError){
-			NSLog(@"[IAmLazyLog] Failed to get contents of %@'s apt list! Error: %@", repo, readError.localizedDescription);
-			continue;
-		}
-		NSArray *lines = [content componentsSeparatedByString:@"\n"];
+		NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"self ENDSWITH '_Packages'"];
+		NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"self BEGINSWITH %@", repo];
+		NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate1,predicate2]];
+		NSArray *pkgLists = [aptLists filteredArrayUsingPredicate:thePredicate];
+		for(NSString *list in pkgLists){ // count should be 1
+			NSError *readError2 = NULL;
+			NSString *content = [NSString stringWithContentsOfFile:[NSString stringWithFormat:@"%@%@", aptListsDir, list] encoding:NSUTF8StringEncoding error:&readError2];
+			if(readError2){
+				NSLog(@"[IAmLazyLog] Failed to get contents of %@%@! Error: %@", aptListsDir, list, readError2.localizedDescription);
+				continue;
+			}
+			NSArray *lines = [content componentsSeparatedByString:@"\n"];
 
-		NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'Package:'"];
-		NSArray *packages = [lines filteredArrayUsingPredicate:predicate];
-		NSArray *packagesWithNoDups = [[NSOrderedSet orderedSetWithArray:packages] array]; // remove dups and retain order
-		for(NSString *line in packagesWithNoDups){
-			if(![line length]) continue;
-			NSString *cleanLine = [line stringByReplacingOccurrencesOfString:@"Package: " withString:@""];
-			if([cleanLine length]) [packagesToIgnore addObject:cleanLine];
+			NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'Package:'"];
+			NSArray *packages = [lines filteredArrayUsingPredicate:predicate];
+			NSArray *packagesWithNoDups = [[NSOrderedSet orderedSetWithArray:packages] array]; // remove dups and retain order
+			for(NSString *line in packagesWithNoDups){
+				if(![line length]) continue;
+				NSString *cleanLine = [line stringByReplacingOccurrencesOfString:@"Package: " withString:@""];
+				if([cleanLine length]) [packagesToIgnore addObject:cleanLine];
+			}
 		}
 	}
 
