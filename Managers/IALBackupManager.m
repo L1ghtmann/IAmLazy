@@ -5,6 +5,7 @@
 //	Created by Lightmann during COVID-19
 //
 
+#import "../NVHTarGzip/NVHTarGzip.h"
 #import "IALGeneralManager.h"
 #import "IALBackupManager.h"
 #import "../Common.h"
@@ -451,12 +452,15 @@
 	}
 
 	// make tarball
-	// ensure file structure is ONLY me.lightmann.iamlazy/ not /tmp/me.lightmann.iamlazy/
-	// having --strip-components=2 on the restore end breaks compatibility w older backups
-	[_generalManager executeCommand:[NSString stringWithFormat:@"cd /tmp && tar -czf %@%@ me.lightmann.iamlazy/ --remove-files \\;", backupDir, backupName]];
+	[[NVHTarGzip sharedInstance] tarGzipFileAtPath:tmpDir toPath:[NSString stringWithFormat:@"%@%@", backupDir, backupName] completion:^(NSError *error){
+		if(error){
+			NSLog(@"[IAmLazyLog] Failed to create tarball: %@", error.localizedDescription);
+		}
+		[_generalManager cleanupTmp];
 
-	// confirm the backup now exists where expected
-	[self verifyBackup:backupName];
+		// confirm the backup now exists where expected
+		[self verifyBackup:backupName];
+	}];
 }
 
 -(void)verifyBackup:(NSString *)backupName{

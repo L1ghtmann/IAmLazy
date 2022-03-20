@@ -56,49 +56,40 @@ int main(int argc, char *argv[]) {
 
 	if(strcmp(argv[1], "cleanup-tmp") == 0){
 		// delete temporary directory
-		NSString *cmd = [NSString stringWithFormat:@"rm -rf %@", tmpDir];
-		executeCommand(cmd);
+		[[NSFileManager defaultManager] removeItemAtPath:tmpDir error:NULL];
 	}
 	else if(strcmp(argv[1], "copy-generic-files") == 0){
 		NSString *tweakDir = [NSString stringWithContentsOfFile:targetDir encoding:NSUTF8StringEncoding error:NULL];
 
-		/*
-			There are three worthwile approaches to copying files:
-				1) one massive copy cmd with all desired source files specified
-				2) running a cmd for each file individually
-				3) read files to copy from a file
-
-			1 -- quick, but can lead to an NSInternalInconsistencyException being thrown with reason: "Couldn't posix_spawn: error 7" (error 7 == E2BIG)
-			this occurs because the cmd's arg length > arg length limit for posix defined by KERN_ARGMAX, which can be checked with "sysctl kern.argmax"
-			from what I can tell, the limit is ~262144 (including spaces), which can be exceeded by themes with thousands of files and complex dir structures
-
-			2 -- works, but is really slow compared to 1 and 3
-
-			3 -- solid and quick af (so we're going with this)
-			rsync has this functionality built-in with the --files-from flag, but rsync isn't preinstalled, so that means we'd have yet another dependency
-			alternatively, we can use xargs' -a flag, where it will read from a file and properly divvy up the args into mutliple cmds if ARG_MAX is exceeded
-		*/
-
-		// copy files and file structure
-		NSString *cmd = [NSString stringWithFormat:@"xargs -d '\n' -a %@ cp -a --parents -t %@", gFilesToCopy, tweakDir];
-		executeCommand(cmd);
-
-		// 'reenable' tweaks that've been disabled with iCleaner Pro (i.e., change extension from .disabled back to .dylib)
-		NSString *cmd2 = [NSString stringWithFormat:@"cd %@ && find . -type f -name '*.disabled' | while read f; do mv \"$f\" \"${f%%.disabled}.dylib\"; done", tweakDir];
-		executeCommand(cmd2);
+		// recreate directory structure and copy files
+		NSFileManager *fileManager = [NSFileManager defaultManager];
+		NSString *filesToCopy = [NSString stringWithContentsOfFile:gFilesToCopy encoding:NSUTF8StringEncoding error:NULL];
+		NSArray *lines = [filesToCopy componentsSeparatedByString:@"\n"];
+		for(NSString *file in lines){
+			NSString *dirStructure = [file stringByDeletingLastPathComponent]; // grab parent directory structure
+			NSString *newPath = [NSString stringWithFormat:@"%@%@", tweakDir, dirStructure];
+			if(![[newPath substringFromIndex:[newPath length]-1] isEqualToString:@"/"]) newPath = [newPath stringByAppendingString:@"/"]; // add missing slash
+			[fileManager createDirectoryAtPath:newPath withIntermediateDirectories:YES attributes:nil error:NULL]; // recreate parent directory structure
+			NSString *extension = [file pathExtension];
+			// 'reenable' tweaks that've been disabled with iCleaner Pro (i.e., change extension from .disabled back to .dylib)
+			if([[[file pathExtension] lowercaseString] isEqualToString:@"disabled"]) extension = @"dylib";
+			NSString *newFile = [newPath stringByAppendingString:[[[file lastPathComponent] stringByDeletingPathExtension] stringByAppendingPathExtension:extension]];
+			[fileManager copyItemAtPath:file toPath:newFile error:NULL]; // copy file
+		}
 	}
 	else if(strcmp(argv[1], "copy-debian-files") == 0){
 		NSString *tweakDir = [NSString stringWithContentsOfFile:targetDir encoding:NSUTF8StringEncoding error:NULL];
 		NSString *debian = [NSString stringWithFormat:@"%@/DEBIAN/", tweakDir];
+		NSString *tweakName = [tweakDir lastPathComponent];
 
 		// copy files
-		NSString *cmd = [NSString stringWithFormat:@"xargs -d '\n' -a %@ cp -a -t %@", dFilesToCopy, debian];
-		executeCommand(cmd);
-
-		// rename files (remove tweakName prefix)
-		NSString *tweakName = [tweakDir stringByReplacingOccurrencesOfString:tmpDir withString:@""];
-		NSString *cmd2 = [NSString stringWithFormat:@"cd %@ && find . -name '%@.*' | while read f; do mv \"$f\" \"${f##*.}\"; done", debian, tweakName];
-		executeCommand(cmd2);
+		NSString *filesToCopy = [NSString stringWithContentsOfFile:dFilesToCopy encoding:NSUTF8StringEncoding error:NULL];
+		NSArray *lines = [filesToCopy componentsSeparatedByString:@"\n"];
+		for(NSString *file in lines){
+			NSString *fileName = [file lastPathComponent];
+			NSString *strippedName = [fileName stringByReplacingOccurrencesOfString:[tweakName stringByAppendingString:@"."] withString:@""]; // remove tweakName prefix
+			[[NSFileManager defaultManager] copyItemAtPath:file toPath:[NSString stringWithFormat:@"%@%@", debian, strippedName] error:NULL]; // copy file
+		}
 	}
 	else if(strcmp(argv[1], "build-debs") == 0){
 		// Note: the default compression for dpkg-deb is xz (as of 1.15.6), which will occassionally cause an error:

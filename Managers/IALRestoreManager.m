@@ -5,6 +5,7 @@
 //	Created by Lightmann during COVID-19
 //
 
+#import "../NVHTarGzip/NVHTarGzip.h"
 #import "IALGeneralManager.h"
 #import "IALRestoreManager.h"
 #import "../Common.h"
@@ -113,7 +114,11 @@
 }
 
 -(void)unpackArchive:(NSString *)backupName{
-	[_generalManager executeCommand:[NSString stringWithFormat:@"tar -xf %@%@ -C /tmp", backupDir, backupName]];
+	[[NVHTarGzip sharedInstance] unTarGzipFileAtPath:[NSString stringWithFormat:@"%@%@", backupDir, backupName] toPath:tmpDir completion:^(NSError* error){
+		if(error){
+			NSLog(@"[IAmLazyLog] Failed to extract tarball: %@", error.localizedDescription);
+		}
+	}];
 }
 
 -(BOOL)verifyBootstrapOfTarball{
