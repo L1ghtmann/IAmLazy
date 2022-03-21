@@ -5,7 +5,7 @@
 //	Created by Lightmann during COVID-19
 //
 
-#import "../NVHTarGzip/NVHTarGzip.h"
+#import "../Compression/NVHTarGzip/NVHTarGzip.h"
 #import "IALGeneralManager.h"
 #import "IALRestoreManager.h"
 #import "../Common.h"

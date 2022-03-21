@@ -5,7 +5,8 @@
 //	Created by Lightmann during COVID-19
 //
 
-#import "../NVHTarGzip/NVHTarGzip.h"
+#import "../Compression/NVHTarGzip/NVHTarGzip.h"
+#import "../Compression/GZIP/NSData+GZIP.h"
 #import "IALGeneralManager.h"
 #import "IALBackupManager.h"
 #import "../Common.h"
@@ -450,15 +451,39 @@
 	else{
 		backupName = [latest stringByAppendingString:@".tar.gz"];
 	}
+	NSString *backupPath = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
 
 	// make tarball
-	[[NVHTarGzip sharedInstance] tarGzipFileAtPath:tmpDir toPath:[NSString stringWithFormat:@"%@%@", backupDir, backupName] completion:^(NSError *error){
+	NSString *tar = [backupName stringByDeletingPathExtension];
+	NSString *tarPath = [backupPath stringByDeletingPathExtension];
+	// Note: NVHTarGzip's gzip/tar+gzip functionality is borked and misses source files, so doing it in two steps
+	[[NVHTarGzip sharedInstance] tarFileAtPath:tmpDir toPath:tarPath completion:^(NSError *error){
 		if(error){
 			NSLog(@"[IAmLazyLog] Failed to create tarball: %@", error.localizedDescription);
 		}
 		[_generalManager cleanupTmp];
 
-		// confirm the backup now exists where expected
+		// confirm the tarball now exists where expected
+		[self verifyBackup:tar]; // TODO: convert to verifyBackup to verifyFile w full path arg
+
+		// gzip tarball
+		NSData *tarData = [NSData dataWithContentsOfFile:tarPath];
+		NSData *gzipData = [tarData gzippedData];
+		NSError *writeError = NULL;
+		[gzipData writeToFile:backupPath options:NSDataWritingAtomic error:&writeError];
+		if(writeError){
+			NSLog(@"[IAmLazyLog] Failed to write gzipData to file: %@", writeError.localizedDescription);
+		}
+		else{
+			// delete the tarball
+			NSError *deleteError = NULL;
+			[[NSFileManager defaultManager] removeItemAtPath:tarPath error:&deleteError];
+			if(deleteError){
+				NSLog(@"[IAmLazyLog] Failed to delete %@: %@", tarPath, deleteError.localizedDescription);
+			}
+		}
+
+		// confirm the gzip archive now exists where expected
 		[self verifyBackup:backupName];
 	}];
 }

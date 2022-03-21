@@ -10,13 +10,13 @@
 
 int proc_pidpath(int pid, void *buffer, uint32_t buffersize); // libproc.h
 
-void executeCommand(NSString *cmd){
-	NSTask *task = [[NSTask alloc] init];
-	[task setLaunchPath:@"/bin/sh"];
-	[task setArguments:@[@"-c", cmd]];
-	[task launch];
-	[task waitUntilExit];
-}
+// void executeCommand(NSString *cmd){
+// 	NSTask *task = [[NSTask alloc] init];
+// 	[task setLaunchPath:@"/bin/sh"];
+// 	[task setArguments:@[@"-c", cmd]];
+// 	[task launch];
+// 	[task waitUntilExit];
+// }
 
 int main(int argc, char *argv[]) {
 	if(argc != 2){
@@ -97,9 +97,50 @@ int main(int argc, char *argv[]) {
 		// is a dpkg version conflict. in order to fix this, we need to use gzip compression
 
 		// build debs from collected files and then remove the respective file dir when done
-		NSString *cmd = [NSString stringWithFormat:@"find %@ -maxdepth 1 -type d -exec dpkg-deb -b -Zgzip -z9 {} \\; -exec rm -r {} \\; > %@build_log.txt", tmpDir, logDir];
-		executeCommand(cmd);
+		NSString *log = [NSString stringWithFormat:@"%@build_log.txt", logDir];
+		NSArray *tmpDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:NULL];
+		NSMutableArray *tweakDirs = [NSMutableArray new];
+		for(NSString *item in tmpDirContents){
+			NSString *path = [tmpDir stringByAppendingString:item];
+
+			BOOL isDir = NO;
+			if([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDir] && isDir){
+				[tweakDirs addObject:path];
+			}
+		}
+
+		NSMutableString *logText = [NSMutableString new];
+		for(NSString *tweak in tweakDirs){
+			NSTask *task = [[NSTask alloc] init];
+			NSMutableArray *args = [NSMutableArray new];
+			[task setLaunchPath:@"/usr/bin/dpkg-deb"];
+			[args addObject:@"-b"];
+			[args addObject:@"-Zgzip"];
+			[args addObject:@"-z9"];
+			[args addObject:tweak];
+			[task setArguments:args];
+
+			NSPipe *pipe = [NSPipe pipe];
+			[task setStandardOutput:pipe];
+
+			[task launch];
+
+			NSFileHandle *handle = [pipe fileHandleForReading];
+			NSData *data = [handle readDataToEndOfFile];
+			[handle closeFile];
+
+			// have to call after ^ to ensure that the output pipe doesn't fill
+			// if it does, the process will hang and block waitUntilExit from returning
+			[task waitUntilExit];
+
+			NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+			[logText appendString:output];
+
+			[[NSFileManager defaultManager] removeItemAtPath:tweak error:NULL];
+		}
+		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 	}
+	/*
 	else if(strcmp(argv[1], "install-debs") == 0){
 		// install debs and resolve missing dependencies
 		// doing each deb individually to ensure that the entire process isn't nuked if a totally unconfigurable package (e.g., incompatible iOS vers, unmeetable dependencies, etc) is met
@@ -126,6 +167,7 @@ int main(int argc, char *argv[]) {
 		NSString *cmd3 = [NSString stringWithFormat:@"xargs -n 1 -a %@ apt-get install -fy --allow-unauthenticated > %@fixup_log.txt", tweakList, logDir];
 		executeCommand(cmd3);
 	}
+	*/
 	else{
 		printf("Houston, we have a problem: an invalid argument was provided!\n");
 		return 1;

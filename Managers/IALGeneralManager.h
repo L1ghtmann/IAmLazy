@@ -15,7 +15,6 @@
 -(void)cleanupTargetList;
 -(NSString *)getLatestBackup;
 -(NSArray *)getBackups;
--(void)executeCommand:(NSString *)cmd;
 -(NSString *)executeCommandWithOutput:(NSString *)cmd;
 -(void)executeCommandAsRoot:(NSString *)cmd;
 -(void)popErrorAlertWithReason:(NSString *)reason;

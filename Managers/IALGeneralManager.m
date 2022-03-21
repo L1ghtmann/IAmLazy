@@ -89,16 +89,6 @@
 	return sortedBackups;
 }
 
-// Note: using the desired binaries (e.g., rm, rsync) as the launch path occasionally causes a crash (EXC_CORPSE_NOTIFY) because abort() was called???
-// to fix this, switched the launch path to bourne shell and, voila, no crash!
--(void)executeCommand:(NSString *)cmd{
-	NSTask *task = [[NSTask alloc] init];
-	[task setLaunchPath:@"/bin/sh"];
-	[task setArguments:@[@"-c", cmd]];
-	[task launch];
-	[task waitUntilExit];
-}
-
 -(NSString *)executeCommandWithOutput:(NSString *)cmd{
 	NSTask *task = [[NSTask alloc] init];
 	[task setLaunchPath:@"/bin/sh"];
