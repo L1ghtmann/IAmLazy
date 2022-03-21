@@ -121,8 +121,8 @@
 		}
 
 		// write to file
-		NSString *file = [NSString stringWithFormat:@"%@%@", backupDir, listName];
-		[[NSFileManager defaultManager] createFileAtPath:file contents:[fileContent dataUsingEncoding:NSUTF8StringEncoding] attributes:nil];
+		NSString *filePath = [NSString stringWithFormat:@"%@%@", backupDir, listName];
+		[[NSFileManager defaultManager] createFileAtPath:filePath contents:[fileContent dataUsingEncoding:NSUTF8StringEncoding] attributes:nil];
 
 		// make note of the bootstrap that the list was made on
 		if(!filter){
@@ -133,14 +133,14 @@
 
 			NSString *madeOn = [NSString stringWithFormat:@"\n\n## made on %@ ##", bootstrap];
 
-			NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:file];
+			NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:filePath];
 			[fileHandle seekToEndOfFile];
 			[fileHandle writeData:[madeOn dataUsingEncoding:NSUTF8StringEncoding]];
 			[fileHandle closeFile];
 		}
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
 
-		[self verifyList:listName];
+		[self verifyFileAtPath:filePath];
 	}
 
 	// make note of end time
@@ -151,7 +151,7 @@
 	NSMutableArray *allPackages = [NSMutableArray new];
 
 	// get list of all installed packages and their priorities
-	NSString *output = [_generalManager executeCommandWithOutput:@"dpkg-query -Wf '${Package;-50}${Priority}\n'"];
+	NSString *output = [self queryDpkgWithArgs:@[@"-Wf", @"${Package;-50}${Priority}\n"]];
 	NSArray *lines = [output componentsSeparatedByString:@"\n"];
 
 	// filter out packages with the 'requried' priorty
@@ -231,7 +231,7 @@
 		NSMutableArray *directories = [NSMutableArray new];
 
 		// get generic files and directories and sort into respective arrays
-		NSString *output = [_generalManager executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -L %@", package]];
+		NSString *output = [self queryDpkgWithArgs:@[@"-L", package]];
 		NSArray *lines = [output componentsSeparatedByString:@"\n"];
 		for(NSString *line in lines){
 			if(![line length] || [line isEqualToString:@"/."]){
@@ -279,7 +279,7 @@
 		}
 
 		// get DEBIAN files (e.g., pre/post scripts) and put into an array
-		NSString *output2 = [_generalManager executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -c %@", package]];
+		NSString *output2 = [self queryDpkgWithArgs:@[@"-c", package]];
 		NSArray *lines2 = [output2 componentsSeparatedByString:@"\n"];
 
 		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS '.md5sums'"]; // dpkg generates this dynamically at installation
@@ -379,7 +379,7 @@
 
 -(void)makeControlForPackage:(NSString *)package inDirectory:(NSString *)tweakDir{
 	// get info for package
-	NSString *output = [_generalManager executeCommandWithOutput:[NSString stringWithFormat:@"dpkg-query -s %@", package]];
+	NSString *output = [self queryDpkgWithArgs:@[@"-s", package]];
 	NSString *noStatusLine = [output stringByReplacingOccurrencesOfString:@"Status: install ok installed\n" withString:@""];
 	NSString *info = [noStatusLine stringByAppendingString:@"\n"]; // ensure final newline (deb will fail to build if missing)
 
@@ -454,7 +454,6 @@
 	NSString *backupPath = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
 
 	// make tarball
-	NSString *tar = [backupName stringByDeletingPathExtension];
 	NSString *tarPath = [backupPath stringByDeletingPathExtension];
 	// Note: NVHTarGzip's gzip/tar+gzip functionality is borked and misses source files, so doing it in two steps
 	[[NVHTarGzip sharedInstance] tarFileAtPath:tmpDir toPath:tarPath completion:^(NSError *error){
@@ -464,7 +463,7 @@
 		[_generalManager cleanupTmp];
 
 		// confirm the tarball now exists where expected
-		[self verifyBackup:tar]; // TODO: convert to verifyBackup to verifyFile w full path arg
+		[self verifyFileAtPath:tarPath];
 
 		// gzip tarball
 		NSData *tarData = [NSData dataWithContentsOfFile:tarPath];
@@ -479,28 +478,18 @@
 			NSError *deleteError = NULL;
 			[[NSFileManager defaultManager] removeItemAtPath:tarPath error:&deleteError];
 			if(deleteError){
-				NSLog(@"[IAmLazyLog] Failed to delete %@: %@", tarPath, deleteError.localizedDescription);
+				NSLog(@"[IAmLazyLog] Failed to delete tarball: %@", deleteError.localizedDescription);
 			}
 		}
 
 		// confirm the gzip archive now exists where expected
-		[self verifyBackup:backupName];
+		[self verifyFileAtPath:backupPath];
 	}];
 }
 
--(void)verifyBackup:(NSString *)backupName{
-	NSString *path = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
-	if(![[NSFileManager defaultManager] fileExistsAtPath:path]){
-		NSString *reason = [NSString stringWithFormat:@"%@ DNE!", path];
-		[_generalManager popErrorAlertWithReason:reason];
-		return;
-	}
-}
-
--(void)verifyList:(NSString *)listName{
-	NSString *path = [NSString stringWithFormat:@"%@%@", backupDir, listName];
-	if(![[NSFileManager defaultManager] fileExistsAtPath:path]){
-		NSString *reason = [NSString stringWithFormat:@"%@ DNE!", path];
+-(void)verifyFileAtPath:(NSString *)filePath{
+	if(![[NSFileManager defaultManager] fileExistsAtPath:filePath]){
+		NSString *reason = [NSString stringWithFormat:@"%@ DNE!", filePath];
 		[_generalManager popErrorAlertWithReason:reason];
 		return;
 	}
@@ -509,6 +498,29 @@
 -(NSString *)getDuration{
 	NSTimeInterval duration = [self.endTime timeIntervalSinceDate:self.startTime];
 	return [NSString stringWithFormat:@"%.02f", duration];
+}
+
+-(NSString *)queryDpkgWithArgs:(NSArray *)args{
+	NSTask *task = [[NSTask alloc] init];
+	[task setLaunchPath:@"/usr/bin/dpkg-query"];
+	[task setArguments:args];
+
+	NSPipe *pipe = [NSPipe pipe];
+	[task setStandardOutput:pipe];
+
+	[task launch];
+
+	NSFileHandle *handle = [pipe fileHandleForReading];
+	NSData *data = [handle readDataToEndOfFile];
+	[handle closeFile];
+
+	// have to call after ^ to ensure that the output pipe doesn't fill
+	// if it does, the process will hang and block waitUntilExit from returning
+	[task waitUntilExit];
+
+	NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+
+	return output;
 }
 
 @end

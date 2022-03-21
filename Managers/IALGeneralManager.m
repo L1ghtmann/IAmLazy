@@ -89,30 +89,6 @@
 	return sortedBackups;
 }
 
--(NSString *)executeCommandWithOutput:(NSString *)cmd{
-	NSTask *task = [[NSTask alloc] init];
-	[task setLaunchPath:@"/bin/sh"];
-	[task setArguments:@[@"-c", cmd]];
-
-	NSPipe *pipe = [NSPipe pipe];
-	[task setStandardOutput:pipe];
-
-	[task launch];
-
-	NSFileHandle *handle = [pipe fileHandleForReading];
-	NSData *data = [handle readDataToEndOfFile];
-	[handle closeFile];
-
-	// have to call after ^ to ensure that the output pipe doesn't fill
-	// if it does, the process will hang and block waitUntilExit from returning
-	[task waitUntilExit];
-
-	NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-
-	return output;
-}
-
-// made one for AndSoAreYou just for consistency. This isn't really necessary
 -(void)executeCommandAsRoot:(NSString *)cmd{
 	NSTask *task = [[NSTask alloc] init];
 	[task setLaunchPath:@"/usr/libexec/iamlazy/AndSoAreYou"];
