@@ -6,6 +6,7 @@
 //
 
 #import "../Compression/NVHTarGzip/NVHTarGzip.h"
+#import "../Compression/GZIP/NSData+GZIP.h"
 #import "IALGeneralManager.h"
 #import "IALRestoreManager.h"
 #import "../Common.h"
@@ -65,7 +66,7 @@
 
 		BOOL compatible = YES;
 		if([backupName containsString:@"u.tar"]){
-			compatible = [self verifyBootstrapOfTarball];
+			compatible = [self verifyBootstrapForBackup:target];
 		}
 
 		if(compatible){
@@ -100,7 +101,7 @@
 
 		BOOL compatible = YES;
 		if([backupName containsString:@"u.txt"]){
-			compatible = [self verifyBootstrapOfList:target];
+			compatible = [self verifyBootstrapForBackup:target];
 		}
 
 		if(compatible){
@@ -114,14 +115,34 @@
 }
 
 -(void)unpackArchive:(NSString *)backupName{
-	[[NVHTarGzip sharedInstance] unTarGzipFileAtPath:[NSString stringWithFormat:@"%@%@", backupDir, backupName] toPath:tmpDir completion:^(NSError* error){
-		if(error){
-			NSLog(@"[IAmLazyLog] Failed to extract tarball: %@", error.localizedDescription);
-		}
-	}];
+	NSString *backupPath = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
+	NSString *tarPath = [[NSString stringWithFormat:@"/tmp/%@", backupName] stringByDeletingPathExtension];
+
+	// convert backup to gzip data and then back to tar data
+	NSData *gzipData = [NSData dataWithContentsOfFile:backupPath];
+	NSData *tarData = [gzipData gunzippedData];
+	NSError *writeError = NULL;
+	[tarData writeToFile:tarPath options:NSDataWritingAtomic error:&writeError];
+	if(writeError){
+		NSLog(@"[IAmLazyLog] Failed to write tarData to file: %@", writeError.localizedDescription);
+	}
+	// convert tar data to tarball to extract contents from
+	else{
+		[[NVHTarGzip sharedInstance] unTarFileAtPath:tarPath toPath:tmpDir completion:^(NSError* error){
+			if(error){
+				NSLog(@"[IAmLazyLog] Failed to extract tarball: %@", error.localizedDescription);
+			}
+			// delete the tarball
+			NSError *deleteError = NULL;
+			[[NSFileManager defaultManager] removeItemAtPath:tarPath error:&deleteError];
+			if(deleteError){
+				NSLog(@"[IAmLazyLog] Failed to delete tarball: %@", deleteError.localizedDescription);
+			}
+		}];
+	}
 }
 
--(BOOL)verifyBootstrapOfTarball{
+-(BOOL)verifyBootstrapForBackup:(NSString *)targetBackup{
 	NSString *bootstrap = @"bingner_elucubratus";
 	NSString *oppBootstrap = @"procursus";
 	if([[NSFileManager defaultManager] fileExistsAtPath:@"/.procursus_strapped"]){
@@ -129,30 +150,20 @@
 		oppBootstrap = @"bingner_elucubratus";
 	}
 
-	if(![[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap]]){
+	BOOL check = YES;
+	if(![[targetBackup pathExtension] isEqualToString:@"txt"]){ // deb backup
+		check = [[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap]];
+	}
+	else{ // list backuo
+		check = [[NSString stringWithContentsOfFile:targetBackup encoding:NSUTF8StringEncoding error:NULL] containsString:[NSString stringWithFormat:@"## made on %@ ##", bootstrap]];
+	}
+
+	if(!check){
 		NSString *reason = [NSString stringWithFormat:@"The backup you're trying to restore from was made for jailbreaks running the %@ bootstrap. \n\nYour current jailbreak is using %@!", oppBootstrap, bootstrap];
 		[_generalManager popErrorAlertWithReason:reason];
-		return NO;
 	}
 
-	return YES;
-}
-
--(BOOL)verifyBootstrapOfList:(NSString *)list{
-	NSString *bootstrap = @"bingner_elucubratus";
-	NSString *oppBootstrap = @"procursus";
-	if([[NSFileManager defaultManager] fileExistsAtPath:@"/.procursus_strapped"]){
-		bootstrap = @"procursus";
-		oppBootstrap = @"bingner_elucubratus";
-	}
-
-	if(![[NSString stringWithContentsOfFile:list encoding:NSUTF8StringEncoding error:NULL] containsString:bootstrap]){
-		NSString *reason = [NSString stringWithFormat:@"The list you're trying to restore from was made for jailbreaks running the %@ bootstrap. \n\nYour current jailbreak is using %@!", oppBootstrap, bootstrap];
-		[_generalManager popErrorAlertWithReason:reason];
-		return NO;
-	}
-
-	return YES;
+	return check;
 }
 
 -(void)installDebs{

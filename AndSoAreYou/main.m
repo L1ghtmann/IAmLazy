@@ -1,6 +1,6 @@
 //
 //	main.m
-//	IAmLazy
+//	IAmLazy (AndSoAreYou)
 //
 //	Created by Lightmann during COVID-19
 //
@@ -9,14 +9,6 @@
 #import "../Common.h"
 
 int proc_pidpath(int pid, void *buffer, uint32_t buffersize); // libproc.h
-
-// void executeCommand(NSString *cmd){
-// 	NSTask *task = [[NSTask alloc] init];
-// 	[task setLaunchPath:@"/bin/sh"];
-// 	[task setArguments:@[@"-c", cmd]];
-// 	[task launch];
-// 	[task waitUntilExit];
-// }
 
 int main(int argc, char *argv[]) {
 	if(argc != 2){
@@ -140,34 +132,156 @@ int main(int argc, char *argv[]) {
 		}
 		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 	}
-	/*
 	else if(strcmp(argv[1], "install-debs") == 0){
+		// get debs from tmpDir
+		NSString *log = [NSString stringWithFormat:@"%@restore_log.txt", logDir];
+				NSError *error = NULL; // testing
+		NSArray *tmpDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:&error];
+		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '.deb'"];
+		NSArray *debs = [tmpDirContents filteredArrayUsingPredicate:thePredicate];
+
 		// install debs and resolve missing dependencies
-		// doing each deb individually to ensure that the entire process isn't nuked if a totally unconfigurable package (e.g., incompatible iOS vers, unmeetable dependencies, etc) is met
-		NSString *cmd = [NSString stringWithFormat:@"find %@ -name '*.deb' -exec apt-get install -y --allow-unauthenticated {} \\; > %@restore_log.txt", tmpDir, logDir];
-		executeCommand(cmd);
+		NSMutableString *logText = [NSMutableString new];
+				if(![tmpDirContents count]) [logText appendString:[NSString stringWithFormat:@"%@", error.localizedDescription]]; // testing
+		for(NSString *deb in debs){
+			NSString *path = [tmpDir stringByAppendingString:deb];
+
+			NSTask *task = [[NSTask alloc] init];
+			NSMutableArray *args = [NSMutableArray new];
+			[task setLaunchPath:@"/usr/bin/apt-get"];
+			[args addObject:@"install"];
+			[args addObject:@"-y"];
+			[args addObject:@"--allow-unauthenticated"];
+			[args addObject:path];
+			[task setArguments:args];
+
+			NSPipe *pipe = [NSPipe pipe];
+			[task setStandardOutput:pipe];
+
+			[task launch];
+
+			NSFileHandle *handle = [pipe fileHandleForReading];
+			NSData *data = [handle readDataToEndOfFile];
+			[handle closeFile];
+
+			// have to call after ^ to ensure that the output pipe doesn't fill
+			// if it does, the process will hang and block waitUntilExit from returning
+			[task waitUntilExit];
+
+			NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+			[logText appendString:output];
+		}
+		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 
 		// resolve any lingering things (e.g., partial installs due to dependencies)
-		NSString *cmd2 = [NSString stringWithFormat:@"find %@ -name '*.deb' -exec apt-get install -fy --allow-unauthenticated {} \\; > %@fixup_log.txt", tmpDir, logDir];
-		executeCommand(cmd2);
+		NSString *log2 = [NSString stringWithFormat:@"%@fixup_log.txt", logDir];
+		NSMutableString *log2Text = [NSMutableString new];
+		for(NSString *deb in debs){
+			NSString *path = [tmpDir stringByAppendingString:deb];
+
+			NSTask *task = [[NSTask alloc] init];
+			NSMutableArray *args = [NSMutableArray new];
+			[task setLaunchPath:@"/usr/bin/apt-get"];
+			[args addObject:@"install"];
+			[args addObject:@"-fy"];
+			[args addObject:@"--allow-unauthenticated"];
+			[args addObject:path];
+			[task setArguments:args];
+
+			NSPipe *pipe = [NSPipe pipe];
+			[task setStandardOutput:pipe];
+
+			[task launch];
+
+			NSFileHandle *handle = [pipe fileHandleForReading];
+			NSData *data = [handle readDataToEndOfFile];
+			[handle closeFile];
+
+			// have to call after ^ to ensure that the output pipe doesn't fill
+			// if it does, the process will hang and block waitUntilExit from returning
+			[task waitUntilExit];
+
+			NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+			[log2Text appendString:output];
+		}
+		[log2Text writeToFile:log2 atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 	}
 	else if(strcmp(argv[1], "install-list") == 0){
-		NSString *tweakList = [NSString stringWithContentsOfFile:targetList encoding:NSUTF8StringEncoding error:NULL];
+		NSString *targetListFile = [NSString stringWithContentsOfFile:targetList encoding:NSUTF8StringEncoding error:NULL];
+		NSString *tweakList = [NSString stringWithContentsOfFile:targetListFile encoding:NSUTF8StringEncoding error:NULL];
+		NSArray	*tweaks = [tweakList componentsSeparatedByString:@"\n"];
 
 		// make sure info on available packages is up-to-date
-		NSString *cmd = [NSString stringWithFormat:@"apt-get update"];
-		executeCommand(cmd);
+		NSTask *updateTask = [[NSTask alloc] init];
+		NSMutableArray *updateTaskArgs = [NSMutableArray new];
+		[updateTask setLaunchPath:@"/usr/bin/apt-get"];
+		[updateTaskArgs addObject:@"update"];
+		[updateTask setArguments:updateTaskArgs];
+		[updateTask launch];
+		[updateTask waitUntilExit];
 
 		// install packages from tweak list
-		// doing one package at a time to ensure that the entire process isn't nuked if an unknown, unfindable, and/or incompatible package is met
-		NSString *cmd2 = [NSString stringWithFormat:@"xargs -n 1 -a %@ apt-get install -y --allow-unauthenticated > %@restore_log.txt", tweakList, logDir];
-		executeCommand(cmd2);
+		NSString *log = [NSString stringWithFormat:@"%@restore_log.txt", logDir];
+		NSMutableString *logText = [NSMutableString new];
+		for(NSString *tweak in tweaks){
+			NSTask *task = [[NSTask alloc] init];
+			NSMutableArray *args = [NSMutableArray new];
+			[task setLaunchPath:@"/usr/bin/apt-get"];
+			[args addObject:@"install"];
+			[args addObject:@"-y"];
+			[args addObject:@"--allow-unauthenticated"];
+			[args addObject:tweak];
+			[task setArguments:args];
+
+			NSPipe *pipe = [NSPipe pipe];
+			[task setStandardOutput:pipe];
+
+			[task launch];
+
+			NSFileHandle *handle = [pipe fileHandleForReading];
+			NSData *data = [handle readDataToEndOfFile];
+			[handle closeFile];
+
+			// have to call after ^ to ensure that the output pipe doesn't fill
+			// if it does, the process will hang and block waitUntilExit from returning
+			[task waitUntilExit];
+
+			NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+			[logText appendString:output];
+		}
+		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 
 		// resolve any lingering things (e.g., partial installs due to dependencies)
-		NSString *cmd3 = [NSString stringWithFormat:@"xargs -n 1 -a %@ apt-get install -fy --allow-unauthenticated > %@fixup_log.txt", tweakList, logDir];
-		executeCommand(cmd3);
+		NSString *log2 = [NSString stringWithFormat:@"%@fixup_log.txt", logDir];
+		NSMutableString *log2Text = [NSMutableString new];
+		for(NSString *tweak in tweaks){
+			NSTask *task = [[NSTask alloc] init];
+			NSMutableArray *args = [NSMutableArray new];
+			[task setLaunchPath:@"/usr/bin/apt-get"];
+			[args addObject:@"install"];
+			[args addObject:@"-fy"];
+			[args addObject:@"--allow-unauthenticated"];
+			[args addObject:tweak];
+			[task setArguments:args];
+
+			NSPipe *pipe = [NSPipe pipe];
+			[task setStandardOutput:pipe];
+
+			[task launch];
+
+			NSFileHandle *handle = [pipe fileHandleForReading];
+			NSData *data = [handle readDataToEndOfFile];
+			[handle closeFile];
+
+			// have to call after ^ to ensure that the output pipe doesn't fill
+			// if it does, the process will hang and block waitUntilExit from returning
+			[task waitUntilExit];
+
+			NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+			[log2Text appendString:output];
+		}
+		[log2Text writeToFile:log2 atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 	}
-	*/
 	else{
 		printf("Houston, we have a problem: an invalid argument was provided!\n");
 		return 1;
