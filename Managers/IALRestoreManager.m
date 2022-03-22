@@ -117,24 +117,25 @@
 
 -(void)unpackArchive:(NSString *)backupName{
 	NSString *backupPath = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
-	NSString *tarPath = [[NSString stringWithFormat:@"/tmp/%@", backupName] stringByDeletingPathExtension];
+	NSString *tarPath = [NSTemporaryDirectory() stringByAppendingPathComponent:[backupName stringByDeletingPathExtension]];
 
 	// convert backup to gzip data and then back to tar data
 	NSData *gzipData = [NSData dataWithContentsOfFile:backupPath];
 	NSData *tarData = [gzipData gunzippedData];
-	NSError *writeError = NULL;
 	// write tar data to tarball
+	NSError *writeError = NULL;
 	[tarData writeToFile:tarPath options:NSDataWritingAtomic error:&writeError];
 	if(writeError){
 		NSLog(@"[IAmLazyLog] Failed to write tarData to file: %@", writeError.localizedDescription);
 	}
 	else{
 		// extract contents of tarball
-		NVHTarFile* tarFile = [[NVHTarFile alloc] initWithPath:tarPath];
+		NVHTarFile *tarFile = [[NVHTarFile alloc] initWithPath:tarPath];
 		[tarFile createFilesAndDirectoriesAtPath:tmpDir completion:^(NSError* error){
 			if(error){
 				NSLog(@"[IAmLazyLog] Failed to extract tarball: %@", error.localizedDescription);
 			}
+
 			// delete the tarball
 			NSError *deleteError = NULL;
 			[[NSFileManager defaultManager] removeItemAtPath:tarPath error:&deleteError];

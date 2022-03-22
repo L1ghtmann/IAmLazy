@@ -459,8 +459,8 @@
 	NSString *backupPath = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
 
 	// make tarball
-	NSString *tarPath = [backupPath stringByDeletingPathExtension];
 	// Note: NVHTarGzip's gzip/tar+gzip functionality is borked, so doing archival in two sep. steps
+	NSString *tarPath = [NSTemporaryDirectory() stringByAppendingPathComponent:[backupName stringByDeletingPathExtension]];
 	NVHTarFile *tarFile = [[NVHTarFile alloc] initWithPath:tarPath];
     [tarFile packFilesAndDirectoriesAtPath:tmpDir completion:^(NSError *error){
 		if(error){
