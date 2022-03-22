@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
 	else if(strcmp(argv[1], "install-debs") == 0){
 		// get debs from tmpDir
 		NSString *log = [NSString stringWithFormat:@"%@restore_log.txt", logDir];
-				NSError *error = NULL; // testing
+				NSError *error = nil; // testing
 		NSArray *tmpDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:&error];
 		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '.deb'"];
 		NSArray *debs = [tmpDirContents filteredArrayUsingPredicate:thePredicate];

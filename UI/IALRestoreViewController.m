@@ -189,7 +189,7 @@
 		for(NSString *backup in backupNames){
 			NSString *dateString = nil;
 
-			NSError *readError = NULL;
+			NSError *readError = nil;
 			NSString *path = [backupDir stringByAppendingPathComponent:backup];
 			NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:&readError];
 			if(readError){

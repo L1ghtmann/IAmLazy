@@ -111,7 +111,7 @@
 		NSString *filePath = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
 		NSFileManager *fileManager = [NSFileManager defaultManager];
 		if([fileManager isDeletableFileAtPath:filePath]){
-			NSError *deleteError = NULL;
+			NSError *deleteError = nil;
 			BOOL success = [fileManager removeItemAtPath:filePath error:&deleteError];
 			if(!success){
 				NSString *reason = [NSString stringWithFormat:@"An error occured and %@ was not deleted! \n\nError: %@", backupName, deleteError.localizedDescription];
@@ -167,7 +167,7 @@
 	NSString *localPath = [NSString stringWithFormat:@"file://%@%@", backupDir, [url lastPathComponent]];
 	NSURL *backupDirURL = [NSURL URLWithString:localPath];
 
-	NSError *writeError = NULL;
+	NSError *writeError = nil;
 	BOOL success = [[NSFileManager defaultManager] copyItemAtURL:url toURL:backupDirURL error:&writeError];
 	if(!success){
 		NSString *reason = [NSString stringWithFormat:@"An error occured and %@ could not be imported! \n\nError: %@", [url absoluteString], writeError.localizedDescription];

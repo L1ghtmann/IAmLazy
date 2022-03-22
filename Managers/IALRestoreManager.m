@@ -56,7 +56,7 @@
 
 		// make log dir if it doesn't exist already
 		if(![fileManager fileExistsAtPath:logDir]){
-			NSError *writeError = NULL;
+			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
 				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError.localizedDescription];
@@ -81,7 +81,7 @@
 	else{
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
 		// write new target list to file
-		NSError *writeError = NULL;
+		NSError *writeError = nil;
 		[target writeToFile:targetList atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
 		if(writeError){
 			NSLog(@"[IAmLazyLog] Failed to write target to %@! Error: %@", targetList, writeError.localizedDescription);
@@ -123,7 +123,7 @@
 	NSData *gzipData = [NSData dataWithContentsOfFile:backupPath];
 	NSData *tarData = [gzipData gunzippedData];
 	// write tar data to tarball
-	NSError *writeError = NULL;
+	NSError *writeError = nil;
 	[tarData writeToFile:tarPath options:NSDataWritingAtomic error:&writeError];
 	if(writeError){
 		NSLog(@"[IAmLazyLog] Failed to write tarData to file: %@", writeError.localizedDescription);
@@ -137,7 +137,7 @@
 			}
 
 			// delete the tarball
-			NSError *deleteError = NULL;
+			NSError *deleteError = nil;
 			[[NSFileManager defaultManager] removeItemAtPath:tarPath error:&deleteError];
 			if(deleteError){
 				NSLog(@"[IAmLazyLog] Failed to delete tarball: %@", deleteError.localizedDescription);

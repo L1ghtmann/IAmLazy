@@ -44,7 +44,7 @@
 
 -(void)cleanupTargetList{
 	// remove list file now that we're done with it
-	NSError *deleteError = NULL;
+	NSError *deleteError = nil;
 	[[NSFileManager defaultManager] removeItemAtPath:targetList error:&deleteError];
 	if(deleteError){
 		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", targetList, deleteError.localizedDescription);
@@ -66,7 +66,7 @@
 }
 
 -(NSArray *)getBackups{
-	NSError *readError = NULL;
+	NSError *readError = nil;
 	NSArray *backupDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:backupDir error:&readError];
 	if(readError){
 		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", backupDir, readError.localizedDescription);

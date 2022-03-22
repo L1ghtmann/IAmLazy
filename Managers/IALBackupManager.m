@@ -62,7 +62,7 @@
 	if(type == 0){
 		// make fresh tmp directory
 		if(![fileManager fileExistsAtPath:tmpDir]){
-			NSError *writeError = NULL;
+			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
 				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", tmpDir, writeError.localizedDescription];
@@ -78,7 +78,7 @@
 
 		// make backup and log dirs if they don't exist already
 		if(![fileManager fileExistsAtPath:logDir]){
-			NSError *writeError = NULL;
+			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
 				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError.localizedDescription];
@@ -184,7 +184,7 @@
 	NSMutableArray *userPackages;
 
 	// get apt lists
-	NSError *readError = NULL;
+	NSError *readError = nil;
 	NSString *aptListsDir = @"/var/lib/apt/lists/";
 	NSArray *aptLists = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:aptListsDir error:&readError];
 	if(readError){
@@ -240,7 +240,7 @@
 				continue; // disregard
 			}
 
-			NSError *readError = NULL;
+			NSError *readError = nil;
 			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:line error:&readError];
 			if(readError){
 				NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", line, readError.localizedDescription);
@@ -300,7 +300,7 @@
 		}
 
 		// this is nice because it overwrites the file's content, unlike the write method from NSFileManager
-		NSError *writeError = NULL;
+		NSError *writeError = nil;
 		[gFilePaths writeToFile:gFilesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
 		if(writeError){
 			NSLog(@"[IAmLazyLog] Failed to write gFilePaths to %@ for %@! Error: %@", gFilesToCopy, package, writeError.localizedDescription);
@@ -341,7 +341,7 @@
 	}
 
 	// remove list files now that we're done w them
-	NSError *deleteError = NULL;
+	NSError *deleteError = nil;
 	[fileManager removeItemAtPath:gFilesToCopy error:&deleteError];
 	if(deleteError){
 		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", gFilesToCopy, deleteError.localizedDescription);
@@ -365,7 +365,7 @@
 	for(NSString *dir in directories){
 		NSString *path = [NSString stringWithFormat:@"%@%@", tweakDir, dir];
 		if(![fileManager fileExistsAtPath:path]){
-			NSError *writeError = NULL;
+			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
 				NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", path, writeError.localizedDescription);
@@ -391,7 +391,7 @@
 	// make DEBIAN dir
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if(![fileManager fileExistsAtPath:debian]){
-		NSError *writeError = NULL;
+		NSError *writeError = nil;
 		[fileManager createDirectoryAtPath:debian withIntermediateDirectories:YES attributes:nil error:&writeError];
 		if(writeError){
 			NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", debian, writeError.localizedDescription);
@@ -421,7 +421,7 @@
 }
 
 -(void)verifyDebs{
-	NSError *readError = NULL;
+	NSError *readError = nil;
 	NSArray *tmp = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:&readError];
 	if(readError){
 		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", tmpDir, readError.localizedDescription);
@@ -474,14 +474,14 @@
 		// gzip tarball
 		NSData *tarData = [NSData dataWithContentsOfFile:tarPath];
 		NSData *gzipData = [tarData gzippedData];
-		NSError *writeError = NULL;
+		NSError *writeError = nil;
 		[gzipData writeToFile:backupPath options:NSDataWritingAtomic error:&writeError];
 		if(writeError){
 			NSLog(@"[IAmLazyLog] Failed to write gzipData to file: %@", writeError.localizedDescription);
 		}
 		else{
 			// delete the tarball
-			NSError *deleteError = NULL;
+			NSError *deleteError = nil;
 			[[NSFileManager defaultManager] removeItemAtPath:tarPath error:&deleteError];
 			if(deleteError){
 				NSLog(@"[IAmLazyLog] Failed to delete tarball: %@", deleteError.localizedDescription);
