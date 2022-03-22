@@ -123,12 +123,13 @@
 	NSData *gzipData = [NSData dataWithContentsOfFile:backupPath];
 	NSData *tarData = [gzipData gunzippedData];
 	NSError *writeError = NULL;
+	// write tar data to tarball
 	[tarData writeToFile:tarPath options:NSDataWritingAtomic error:&writeError];
 	if(writeError){
 		NSLog(@"[IAmLazyLog] Failed to write tarData to file: %@", writeError.localizedDescription);
 	}
-	// convert tar data to tarball to extract contents from
 	else{
+		// extract contents of tarball
 		NVHTarFile* tarFile = [[NVHTarFile alloc] initWithPath:tarPath];
 		[tarFile createFilesAndDirectoriesAtPath:tmpDir completion:^(NSError* error){
 			if(error){

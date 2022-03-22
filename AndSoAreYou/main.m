@@ -57,16 +57,24 @@ int main(int argc, char *argv[]) {
 		NSFileManager *fileManager = [NSFileManager defaultManager];
 		NSString *filesToCopy = [NSString stringWithContentsOfFile:gFilesToCopy encoding:NSUTF8StringEncoding error:NULL];
 		NSArray *lines = [filesToCopy componentsSeparatedByString:@"\n"];
-		for(NSString *file in lines){
-			NSString *dirStructure = [file stringByDeletingLastPathComponent]; // grab parent directory structure
-			NSString *newPath = [NSString stringWithFormat:@"%@%@", tweakDir, dirStructure];
-			if(![[newPath substringFromIndex:[newPath length]-1] isEqualToString:@"/"]) newPath = [newPath stringByAppendingString:@"/"]; // add missing slash
-			[fileManager createDirectoryAtPath:newPath withIntermediateDirectories:YES attributes:nil error:NULL]; // recreate parent directory structure
-			NSString *extension = [file pathExtension];
-			// 'reenable' tweaks that've been disabled with iCleaner Pro (i.e., change extension from .disabled back to .dylib)
-			if([[[file pathExtension] lowercaseString] isEqualToString:@"disabled"]) extension = @"dylib";
-			NSString *newFile = [newPath stringByAppendingString:[[[file lastPathComponent] stringByDeletingPathExtension] stringByAppendingPathExtension:extension]];
-			[fileManager copyItemAtPath:file toPath:newFile error:NULL]; // copy file
+		if([lines count]){
+			for(NSString *file in lines){
+				if(![file length]) continue;
+
+				// recreate parent directory structure
+				NSString *dirStructure = [file stringByDeletingLastPathComponent]; // grab parent directory structure
+				NSString *newPath = [NSString stringWithFormat:@"%@%@", tweakDir, dirStructure];
+				if(![[newPath substringFromIndex:[newPath length]-1] isEqualToString:@"/"]) newPath = [newPath stringByAppendingString:@"/"]; // add missing slash
+				[fileManager createDirectoryAtPath:newPath withIntermediateDirectories:YES attributes:nil error:NULL];
+
+				// 'reenable' tweaks that've been disabled with iCleaner Pro (i.e., change extension from .disabled back to .dylib)
+				NSString *extension = [file pathExtension];
+				if([[[file pathExtension] lowercaseString] isEqualToString:@"disabled"]) extension = @"dylib";
+				NSString *newFile = [newPath stringByAppendingString:[[[file lastPathComponent] stringByDeletingPathExtension] stringByAppendingPathExtension:extension]];
+
+				// copy file
+				[fileManager copyItemAtPath:file toPath:newFile error:NULL];
+			}
 		}
 	}
 	else if(strcmp(argv[1], "copy-debian-files") == 0){
@@ -77,10 +85,15 @@ int main(int argc, char *argv[]) {
 		// copy files
 		NSString *filesToCopy = [NSString stringWithContentsOfFile:dFilesToCopy encoding:NSUTF8StringEncoding error:NULL];
 		NSArray *lines = [filesToCopy componentsSeparatedByString:@"\n"];
-		for(NSString *file in lines){
-			NSString *fileName = [file lastPathComponent];
-			NSString *strippedName = [fileName stringByReplacingOccurrencesOfString:[tweakName stringByAppendingString:@"."] withString:@""]; // remove tweakName prefix
-			[[NSFileManager defaultManager] copyItemAtPath:file toPath:[NSString stringWithFormat:@"%@%@", debian, strippedName] error:NULL]; // copy file
+		if([lines count]){
+			for(NSString *file in lines){
+				if(![file length]) continue;
+
+				// remove tweakName prefix and copy file
+				NSString *fileName = [file lastPathComponent];
+				NSString *strippedName = [fileName stringByReplacingOccurrencesOfString:[tweakName stringByAppendingString:@"."] withString:@""];
+				[[NSFileManager defaultManager] copyItemAtPath:file toPath:[NSString stringWithFormat:@"%@%@", debian, strippedName] error:NULL];
+			}
 		}
 	}
 	else if(strcmp(argv[1], "build-debs") == 0){
