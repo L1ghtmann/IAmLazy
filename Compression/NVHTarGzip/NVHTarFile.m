@@ -138,7 +138,6 @@
 - (BOOL)createFilesAndDirectoriesAtPath:(NSString *)path withTarObject:(id)object size:(unsigned long long)size error:(NSError **)error
 {
     NSFileManager *filemanager = [NSFileManager defaultManager];
-
     [filemanager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:nil]; //Create path on filesystem
 
     unsigned long long location = 0; // Position in the file
@@ -295,13 +294,14 @@
 - (void)writeFileDataForObject:(id)object atLocation:(unsigned long long)location withLength:(unsigned long long)length atPath:(NSString *)path
 {
     BOOL created = NO;
+    NSFileManager *fileManager = [NSFileManager defaultManager];
     if ([object isKindOfClass:[NSData class]]) {
         NSData *contents = [object subdataWithRange:NSMakeRange((NSUInteger)location, (NSUInteger)length)];
-        created = [[NSFileManager defaultManager] createFileAtPath:path
+        created = [fileManager createFileAtPath:path
                                                           contents:contents
                                                         attributes:nil]; //Write the file on filesystem
     } else if ([object isKindOfClass:[NSFileHandle class]]) {
-        created = [[NSFileManager defaultManager] createFileAtPath:path contents:nil attributes:nil];
+        created = [fileManager createFileAtPath:path contents:nil attributes:nil];
         if (created) {
             NSFileHandle *destinationFile = [NSFileHandle fileHandleForWritingAtPath:path];
             [object seekToFileOffset:location];
@@ -361,7 +361,6 @@
 - (BOOL)innerPackFilesAndDirectoriesAtPath:(NSString *)path error:(NSError **)error
 {
     NSFileManager *fileManager = [NSFileManager defaultManager];
-
     if ([fileManager fileExistsAtPath:path]) {
         [fileManager removeItemAtPath:self.filePath error:nil];
         [@"" writeToFile:self.filePath atomically:NO encoding:NSUTF8StringEncoding error:nil];

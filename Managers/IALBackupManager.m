@@ -5,7 +5,7 @@
 //	Created by Lightmann during COVID-19
 //
 
-#import "../Compression/NVHTarGzip/NVHTarGzip.h"
+#import "../Compression/NVHTarGzip/NVHTarFile.h"
 #import "../Compression/GZIP/NSData+GZIP.h"
 #import "IALGeneralManager.h"
 #import "IALBackupManager.h"
@@ -21,14 +21,15 @@
 	[self setStartTime:[NSDate date]];
 
 	// check if Documents/ has root ownership (it shouldn't)
-	if([[NSFileManager defaultManager] isWritableFileAtPath:@"/var/mobile/Documents/"] == 0){
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	if([fileManager isWritableFileAtPath:@"/var/mobile/Documents/"] == 0){
 		NSString *reason = @"/var/mobile/Documents is not writeable. \n\nPlease ensure that the directory's owner is mobile and not root.";
 		[_generalManager popErrorAlertWithReason:reason];
 		return;
 	}
 
 	// check for old tmp files
-	if([[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
+	if([fileManager fileExistsAtPath:tmpDir]){
 		[_generalManager cleanupTmp];
 	}
 
@@ -60,9 +61,9 @@
 
 	if(type == 0){
 		// make fresh tmp directory
-		if(![[NSFileManager defaultManager] fileExistsAtPath:tmpDir]){
+		if(![fileManager fileExistsAtPath:tmpDir]){
 			NSError *writeError = NULL;
-			[[NSFileManager defaultManager] createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&writeError];
+			[fileManager createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
 				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", tmpDir, writeError.localizedDescription];
 				[_generalManager popErrorAlertWithReason:reason];
@@ -76,9 +77,9 @@
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
 
 		// make backup and log dirs if they don't exist already
-		if(![[NSFileManager defaultManager] fileExistsAtPath:logDir]){
+		if(![fileManager fileExistsAtPath:logDir]){
 			NSError *writeError = NULL;
-			[[NSFileManager defaultManager] createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
+			[fileManager createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
 				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError.localizedDescription];
 				[_generalManager popErrorAlertWithReason:reason];
@@ -122,12 +123,12 @@
 
 		// write to file
 		NSString *filePath = [NSString stringWithFormat:@"%@%@", backupDir, listName];
-		[[NSFileManager defaultManager] createFileAtPath:filePath contents:[fileContent dataUsingEncoding:NSUTF8StringEncoding] attributes:nil];
+		[fileManager createFileAtPath:filePath contents:[fileContent dataUsingEncoding:NSUTF8StringEncoding] attributes:nil];
 
 		// make note of the bootstrap that the list was made on
 		if(!filter){
 			NSString *bootstrap = @"bingner_elucubratus";
-			if([[NSFileManager defaultManager] fileExistsAtPath:@"/.procursus_strapped"]){
+			if([fileManager fileExistsAtPath:@"/.procursus_strapped"]){
 				bootstrap = @"procursus";
 			}
 
@@ -226,6 +227,7 @@
 }
 
 -(void)gatherPackageFiles{
+	NSFileManager *fileManager = [NSFileManager defaultManager];
 	for(NSString *package in self.packages){
 		NSMutableArray *genericFiles = [NSMutableArray new];
 		NSMutableArray *directories = [NSMutableArray new];
@@ -239,7 +241,7 @@
 			}
 
 			NSError *readError = NULL;
-			NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:line error:&readError];
+			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:line error:&readError];
 			if(readError){
 				NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", line, readError.localizedDescription);
 				continue;
@@ -271,7 +273,7 @@
 					// want to grab any symlniks that lead to files, but ignore those that lead to dirs
 					// this will traverse any links and check for the existence of a file at the link's final destination
 					BOOL isDir = NO;
-					if([[NSFileManager defaultManager] fileExistsAtPath:line isDirectory:&isDir] && !isDir){
+					if([fileManager fileExistsAtPath:line isDirectory:&isDir] && !isDir){
 						[genericFiles addObject:line];
 					}
 				}
@@ -315,9 +317,9 @@
 		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:package];
 
 		// make dir to hold stuff for the tweak
-		if(![[NSFileManager defaultManager] fileExistsAtPath:tweakDir]){
+		if(![fileManager fileExistsAtPath:tweakDir]){
 			NSError *writeError3 = NULL;
-			[[NSFileManager defaultManager] createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&writeError3];
+			[fileManager createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&writeError3];
 			if(writeError3){
 				NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", tweakDir, writeError3.localizedDescription);
 				continue;
@@ -340,30 +342,31 @@
 
 	// remove list files now that we're done w them
 	NSError *deleteError = NULL;
-	[[NSFileManager defaultManager] removeItemAtPath:gFilesToCopy error:&deleteError];
+	[fileManager removeItemAtPath:gFilesToCopy error:&deleteError];
 	if(deleteError){
 		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", gFilesToCopy, deleteError.localizedDescription);
 	}
 
 	NSError *deleteError2 = NULL;
-	[[NSFileManager defaultManager] removeItemAtPath:dFilesToCopy error:&deleteError2];
+	[fileManager removeItemAtPath:dFilesToCopy error:&deleteError2];
 	if(deleteError2){
 		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", dFilesToCopy, deleteError2.localizedDescription);
 	}
 
 	NSError *deleteError3 = NULL;
-	[[NSFileManager defaultManager] removeItemAtPath:targetDir error:&deleteError3];
+	[fileManager removeItemAtPath:targetDir error:&deleteError3];
 	if(deleteError3){
 		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", targetDir, deleteError3.localizedDescription);
 	}
 }
 
 -(void)makeSubDirectories:(NSArray *)directories inDirectory:(NSString *)tweakDir{
+	NSFileManager *fileManager = [NSFileManager defaultManager];
 	for(NSString *dir in directories){
 		NSString *path = [NSString stringWithFormat:@"%@%@", tweakDir, dir];
-		if(![[NSFileManager defaultManager] fileExistsAtPath:path]){
+		if(![fileManager fileExistsAtPath:path]){
 			NSError *writeError = NULL;
-			[[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&writeError];
+			[fileManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
 				NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", path, writeError.localizedDescription);
 				continue;
@@ -386,9 +389,10 @@
 	NSString *debian = [NSString stringWithFormat:@"%@/DEBIAN/", tweakDir];
 
 	// make DEBIAN dir
-	if(![[NSFileManager defaultManager] fileExistsAtPath:debian]){
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	if(![fileManager fileExistsAtPath:debian]){
 		NSError *writeError = NULL;
-		[[NSFileManager defaultManager] createDirectoryAtPath:debian withIntermediateDirectories:YES attributes:nil error:&writeError];
+		[fileManager createDirectoryAtPath:debian withIntermediateDirectories:YES attributes:nil error:&writeError];
 		if(writeError){
 			NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", debian, writeError.localizedDescription);
 			return;
@@ -398,7 +402,7 @@
 	// write info to file
 	NSData *data = [info dataUsingEncoding:NSUTF8StringEncoding];
 	NSString *control = [debian stringByAppendingPathComponent:@"control"];
-	[[NSFileManager defaultManager] createFileAtPath:control contents:data attributes:nil];
+	[fileManager createFileAtPath:control contents:data attributes:nil];
 }
 
 -(void)copyDEBIANFiles{
@@ -433,12 +437,13 @@
 
 -(void)makeBootstrapFile{
 	NSString *bootstrap = @"bingner_elucubratus";
-	if([[NSFileManager defaultManager] fileExistsAtPath:@"/.procursus_strapped"]){
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	if([fileManager fileExistsAtPath:@"/.procursus_strapped"]){
 		bootstrap = @"procursus";
 	}
 
 	NSString *file = [NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap];
-	[[NSFileManager defaultManager] createFileAtPath:file contents:nil attributes:nil];
+	[fileManager createFileAtPath:file contents:nil attributes:nil];
 }
 
 -(void)makeTarballWithFilter:(BOOL)filter{
@@ -455,8 +460,9 @@
 
 	// make tarball
 	NSString *tarPath = [backupPath stringByDeletingPathExtension];
-	// Note: NVHTarGzip's gzip/tar+gzip functionality is borked and misses source files, so doing it in two steps
-	[[NVHTarGzip sharedInstance] tarFileAtPath:tmpDir toPath:tarPath completion:^(NSError *error){
+	// Note: NVHTarGzip's gzip/tar+gzip functionality is borked, so doing archival in two sep. steps
+	NVHTarFile *tarFile = [[NVHTarFile alloc] initWithPath:tarPath];
+    [tarFile packFilesAndDirectoriesAtPath:tmpDir completion:^(NSError *error){
 		if(error){
 			NSLog(@"[IAmLazyLog] Failed to create tarball: %@", error.localizedDescription);
 		}

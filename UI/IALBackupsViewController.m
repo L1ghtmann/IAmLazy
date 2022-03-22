@@ -109,9 +109,10 @@
 		// remove backup
 		NSString *backupName = [tableView cellForRowAtIndexPath:indexPath].textLabel.text;
 		NSString *filePath = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
-		if([[NSFileManager defaultManager] isDeletableFileAtPath:filePath]){
+		NSFileManager *fileManager = [NSFileManager defaultManager];
+		if([fileManager isDeletableFileAtPath:filePath]){
 			NSError *deleteError = NULL;
-			BOOL success = [[NSFileManager defaultManager] removeItemAtPath:filePath error:&deleteError];
+			BOOL success = [fileManager removeItemAtPath:filePath error:&deleteError];
 			if(!success){
 				NSString *reason = [NSString stringWithFormat:@"An error occured and %@ was not deleted! \n\nError: %@", backupName, deleteError.localizedDescription];
 				[self popErrorAlertWithReason:reason];

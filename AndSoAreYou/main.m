@@ -89,14 +89,15 @@ int main(int argc, char *argv[]) {
 		// is a dpkg version conflict. in order to fix this, we need to use gzip compression
 
 		// build debs from collected files and then remove the respective file dir when done
+		NSFileManager *fileManager = [NSFileManager defaultManager];
 		NSString *log = [NSString stringWithFormat:@"%@build_log.txt", logDir];
-		NSArray *tmpDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:NULL];
+		NSArray *tmpDirContents = [fileManager contentsOfDirectoryAtPath:tmpDir error:NULL];
 		NSMutableArray *tweakDirs = [NSMutableArray new];
 		for(NSString *item in tmpDirContents){
 			NSString *path = [tmpDir stringByAppendingString:item];
 
 			BOOL isDir = NO;
-			if([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDir] && isDir){
+			if([fileManager fileExistsAtPath:path isDirectory:&isDir] && isDir){
 				[tweakDirs addObject:path];
 			}
 		}
@@ -128,7 +129,7 @@ int main(int argc, char *argv[]) {
 			NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 			[logText appendString:output];
 
-			[[NSFileManager defaultManager] removeItemAtPath:tweak error:NULL];
+			[fileManager removeItemAtPath:tweak error:NULL];
 		}
 		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 	}
