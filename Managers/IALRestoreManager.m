@@ -5,7 +5,7 @@
 //	Created by Lightmann during COVID-19
 //
 
-#import "../Compression/NVHTarGzip/NVHTarFile.h"
+#import "../Compression/Light-Untar/NSFileManager+Tar.h"
 #import "../Compression/GZIP/NSData+GZIP.h"
 #import "IALGeneralManager.h"
 #import "IALRestoreManager.h"
@@ -116,33 +116,16 @@
 }
 
 -(void)unpackArchive:(NSString *)backupName{
-	NSString *backupPath = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
-	NSString *tarPath = [NSTemporaryDirectory() stringByAppendingPathComponent:[backupName stringByDeletingPathExtension]];
-
 	// convert backup to gzip data and then back to tar data
+	NSString *backupPath = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
 	NSData *gzipData = [NSData dataWithContentsOfFile:backupPath];
 	NSData *tarData = [gzipData gunzippedData];
-	// write tar data to tarball
-	NSError *writeError = nil;
-	[tarData writeToFile:tarPath options:NSDataWritingAtomic error:&writeError];
-	if(writeError){
-		NSLog(@"[IAmLazyLog] Failed to write tarData to file: %@", writeError.localizedDescription);
-	}
-	else{
-		// extract contents of tarball
-		NVHTarFile *tarFile = [[NVHTarFile alloc] initWithPath:tarPath];
-		[tarFile createFilesAndDirectoriesAtPath:tmpDir completion:^(NSError* error){
-			if(error){
-				NSLog(@"[IAmLazyLog] Failed to extract tarball: %@", error.localizedDescription);
-			}
 
-			// delete the tarball
-			NSError *deleteError = nil;
-			[[NSFileManager defaultManager] removeItemAtPath:tarPath error:&deleteError];
-			if(deleteError){
-				NSLog(@"[IAmLazyLog] Failed to delete tarball: %@", deleteError.localizedDescription);
-			}
-		}];
+	// extract tar data
+	NSError *writeError = nil;
+	[[NSFileManager defaultManager] createFilesAndDirectoriesAtPath:@"/tmp" withTarData:tarData error:&writeError progress:nil];
+	if(writeError){
+		NSLog(@"[IAmLazyLog] Failed to extract tar data: %@", writeError.localizedDescription);
 	}
 }
 

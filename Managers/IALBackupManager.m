@@ -5,7 +5,6 @@
 //	Created by Lightmann during COVID-19
 //
 
-#import "../Compression/NVHTarGzip/NVHTarFile.h"
 #import "../Compression/GZIP/NSData+GZIP.h"
 #import "IALGeneralManager.h"
 #import "IALBackupManager.h"
@@ -457,40 +456,33 @@
 		backupName = [latest stringByAppendingString:@".tar.gz"];
 	}
 	NSString *backupPath = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
+	NSString *tarPath = [NSTemporaryDirectory() stringByAppendingPathComponent:[backupName stringByDeletingPathExtension]];
 
 	// make tarball
-	// Note: NVHTarGzip's gzip/tar+gzip functionality is borked, so doing archival in two sep. steps
-	NSString *tarPath = [NSTemporaryDirectory() stringByAppendingPathComponent:[backupName stringByDeletingPathExtension]];
-	NVHTarFile *tarFile = [[NVHTarFile alloc] initWithPath:tarPath];
-    [tarFile packFilesAndDirectoriesAtPath:tmpDir completion:^(NSError *error){
-		if(error){
-			NSLog(@"[IAmLazyLog] Failed to create tarball: %@", error.localizedDescription);
-		}
-		[_generalManager cleanupTmp];
+	NSTask *task = [[NSTask alloc] init];
+	NSMutableArray *args = [NSMutableArray new];
+	[task setLaunchPath:@"/usr/bin/tar"];
+	[args addObject:@"-cf"];
+	[args addObject:backupPath];
+	[args addObject:@"-C"];
+	[args addObject:@"/tmp"];
+	[args addObject:@"me.lightmann.iamlazy"];
+	[args addObject:@"--remove-files"];
+	[task setArguments:args];
+	[task launch];
+	[task waitUntilExit];
 
-		// confirm the tarball now exists where expected
-		[self verifyFileAtPath:tarPath];
+	// gzip tarball
+	NSData *tarData = [NSData dataWithContentsOfFile:tarPath];
+	NSData *gzipData = [tarData gzippedData];
+	NSError *writeError = nil;
+	[gzipData writeToFile:backupPath options:NSDataWritingAtomic error:&writeError];
+	if(writeError){
+		NSLog(@"[IAmLazyLog] Failed to write gzipData to file: %@", writeError.localizedDescription);
+	}
 
-		// gzip tarball
-		NSData *tarData = [NSData dataWithContentsOfFile:tarPath];
-		NSData *gzipData = [tarData gzippedData];
-		NSError *writeError = nil;
-		[gzipData writeToFile:backupPath options:NSDataWritingAtomic error:&writeError];
-		if(writeError){
-			NSLog(@"[IAmLazyLog] Failed to write gzipData to file: %@", writeError.localizedDescription);
-		}
-		else{
-			// delete the tarball
-			NSError *deleteError = nil;
-			[[NSFileManager defaultManager] removeItemAtPath:tarPath error:&deleteError];
-			if(deleteError){
-				NSLog(@"[IAmLazyLog] Failed to delete tarball: %@", deleteError.localizedDescription);
-			}
-		}
-
-		// confirm the gzip archive now exists where expected
-		[self verifyFileAtPath:backupPath];
-	}];
+	// confirm the gzip archive now exists where expected
+	[self verifyFileAtPath:backupPath];
 }
 
 -(void)verifyFileAtPath:(NSString *)filePath{
