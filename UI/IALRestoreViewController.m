@@ -11,6 +11,7 @@
 #import "IALRestoreViewController.h"
 #import "IALTableViewCell.h"
 #import "../Common.h"
+#import <NSTask.h>
 
 @implementation IALRestoreViewController
 

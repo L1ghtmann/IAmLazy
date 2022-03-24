@@ -5,8 +5,9 @@
 //	Created by Lightmann during COVID-19
 //
 
-#import <sys/stat.h>
 #import "../Common.h"
+#import <sys/stat.h>
+#import <NSTask.h>
 
 int proc_pidpath(int pid, void *buffer, uint32_t buffersize); // libproc.h
 
@@ -46,11 +47,11 @@ int main(int argc, char *argv[]) {
 	setuid(0);
 	setuid(0);
 
-	if(strcmp(argv[1], "cleanup-tmp") == 0){
+	if(strcmp(argv[1], "cleanTmp") == 0){
 		// delete temporary directory
 		[[NSFileManager defaultManager] removeItemAtPath:tmpDir error:NULL];
 	}
-	else if(strcmp(argv[1], "copy-generic-files") == 0){
+	else if(strcmp(argv[1], "cpGFiles") == 0){
 		NSString *tweakDir = [NSString stringWithContentsOfFile:targetDir encoding:NSUTF8StringEncoding error:NULL];
 
 		// recreate directory structure and copy files
@@ -77,7 +78,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	}
-	else if(strcmp(argv[1], "copy-debian-files") == 0){
+	else if(strcmp(argv[1], "cpDFiles") == 0){
 		NSString *tweakDir = [NSString stringWithContentsOfFile:targetDir encoding:NSUTF8StringEncoding error:NULL];
 		NSString *debian = [NSString stringWithFormat:@"%@/DEBIAN/", tweakDir];
 		NSString *tweakName = [tweakDir lastPathComponent];
@@ -96,7 +97,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	}
-	else if(strcmp(argv[1], "build-debs") == 0){
+	else if(strcmp(argv[1], "buildDebs") == 0){
 		// Note: the default compression for dpkg-deb is xz (as of 1.15.6), which will occassionally cause an error:
 		// "unexpected end of file in archive member header in packageName.deb" upon extraction/installation if there
 		// is a dpkg version conflict. in order to fix this, we need to use gzip compression
@@ -146,17 +147,15 @@ int main(int argc, char *argv[]) {
 		}
 		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 	}
-	else if(strcmp(argv[1], "install-debs") == 0){
+	else if(strcmp(argv[1], "installDebs") == 0){
 		// get debs from tmpDir
 		NSString *log = [NSString stringWithFormat:@"%@restore_log.txt", logDir];
-				NSError *error = nil; // testing
-		NSArray *tmpDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:&error];
+		NSArray *tmpDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:NULL];
 		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '.deb'"];
 		NSArray *debs = [tmpDirContents filteredArrayUsingPredicate:thePredicate];
 
 		// install debs and resolve missing dependencies
 		NSMutableString *logText = [NSMutableString new];
-				if(![tmpDirContents count]) [logText appendString:[NSString stringWithFormat:@"%@", error.localizedDescription]]; // testing
 		for(NSString *deb in debs){
 			NSString *path = [tmpDir stringByAppendingString:deb];
 
@@ -220,7 +219,7 @@ int main(int argc, char *argv[]) {
 		}
 		[log2Text writeToFile:log2 atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 	}
-	else if(strcmp(argv[1], "install-list") == 0){
+	else if(strcmp(argv[1], "installList") == 0){
 		NSString *targetListFile = [NSString stringWithContentsOfFile:targetList encoding:NSUTF8StringEncoding error:NULL];
 		NSString *tweakList = [NSString stringWithContentsOfFile:targetListFile encoding:NSUTF8StringEncoding error:NULL];
 		NSArray	*tweaks = [tweakList componentsSeparatedByString:@"\n"];

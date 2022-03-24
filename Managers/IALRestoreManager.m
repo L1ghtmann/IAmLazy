@@ -145,20 +145,22 @@
 }
 
 -(BOOL)verifyBootstrapForBackup:(NSString *)targetBackup{
-	NSString *bootstrap = @"bingner_elucubratus";
+	NSString *bootstrap = @"elucubratus";
 	NSString *oppBootstrap = @"procursus";
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if([fileManager fileExistsAtPath:@"/.procursus_strapped"]){
 		bootstrap = @"procursus";
-		oppBootstrap = @"bingner_elucubratus";
+		oppBootstrap = @"elucubratus";
 	}
 
 	BOOL check = YES;
 	if(![[targetBackup pathExtension] isEqualToString:@"txt"]){ // deb backup
 		check = [fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap]];
 	}
-	else{ // list backuo
-		check = [[NSString stringWithContentsOfFile:targetBackup encoding:NSUTF8StringEncoding error:NULL] containsString:[NSString stringWithFormat:@"## made on %@ ##", bootstrap]];
+	else{ // list backup
+		NSString *content = [NSString stringWithContentsOfFile:targetBackup encoding:NSUTF8StringEncoding error:NULL];
+		NSArray *bits = [content componentsSeparatedByString:@"\n"];
+		check = [[bits firstObject] isEqualToString:bootstrap];
 	}
 
 	if(!check){
@@ -171,12 +173,12 @@
 
 -(void)installDebs{
 	// installing via apt/dpkg requires root
-	[_generalManager executeCommandAsRoot:@"install-debs"];
+	[_generalManager executeCommandAsRoot:@"installDebs"];
 }
 
 -(void)installList{
 	// installing via apt/dpkg requires root
-	[_generalManager executeCommandAsRoot:@"install-list"];
+	[_generalManager executeCommandAsRoot:@"installList"];
 }
 
 @end

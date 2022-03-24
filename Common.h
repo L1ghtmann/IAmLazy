@@ -1,5 +1,4 @@
 #import <UIKit/UIApplication.h>
-#import <NSTask.h>
 
 #define tmpDir @"/tmp/me.lightmann.iamlazy/"
 #define gFilesToCopy @"/tmp/me.lightmann.iamlazy/.gfilesToCopy"

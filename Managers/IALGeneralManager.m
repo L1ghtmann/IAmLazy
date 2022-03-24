@@ -9,6 +9,7 @@
 #import "IALRestoreManager.h"
 #import "IALBackupManager.h"
 #import "../Common.h"
+#import <NSTask.h>
 
 @implementation IALGeneralManager
 
@@ -39,7 +40,7 @@
 
 -(void)cleanupTmp{
 	// has to be done as root since some files have root ownership
-	[self executeCommandAsRoot:@"cleanup-tmp"];
+	[self executeCommandAsRoot:@"cleanTmp"];
 }
 
 -(void)cleanupTargetList{
@@ -85,16 +86,19 @@
 		return - [(NSString *)obj1 compare:(NSString *)obj2 options:NSNumericSearch]; // note: "-" == NSOrderedDescending
 	}];
 	NSArray *sortedBackups = [backups sortedArrayUsingDescriptors:@[nameDescriptor]];
-
 	return sortedBackups;
 }
 
 -(void)executeCommandAsRoot:(NSString *)cmd{
-	NSTask *task = [[NSTask alloc] init];
-	[task setLaunchPath:@"/usr/libexec/iamlazy/AndSoAreYou"];
-	[task setArguments:@[cmd]];
-	[task launch];
-	[task waitUntilExit];
+	NSCharacterSet *alphaSet = [NSCharacterSet alphanumericCharacterSet];
+	BOOL valid = [[cmd stringByTrimmingCharactersInSet:alphaSet] isEqualToString:@""];
+	if(valid){
+		NSTask *task = [[NSTask alloc] init];
+		[task setLaunchPath:@"/usr/libexec/iamlazy/AndSoAreYou"];
+		[task setArguments:@[cmd]];
+		[task launch];
+		[task waitUntilExit];
+	}
 }
 
 -(void)popErrorAlertWithReason:(NSString *)reason{

@@ -9,6 +9,7 @@
 #import "IALGeneralManager.h"
 #import "IALBackupManager.h"
 #import "../Common.h"
+#import <NSTask.h>
 
 @implementation IALBackupManager
 
@@ -124,18 +125,15 @@
 		NSString *filePath = [NSString stringWithFormat:@"%@%@", backupDir, listName];
 		[fileManager createFileAtPath:filePath contents:[fileContent dataUsingEncoding:NSUTF8StringEncoding] attributes:nil];
 
-		// make note of the bootstrap that the list was made on
+		// note bootstrap the list was made on
 		if(!filter){
-			NSString *bootstrap = @"bingner_elucubratus";
+			NSString *bootstrap = @"elucubratus";
 			if([fileManager fileExistsAtPath:@"/.procursus_strapped"]){
 				bootstrap = @"procursus";
 			}
 
-			NSString *madeOn = [NSString stringWithFormat:@"\n\n## made on %@ ##", bootstrap];
-
 			NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:filePath];
-			[fileHandle seekToEndOfFile];
-			[fileHandle writeData:[madeOn dataUsingEncoding:NSUTF8StringEncoding]];
+			[fileHandle writeData:[[bootstrap stringByAppendingString:@"\n"] dataUsingEncoding:NSUTF8StringEncoding]];
 			[fileHandle closeFile];
 		}
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
@@ -376,7 +374,7 @@
 
 -(void)copyGenericFiles{
 	// have to run as root in order to retain file attributes (ownership, etc)
-	[_generalManager executeCommandAsRoot:@"copy-generic-files"];
+	[_generalManager executeCommandAsRoot:@"cpGFiles"];
 }
 
 -(void)makeControlForPackage:(NSString *)package inDirectory:(NSString *)tweakDir{
@@ -406,14 +404,14 @@
 
 -(void)copyDEBIANFiles{
 	// have to copy as root in order to retain file attributes (ownership, etc)
-	[_generalManager executeCommandAsRoot:@"copy-debian-files"];
+	[_generalManager executeCommandAsRoot:@"cpDFiles"];
 }
 
 -(void)buildDebs{
 	// have to run as root for some packages to be built correctly (e.g., sudo, openssh-client, etc)
 	// if this isn't done as root, said packages will be corrupt and produce the error:
 	// "unexpected end of file in archive member header in packageName.deb" upon extraction/installation
-	[_generalManager executeCommandAsRoot:@"build-debs"];
+	[_generalManager executeCommandAsRoot:@"buildDebs"];
 
 	// confirm that we successfully built debs
 	[self verifyDebs];
@@ -435,7 +433,7 @@
 }
 
 -(void)makeBootstrapFile{
-	NSString *bootstrap = @"bingner_elucubratus";
+	NSString *bootstrap = @"elucubratus";
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if([fileManager fileExistsAtPath:@"/.procursus_strapped"]){
 		bootstrap = @"procursus";
