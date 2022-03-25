@@ -207,76 +207,63 @@ int main(int argc, char *argv[]) {
 		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 	}
 	else if(strcmp(argv[1], "installDebs") == 0){
-		// get debs from tmpDir
+		// install debs
 		NSString *log = [NSString stringWithFormat:@"%@restore_log.txt", logDir];
-		NSArray *tmpDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:NULL];
-		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '.deb'"];
-		NSArray *debs = [tmpDirContents filteredArrayUsingPredicate:thePredicate];
-
-		// install debs and resolve missing dependencies
-		// TODO: find a better way of doing this
 		NSMutableString *logText = [NSMutableString new];
-		for(NSString *deb in debs){
-			NSString *path = [tmpDir stringByAppendingString:deb];
 
-			NSTask *task = [[NSTask alloc] init];
-			[task setLaunchPath:@"/usr/bin/apt-get"];
-			[task setArguments:@[
-				@"install",
-				@"-y",
-				@"--allow-unauthenticated",
-				path
-			]];
+		NSTask *task = [[NSTask alloc] init];
+		[task setLaunchPath:@"/usr/bin/dpkg"];
+		[task setArguments:@[
+			@"-iR",
+			tmpDir
+		]];
 
-			NSPipe *pipe = [NSPipe pipe];
-			[task setStandardOutput:pipe];
+		NSPipe *pipe = [NSPipe pipe];
+		[task setStandardOutput:pipe];
 
-			[task launch];
+		[task launch];
 
-			NSFileHandle *handle = [pipe fileHandleForReading];
-			NSData *data = [handle readDataToEndOfFile];
-			[handle closeFile];
+		NSFileHandle *handle = [pipe fileHandleForReading];
+		NSData *data = [handle readDataToEndOfFile];
+		[handle closeFile];
 
-			// have to call after ^ to ensure that the output pipe doesn't fill
-			// if it does, the process will hang and block waitUntilExit from returning
-			[task waitUntilExit];
+		// have to call after ^ to ensure that the output pipe doesn't fill
+		// if it does, the process will hang and block waitUntilExit from returning
+		[task waitUntilExit];
 
-			NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-			[logText appendString:output];
-		}
+		NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+		[logText appendString:output];
+
 		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 
-		// resolve any lingering things (e.g., partial installs due to dependencies)
+		// resolve any lingering things (e.g., conflicts, partial installs due to dependencies, etc)
 		NSString *log2 = [NSString stringWithFormat:@"%@fixup_log.txt", logDir];
 		NSMutableString *log2Text = [NSMutableString new];
-		for(NSString *deb in debs){
-			NSString *path = [tmpDir stringByAppendingString:deb];
 
-			NSTask *task = [[NSTask alloc] init];
-			[task setLaunchPath:@"/usr/bin/apt-get"];
-			[task setArguments:@[
-				@"install",
-				@"-fy",
-				@"--allow-unauthenticated",
-				path
-			]];
+		NSTask *task2 = [[NSTask alloc] init];
+		[task2 setLaunchPath:@"/usr/bin/apt-get"];
+		[task2 setArguments:@[
+			@"install",
+			@"-fy",
+			@"--allow-unauthenticated"
+		]];
 
-			NSPipe *pipe = [NSPipe pipe];
-			[task setStandardOutput:pipe];
+		NSPipe *pipe2 = [NSPipe pipe];
+		[task2 setStandardOutput:pipe2];
 
-			[task launch];
+		[task2 launch];
 
-			NSFileHandle *handle = [pipe fileHandleForReading];
-			NSData *data = [handle readDataToEndOfFile];
-			[handle closeFile];
+		NSFileHandle *handle2 = [pipe2 fileHandleForReading];
+		NSData *data2 = [handle2 readDataToEndOfFile];
+		[handle2 closeFile];
 
-			// have to call after ^ to ensure that the output pipe doesn't fill
-			// if it does, the process will hang and block waitUntilExit from returning
-			[task waitUntilExit];
+		// have to call after ^ to ensure that the output pipe doesn't fill
+		// if it does, the process will hang and block waitUntilExit from returning
+		[task2 waitUntilExit];
 
-			NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-			[log2Text appendString:output];
-		}
+		NSString *output2 = [[NSString alloc] initWithData:data2 encoding:NSUTF8StringEncoding];
+		[log2Text appendString:output2];
+
 		[log2Text writeToFile:log2 atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 	}
 	else if(strcmp(argv[1], "installList") == 0){
@@ -291,6 +278,7 @@ int main(int argc, char *argv[]) {
 		NSArray	*tweaks = [tweakList componentsSeparatedByString:@"\n"];
 
 		// make sure info on available packages is up-to-date
+		// Note: if list isn't in /var/lib/apt/lists/ it isn't queried
 		NSTask *updateTask = [[NSTask alloc] init];
 		[updateTask setLaunchPath:@"/usr/bin/apt-get"];
 		[updateTask setArguments:@[@"update"]];
@@ -298,7 +286,6 @@ int main(int argc, char *argv[]) {
 		[updateTask waitUntilExit];
 
 		// install packages from tweak list
-		// TODO: find a better way of doing this
 		NSString *log = [NSString stringWithFormat:@"%@restore_log.txt", logDir];
 		NSMutableString *logText = [NSMutableString new];
 		for(NSString *tweak in tweaks){
@@ -335,41 +322,9 @@ int main(int argc, char *argv[]) {
 		}
 		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 
-		// resolve any lingering things (e.g., partial installs due to dependencies)
+		// nothing else to do
 		NSString *log2 = [NSString stringWithFormat:@"%@fixup_log.txt", logDir];
-		NSMutableString *log2Text = [NSMutableString new];
-		for(NSString *tweak in tweaks){
-			NSCharacterSet *alphaSet = [NSCharacterSet alphanumericCharacterSet];
-			NSString *run1 = [tweak stringByReplacingOccurrencesOfString:@"." withString:@""];
-			NSString *run2 = [run1 stringByReplacingOccurrencesOfString:@"-" withString:@""];
-			BOOL valid = [[run2 stringByTrimmingCharactersInSet:alphaSet] isEqualToString:@""];
-			if(valid){
-				NSTask *task = [[NSTask alloc] init];
-				[task setLaunchPath:@"/usr/bin/apt-get"];
-				[task setArguments:@[
-					@"install",
-					@"-fy",
-					@"--allow-unauthenticated",
-					tweak
-				]];
-
-				NSPipe *pipe = [NSPipe pipe];
-				[task setStandardOutput:pipe];
-
-				[task launch];
-
-				NSFileHandle *handle = [pipe fileHandleForReading];
-				NSData *data = [handle readDataToEndOfFile];
-				[handle closeFile];
-
-				// have to call after ^ to ensure that the output pipe doesn't fill
-				// if it does, the process will hang and block waitUntilExit from returning
-				[task waitUntilExit];
-
-				NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-				[log2Text appendString:output];
-			}
-		}
+		NSString *log2Text = @"There's no fixup log for a list restore.\n";
 		[log2Text writeToFile:log2 atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 	}
 	else{
