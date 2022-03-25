@@ -197,7 +197,7 @@
 		NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate1,predicate2]];
 		NSArray *pkgLists = [aptLists filteredArrayUsingPredicate:thePredicate];
 		for(NSString *list in pkgLists){ // count should be 1
-			NSError *readError2 = NULL;
+			NSError *readError2 = nil;
 			NSString *content = [NSString stringWithContentsOfFile:[NSString stringWithFormat:@"%@%@", aptListsDir, list] encoding:NSUTF8StringEncoding error:&readError2];
 			if(readError2){
 				NSLog(@"[IAmLazyLog] Failed to get contents of %@%@! Error: %@", aptListsDir, list, readError2.localizedDescription);
@@ -277,37 +277,17 @@
 			}
 		}
 
-		// get DEBIAN files (e.g., pre/post scripts) and put into an array
-		NSString *output2 = [self queryDpkgWithArgs:@[@"-c", package]];
-		NSArray *lines2 = [output2 componentsSeparatedByString:@"\n"];
-
-		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS '.md5sums'"]; // dpkg generates this dynamically at installation
-		NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate]; // find the opposite of ^
-		NSArray *debianFiles = [lines2 filteredArrayUsingPredicate:theAntiPredicate];
-
 		// put the files we want to copy into lists for easier writing
 		NSString *gFilePaths = [[genericFiles valueForKey:@"description"] componentsJoinedByString:@"\n"];
 		if(![gFilePaths length]){
 			NSLog(@"[IAmLazyLog] gFilePaths list is blank for %@!", package);
 		}
 
-		NSString *dFilePaths = [[debianFiles valueForKey:@"description"] componentsJoinedByString:@"\n"];
-		if(![dFilePaths length]){
-			NSLog(@"[IAmLazyLog] dFilePaths list is blank for %@!", package);
-		}
-
 		// this is nice because it overwrites the file's content, unlike the write method from NSFileManager
 		NSError *writeError = nil;
-		[gFilePaths writeToFile:gFilesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
+		[gFilePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
 		if(writeError){
-			NSLog(@"[IAmLazyLog] Failed to write gFilePaths to %@ for %@! Error: %@", gFilesToCopy, package, writeError.localizedDescription);
-			continue;
-		}
-
-		NSError *writeError2 = NULL;
-		[dFilePaths writeToFile:dFilesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&writeError2];
-		if(writeError2){
-			NSLog(@"[IAmLazyLog] Failed to write dFilePaths to %@ for %@! Error: %@", dFilesToCopy, package, writeError2.localizedDescription);
+			NSLog(@"[IAmLazyLog] Failed to write gFilePaths to %@ for %@! Error: %@", filesToCopy, package, writeError.localizedDescription);
 			continue;
 		}
 
@@ -315,20 +295,12 @@
 
 		// make dir to hold stuff for the tweak
 		if(![fileManager fileExistsAtPath:tweakDir]){
-			NSError *writeError3 = NULL;
+			NSError *writeError3 = nil;
 			[fileManager createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&writeError3];
 			if(writeError3){
 				NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", tweakDir, writeError3.localizedDescription);
 				continue;
 			}
-		}
-
-		// again, this is nice because it overwrites the file's content, unlike the write method from NSFileManager
-		NSError *writeError4 = NULL;
-		[tweakDir writeToFile:targetDir atomically:YES encoding:NSUTF8StringEncoding error:&writeError4];
-		if(writeError4){
-			NSLog(@"[IAmLazyLog] Failed to write tweakDir to %@ for %@! Error: %@", targetDir, package, writeError4.localizedDescription);
-			continue;
 		}
 
 		[self makeSubDirectories:directories inDirectory:tweakDir];
@@ -337,23 +309,11 @@
 		[self copyDEBIANFiles];
 	}
 
-	// remove list files now that we're done w them
+	// remove list file now that we're done w it
 	NSError *deleteError = nil;
-	[fileManager removeItemAtPath:gFilesToCopy error:&deleteError];
+	[fileManager removeItemAtPath:filesToCopy error:&deleteError];
 	if(deleteError){
-		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", gFilesToCopy, deleteError.localizedDescription);
-	}
-
-	NSError *deleteError2 = NULL;
-	[fileManager removeItemAtPath:dFilesToCopy error:&deleteError2];
-	if(deleteError2){
-		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", dFilesToCopy, deleteError2.localizedDescription);
-	}
-
-	NSError *deleteError3 = NULL;
-	[fileManager removeItemAtPath:targetDir error:&deleteError3];
-	if(deleteError3){
-		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", targetDir, deleteError3.localizedDescription);
+		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", filesToCopy, deleteError.localizedDescription);
 	}
 }
 
@@ -457,6 +417,7 @@
 	NSString *tarPath = [NSTemporaryDirectory() stringByAppendingPathComponent:[backupName stringByDeletingPathExtension]];
 
 	// make tarball
+	// TODO: find a way to do this w/o shelling out
 	NSTask *task = [[NSTask alloc] init];
 	NSMutableArray *args = [NSMutableArray new];
 	[task setLaunchPath:@"/usr/bin/tar"];

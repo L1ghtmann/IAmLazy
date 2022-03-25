@@ -170,7 +170,7 @@
 			[itemDescs addObject:@"Installing debs"];
 		}
 		else{
-			[itemDescs addObject:@"Making note of target list"];
+			[itemDescs addObject:@"Preparing the target list"];
 			[itemDescs addObject:@"Installing packages from list"];
 		}
 	}

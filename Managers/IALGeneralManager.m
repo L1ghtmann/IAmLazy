@@ -43,15 +43,6 @@
 	[self executeCommandAsRoot:@"cleanTmp"];
 }
 
--(void)cleanupTargetList{
-	// remove list file now that we're done with it
-	NSError *deleteError = nil;
-	[[NSFileManager defaultManager] removeItemAtPath:targetList error:&deleteError];
-	if(deleteError){
-		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", targetList, deleteError.localizedDescription);
-	}
-}
-
 -(NSString *)getLatestBackup{
 	// get number from latest backup
 	NSString *numberString;

@@ -12,7 +12,6 @@
 -(void)makeBackupOfType:(NSInteger)type withFilter:(BOOL)filter;
 -(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type;
 -(void)cleanupTmp;
--(void)cleanupTargetList;
 -(NSString *)getLatestBackup;
 -(NSArray *)getBackups;
 -(void)executeCommandAsRoot:(NSString *)cmd;

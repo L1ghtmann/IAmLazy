@@ -22,7 +22,7 @@
 	self = [super initWithStyle:UITableViewStyleGrouped];
 
 	if(self){
-		_backups = [[[IALGeneralManager sharedInstance] getBackups] mutableCopy];
+		[self getBackups];
 	}
 
 	return self;

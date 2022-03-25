@@ -44,12 +44,12 @@
 
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0"];
 
-	if(type == 0){
-		// check for old tmp files
-		if([fileManager fileExistsAtPath:tmpDir]){
-			[_generalManager cleanupTmp];
-		}
+	// check for old tmp files
+	if([fileManager fileExistsAtPath:tmpDir]){
+		[_generalManager cleanupTmp];
+	}
 
+	if(type == 0){
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
 		[self unpackArchive:backupName];
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
@@ -75,23 +75,31 @@
 			[self installDebs];
 			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
 		}
-
-		[_generalManager cleanupTmp];
 	}
 	else{
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
-		// write new target list to file
+		// prep target list
+		if(![fileManager fileExistsAtPath:tmpDir]){
+			NSError *writeError = nil;
+			[fileManager createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&writeError];
+			if(writeError){
+				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", tmpDir, writeError.localizedDescription];
+				[_generalManager popErrorAlertWithReason:reason];
+				return;
+			}
+		}
 		NSError *writeError = nil;
-		[target writeToFile:targetList atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
+		[fileManager copyItemAtPath:target toPath:[tmpDir stringByAppendingPathComponent:backupName] error:&writeError];
 		if(writeError){
-			NSLog(@"[IAmLazyLog] Failed to write target to %@! Error: %@", targetList, writeError.localizedDescription);
+			NSString *reason = [NSString stringWithFormat:@"Failed to copy %@. \n\nError: %@", target, writeError.localizedDescription];
+			[_generalManager popErrorAlertWithReason:reason];
 			return;
 		}
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
 
 		// make log dir if it doesn't exist already
 		if(![fileManager fileExistsAtPath:logDir]){
-			NSError *writeError2 = NULL;
+			NSError *writeError2 = nil;
 			[fileManager createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError2];
 			if(writeError2){
 				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError2.localizedDescription];
@@ -110,9 +118,9 @@
 			[self installList];
 			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
 		}
-
-		[_generalManager cleanupTargetList];
 	}
+
+	[_generalManager cleanupTmp];
 }
 
 -(void)unpackArchive:(NSString *)backupName{
