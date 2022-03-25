@@ -115,11 +115,8 @@ int main(int argc, char *argv[]) {
 
 		// get DEBIAN files (e.g., pre/post scripts)
 		NSTask *task = [[NSTask alloc] init];
-		NSMutableArray *args = [NSMutableArray new];
 		[task setLaunchPath:@"/usr/bin/dpkg-query"];
-		[args addObject:@"-c"];
-		[args addObject:tweakName];
-		[task setArguments:args];
+		[task setArguments:@[@"-c", tweakName]];
 
 		NSPipe *pipe = [NSPipe pipe];
 		[task setStandardOutput:pipe];
@@ -160,8 +157,10 @@ int main(int argc, char *argv[]) {
 	else if(strcmp(argv[1], "buildDebs") == 0){
 		NSFileManager *fileManager = [NSFileManager defaultManager];
 		NSString *log = [NSString stringWithFormat:@"%@build_log.txt", logDir];
-		NSArray *tmpDirContents = [fileManager contentsOfDirectoryAtPath:tmpDir error:NULL];
+
+		// get tweak dirs from tmpDir
 		NSMutableArray *tweakDirs = [NSMutableArray new];
+		NSArray *tmpDirContents = [fileManager contentsOfDirectoryAtPath:tmpDir error:NULL];
 		for(NSString *item in tmpDirContents){
 			NSString *path = [tmpDir stringByAppendingString:item];
 
@@ -179,13 +178,13 @@ int main(int argc, char *argv[]) {
 		NSMutableString *logText = [NSMutableString new];
 		for(NSString *tweak in tweakDirs){
 			NSTask *task = [[NSTask alloc] init];
-			NSMutableArray *args = [NSMutableArray new];
 			[task setLaunchPath:@"/usr/bin/dpkg-deb"];
-			[args addObject:@"-b"];
-			[args addObject:@"-Zgzip"];
-			[args addObject:@"-z9"];
-			[args addObject:tweak];
-			[task setArguments:args];
+			[task setArguments:@[
+				@"-b",
+				@"-Zgzip",
+				@"-z9",
+				tweak
+			]];
 
 			NSPipe *pipe = [NSPipe pipe];
 			[task setStandardOutput:pipe];
@@ -221,13 +220,13 @@ int main(int argc, char *argv[]) {
 			NSString *path = [tmpDir stringByAppendingString:deb];
 
 			NSTask *task = [[NSTask alloc] init];
-			NSMutableArray *args = [NSMutableArray new];
 			[task setLaunchPath:@"/usr/bin/apt-get"];
-			[args addObject:@"install"];
-			[args addObject:@"-y"];
-			[args addObject:@"--allow-unauthenticated"];
-			[args addObject:path];
-			[task setArguments:args];
+			[task setArguments:@[
+				@"install",
+				@"-y",
+				@"--allow-unauthenticated",
+				path
+			]];
 
 			NSPipe *pipe = [NSPipe pipe];
 			[task setStandardOutput:pipe];
@@ -254,13 +253,13 @@ int main(int argc, char *argv[]) {
 			NSString *path = [tmpDir stringByAppendingString:deb];
 
 			NSTask *task = [[NSTask alloc] init];
-			NSMutableArray *args = [NSMutableArray new];
 			[task setLaunchPath:@"/usr/bin/apt-get"];
-			[args addObject:@"install"];
-			[args addObject:@"-fy"];
-			[args addObject:@"--allow-unauthenticated"];
-			[args addObject:path];
-			[task setArguments:args];
+			[task setArguments:@[
+				@"install",
+				@"-fy",
+				@"--allow-unauthenticated",
+				path
+			]];
 
 			NSPipe *pipe = [NSPipe pipe];
 			[task setStandardOutput:pipe];
@@ -285,9 +284,7 @@ int main(int argc, char *argv[]) {
 		NSArray *tmpDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:NULL];
 		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '.txt'"];
 		NSArray *lists = [tmpDirContents filteredArrayUsingPredicate:thePredicate];
-		NSSortDescriptor *descriptor = [NSSortDescriptor sortDescriptorWithKey:nil ascending:NO selector:@selector(compare:)];
-		NSArray *sortedLists = [lists sortedArrayUsingDescriptors:@[descriptor]]; // if, for some reason, there are mutliple lists present
-		NSString *targetListFile = [tmpDir stringByAppendingPathComponent:[sortedLists firstObject]];
+		NSString *targetListFile = [tmpDir stringByAppendingPathComponent:[lists firstObject]];
 
 		// get packages to install
 		NSString *tweakList = [NSString stringWithContentsOfFile:targetListFile encoding:NSUTF8StringEncoding error:NULL];
@@ -295,10 +292,8 @@ int main(int argc, char *argv[]) {
 
 		// make sure info on available packages is up-to-date
 		NSTask *updateTask = [[NSTask alloc] init];
-		NSMutableArray *updateTaskArgs = [NSMutableArray new];
 		[updateTask setLaunchPath:@"/usr/bin/apt-get"];
-		[updateTaskArgs addObject:@"update"];
-		[updateTask setArguments:updateTaskArgs];
+		[updateTask setArguments:@[@"update"]];
 		[updateTask launch];
 		[updateTask waitUntilExit];
 
@@ -313,13 +308,13 @@ int main(int argc, char *argv[]) {
 			BOOL valid = [[run2 stringByTrimmingCharactersInSet:alphaSet] isEqualToString:@""];
 			if(valid){
 				NSTask *task = [[NSTask alloc] init];
-				NSMutableArray *args = [NSMutableArray new];
 				[task setLaunchPath:@"/usr/bin/apt-get"];
-				[args addObject:@"install"];
-				[args addObject:@"-y"];
-				[args addObject:@"--allow-unauthenticated"];
-				[args addObject:tweak];
-				[task setArguments:args];
+				[task setArguments:@[
+					@"install",
+					@"-y",
+					@"--allow-unauthenticated",
+					tweak
+				]];
 
 				NSPipe *pipe = [NSPipe pipe];
 				[task setStandardOutput:pipe];
@@ -350,13 +345,13 @@ int main(int argc, char *argv[]) {
 			BOOL valid = [[run2 stringByTrimmingCharactersInSet:alphaSet] isEqualToString:@""];
 			if(valid){
 				NSTask *task = [[NSTask alloc] init];
-				NSMutableArray *args = [NSMutableArray new];
 				[task setLaunchPath:@"/usr/bin/apt-get"];
-				[args addObject:@"install"];
-				[args addObject:@"-fy"];
-				[args addObject:@"--allow-unauthenticated"];
-				[args addObject:tweak];
-				[task setArguments:args];
+				[task setArguments:@[
+					@"install",
+					@"-fy",
+					@"--allow-unauthenticated",
+					tweak
+				]];
 
 				NSPipe *pipe = [NSPipe pipe];
 				[task setStandardOutput:pipe];

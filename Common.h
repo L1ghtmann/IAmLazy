@@ -2,8 +2,8 @@
 
 #define tmpDir @"/tmp/me.lightmann.iamlazy/"
 #define filesToCopy @"/tmp/me.lightmann.iamlazy/.filesToCopy"
-#define logDir @"/var/mobile/Documents/me.lightmann.iamlazy/logs/"
 #define backupDir @"/var/mobile/Documents/me.lightmann.iamlazy/"
+#define logDir @"/var/mobile/Documents/me.lightmann.iamlazy/logs/"
 
 #define kWidth [UIScreen mainScreen].bounds.size.width
 #define kHeight [UIScreen mainScreen].bounds.size.height

@@ -419,15 +419,15 @@
 	// make tarball
 	// TODO: find a way to do this w/o shelling out
 	NSTask *task = [[NSTask alloc] init];
-	NSMutableArray *args = [NSMutableArray new];
 	[task setLaunchPath:@"/usr/bin/tar"];
-	[args addObject:@"-cf"];
-	[args addObject:backupPath];
-	[args addObject:@"-C"];
-	[args addObject:@"/tmp"];
-	[args addObject:@"me.lightmann.iamlazy"];
-	[args addObject:@"--remove-files"];
-	[task setArguments:args];
+	[task setArguments:@[
+		@"-cf",
+		backupPath,
+		@"-C",
+		@"/tmp",
+		@"me.lightmann.iamlazy",
+		@"--remove-files"
+	]];
 	[task launch];
 	[task waitUntilExit];
 
@@ -476,7 +476,6 @@
 	[task waitUntilExit];
 
 	NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-
 	return output;
 }
 
