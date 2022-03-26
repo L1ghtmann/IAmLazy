@@ -259,7 +259,7 @@
 		return nil;
 	}
 
-	// divvy up massive control strong into individual strings
+	// divvy up massive control string into individual strings
 	NSMutableString *controlFile = [NSMutableString new];
 	NSArray *lines = [contents componentsSeparatedByString:@"\n"];
 	for(int i = 0; i < [lines count]; i++){

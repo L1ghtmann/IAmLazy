@@ -18,7 +18,9 @@
 		// setup top nav bar
 		[controller.navigationItem setTitleView:[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"AppIcon40x40@2x-clear"]]];
 
-		_srcItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"line.horizontal.3"] style:UIBarButtonItemStylePlain target:self action:@selector(openSrc)];
+		UIImage *githubMark = [UIImage imageNamed:@"GitHub-Mark-64px"];
+		githubMark = [UIImage imageWithCGImage:[githubMark CGImage] scale:[[UIScreen mainScreen] scale]*1.45 orientation:[githubMark imageOrientation]];
+		_srcItem = [[UIBarButtonItem alloc] initWithImage:githubMark style:UIBarButtonItemStylePlain target:self action:@selector(openSrc)];
 		[controller.navigationItem setLeftBarButtonItem:_srcItem];
 
 		_infoItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"info.circle.fill"] style:UIBarButtonItemStylePlain target:self action:@selector(popInfo)];

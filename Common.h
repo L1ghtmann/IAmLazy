@@ -9,7 +9,7 @@
 #define kHeight [UIScreen mainScreen].bounds.size.height
 
 #define container (kHeight - [[UIApplication sharedApplication] statusBarHeight])
-#define cellHeight (container/2)
+#define cellHeight (container/6.5)
 
 @interface UIApplication (Private)
 -(double)statusBarHeight;
