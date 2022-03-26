@@ -73,6 +73,13 @@
 
 		// gather bits for packages
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
+		NSArray *controls = [self getControlFiles];
+		if(![controls count]){
+			NSString *reason = @"Failed to generate controls for installed packages! \n\nPlease try again.";
+			[_generalManager popErrorAlertWithReason:reason];
+			return;
+		}
+		[self setControls:controls];
 		[self gatherPackageFiles];
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
 
@@ -149,7 +156,24 @@
 	NSMutableArray *allPackages = [NSMutableArray new];
 
 	// get list of all installed packages and their priorities
-	NSString *output = [self queryDpkgWithArgs:@[@"-Wf", @"${Package;-50}${Priority}\n"]];
+	NSTask *task = [[NSTask alloc] init];
+	[task setLaunchPath:@"/usr/bin/dpkg-query"];
+	[task setArguments:@[@"-Wf", @"${Package;-50}${Priority}\n"]];
+
+	NSPipe *pipe = [NSPipe pipe];
+	[task setStandardOutput:pipe];
+
+	[task launch];
+
+	NSFileHandle *handle = [pipe fileHandleForReading];
+	NSData *data = [handle readDataToEndOfFile];
+	[handle closeFile];
+
+	// have to call after ^ to ensure that the output pipe doesn't fill
+	// if it does, the process will hang and block waitUntilExit from returning
+	[task waitUntilExit];
+
+	NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 	NSArray *lines = [output componentsSeparatedByString:@"\n"];
 
 	// filter out packages with the 'requried' priorty
@@ -223,24 +247,63 @@
 	return userPackages;
 }
 
+-(NSArray *)getControlFiles{
+	NSMutableArray *controls = [NSMutableArray new];
+
+	// get control files for all installed packages
+	NSError *readError = nil;
+	NSString *path = @"/var/lib/dpkg/status";
+	NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&readError];
+	if(readError){
+		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", path, readError.localizedDescription);
+		return nil;
+	}
+
+	// divvy up massive control strong into individual strings
+	NSMutableString *controlFile = [NSMutableString new];
+	NSArray *lines = [contents componentsSeparatedByString:@"\n"];
+	for(int i = 0; i < [lines count]; i++){
+		NSString *line = lines[i];
+		if([line length]){
+			if(![controlFile length]) [controlFile appendString:line];
+			else [controlFile appendString:[@"\n" stringByAppendingString:line]];
+		}
+		else{
+			[controls addObject:[controlFile copy]];
+			if(i != [lines count]) [controlFile setString:@""];
+			else controlFile = nil;
+		}
+	}
+
+	return controls;
+}
+
 -(void)gatherPackageFiles{
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	for(NSString *package in self.packages){
 		NSMutableArray *genericFiles = [NSMutableArray new];
 		NSMutableArray *directories = [NSMutableArray new];
 
+		// get installed files
+		NSError *readError = nil;
+		NSString *path = [NSString stringWithFormat:@"/var/lib/dpkg/info/%@.list", package];
+		NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&readError];
+		if(readError){
+			NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", path, readError.localizedDescription);
+			continue;
+		}
+
 		// get generic files and directories and sort into respective arrays
-		NSString *output = [self queryDpkgWithArgs:@[@"-L", package]];
-		NSArray *lines = [output componentsSeparatedByString:@"\n"];
+		NSArray *lines = [contents componentsSeparatedByString:@"\n"];
 		for(NSString *line in lines){
 			if(![line length] || [line isEqualToString:@"/."]){
 				continue; // disregard
 			}
 
-			NSError *readError = nil;
-			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:line error:&readError];
-			if(readError){
-				NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", line, readError.localizedDescription);
+			NSError *readError2 = nil;
+			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:line error:&readError2];
+			if(readError2){
+				NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", line, readError2.localizedDescription);
 				continue;
 			}
 
@@ -248,7 +311,7 @@
 
 			// check to see how many times the current filepath is present in the list output
 			// shoutout Cœur on StackOverflow for this efficient code (https://stackoverflow.com/a/57869286)
-			int count = [[NSMutableString stringWithString:output] replaceOccurrencesOfString:line withString:line options:NSLiteralSearch range:NSMakeRange(0, output.length)];
+			int count = [[NSMutableString stringWithString:contents] replaceOccurrencesOfString:line withString:line options:NSLiteralSearch range:NSMakeRange(0, [contents length])];
 
 			if(count == 1){ // this is good, means it's unique!
 				if([type isEqualToString:@"NSFileTypeDirectory"]){
@@ -339,14 +402,16 @@
 
 -(void)makeControlForPackage:(NSString *)package inDirectory:(NSString *)tweakDir{
 	// get info for package
-	NSString *output = [self queryDpkgWithArgs:@[@"-s", package]];
-	NSString *noStatusLine = [output stringByReplacingOccurrencesOfString:@"Status: install ok installed\n" withString:@""];
+	NSString *pkg = [@"Package: " stringByAppendingString:package];
+	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH %@", pkg];
+	NSArray *theOne = [self.controls filteredArrayUsingPredicate:thePredicate];
+	NSString *relevantControl = [theOne firstObject]; // count should be 1
+	NSString *noStatusLine = [relevantControl stringByReplacingOccurrencesOfString:@"Status: install ok installed\n" withString:@""];
 	NSString *info = [noStatusLine stringByAppendingString:@"\n"]; // ensure final newline (deb will fail to build if missing)
-
-	NSString *debian = [NSString stringWithFormat:@"%@/DEBIAN/", tweakDir];
 
 	// make DEBIAN dir
 	NSFileManager *fileManager = [NSFileManager defaultManager];
+	NSString *debian = [NSString stringWithFormat:@"%@/DEBIAN/", tweakDir];
 	if(![fileManager fileExistsAtPath:debian]){
 		NSError *writeError = nil;
 		[fileManager createDirectoryAtPath:debian withIntermediateDirectories:YES attributes:nil error:&writeError];
@@ -455,28 +520,6 @@
 -(NSString *)getDuration{
 	NSTimeInterval duration = [self.endTime timeIntervalSinceDate:self.startTime];
 	return [NSString stringWithFormat:@"%.02f", duration];
-}
-
--(NSString *)queryDpkgWithArgs:(NSArray *)args{
-	NSTask *task = [[NSTask alloc] init];
-	[task setLaunchPath:@"/usr/bin/dpkg-query"];
-	[task setArguments:args];
-
-	NSPipe *pipe = [NSPipe pipe];
-	[task setStandardOutput:pipe];
-
-	[task launch];
-
-	NSFileHandle *handle = [pipe fileHandleForReading];
-	NSData *data = [handle readDataToEndOfFile];
-	[handle closeFile];
-
-	// have to call after ^ to ensure that the output pipe doesn't fill
-	// if it does, the process will hang and block waitUntilExit from returning
-	[task waitUntilExit];
-
-	NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-	return output;
 }
 
 @end

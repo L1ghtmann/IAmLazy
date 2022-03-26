@@ -15,7 +15,7 @@ NSString *getCurrentPackage(){
 	[formatter setDateFormat:@"HH:mm:ss.SSS"];
 
 	NSMutableDictionary *dirsAndCreationDates = [NSMutableDictionary new];
-	NSArray *tmpDirFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:NULL];
+	NSArray *tmpDirFiles = [fileManager contentsOfDirectoryAtPath:tmpDir error:NULL];
 	for(NSString *file in tmpDirFiles){
 		NSString *filePath = [tmpDir stringByAppendingPathComponent:file];
 
