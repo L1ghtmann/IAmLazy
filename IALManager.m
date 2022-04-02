@@ -356,18 +356,16 @@
 }
 
 -(void)makeTarballWithFilter:(BOOL)filter{
-	// get number from latest backup
-	NSString *numberString;
-	NSCharacterSet *numbers = [NSCharacterSet characterSetWithCharactersInString:@"0123456789"];
-	NSScanner *scanner = [NSScanner scannerWithString:[[self getBackups] firstObject]]; // get latest backup filename
-	[scanner scanUpToCharactersFromSet:numbers intoString:NULL]; // remove bit before the number(s)
-	[scanner scanCharactersFromSet:numbers intoString:&numberString]; // get number(s)
-	int latestBackup = [numberString intValue];
+	// get current timestamp
+	NSDateFormatter *dateFormatter=[[NSDateFormatter alloc] init]; 
+	[dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+	// or @"yyyy-MM-dd hh:mm:ss a" if you prefer the time with AM/PM 
+	NSString *currentDate = [dateFormatter stringFromDate:[NSDate date]];
 
 	// craft new backup name
 	NSString *backupName;
-	if(filter) backupName = [NSString stringWithFormat:@"IAmLazy-%d.tar.gz", latestBackup+1];
-	else backupName = [NSString stringWithFormat:@"IAmLazy-%du.tar.gz", latestBackup+1];
+	if(filter) backupName = [NSString stringWithFormat:@"IAmLazy-%@.tar.gz", currentDate];
+	else backupName = [NSString stringWithFormat:@"IAmLazy-%@u.tar.gz", currentDate];
 
 	// make tarball
 	// ensure file structure is ONLY me.lightmann.iamlazy/ not /var/tmp/me.lightmann.iamlazy/
