@@ -5,9 +5,9 @@
 //	Created by Lightmann during COVID-19
 //
 
+#import "../Compression/libarchive.h"
 #import "IALGeneralManager.h"
 #import "IALRestoreManager.h"
-#import "../libarchive.h"
 #import "../Common.h"
 
 @implementation IALRestoreManager

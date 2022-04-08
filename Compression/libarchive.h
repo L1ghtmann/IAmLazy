@@ -1,4 +1,3 @@
-
 // create TAR
 void write_archive(const char *outname);
 

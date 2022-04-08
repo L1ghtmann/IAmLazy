@@ -13,7 +13,6 @@
 #include <sys/fcntl.h>
 #include <archive_entry.h>
 
-// Helpful ref:
 // https://stackoverflow.com/a/4204758
 int get_file_count(){
 	int file_count = 0;
@@ -33,7 +32,6 @@ int get_file_count(){
 	return file_count;
 }
 
-// Helpful ref:
 // https://github.com/libarchive/libarchive/wiki/Examples#A_Basic_Write_Example
 void write_archive(const char *outname){
 	struct archive *a;
@@ -113,20 +111,19 @@ int copy_data(struct archive *ar, struct archive *aw){
 	size_t size;
 	la_int64_t offset;
 
-	for (;;) {
+	for(;;){
 		r = archive_read_data_block(ar, &buff, &size, &offset);
-		if (r == ARCHIVE_EOF)
+		if(r == ARCHIVE_EOF)
 			return (ARCHIVE_OK);
-		if (r < ARCHIVE_OK)
+		if(r < ARCHIVE_OK)
 			return (r);
 		r = archive_write_data_block(aw, buff, size, offset);
-		if (r < ARCHIVE_OK) {
+		if(r < ARCHIVE_OK){
 			return (r);
 		}
 	}
 }
 
-// Helpful ref:
 // https://github.com/libarchive/libarchive/wiki/Examples#A_Complete_Extractor
 void extract_archive(const char *filename){
 	struct archive *a;
