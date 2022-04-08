@@ -5,9 +5,9 @@
 //	Created by Lightmann during COVID-19
 //
 
-#import "../Compression/GZIP/NSData+GZIP.h"
 #import "IALGeneralManager.h"
 #import "IALBackupManager.h"
+#import "../libarchive.h"
 #import "../Common.h"
 #import <NSTask.h>
 
@@ -479,31 +479,18 @@
 		backupName = [latest stringByAppendingString:@".tar.gz"];
 	}
 	NSString *backupPath = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
-	NSString *tarPath = [NSTemporaryDirectory() stringByAppendingPathComponent:[backupName stringByDeletingPathExtension]];
 
-	// make tarball
-	// TODO: find a way to do this w/o shelling out
-	NSTask *task = [[NSTask alloc] init];
-	[task setLaunchPath:@"/usr/bin/tar"];
-	[task setArguments:@[
-		@"-cf",
-		backupPath,
-		@"-C",
-		@"/tmp",
-		@"me.lightmann.iamlazy",
-		@"--remove-files"
-	]];
-	[task launch];
-	[task waitUntilExit];
+	// make tarball (and avoid stalling the main thread)
+	dispatch_semaphore_t sema = dispatch_semaphore_create(0); // wait for async block
+	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),^{
+		write_archive([backupPath UTF8String]);
 
-	// gzip tarball
-	NSData *tarData = [NSData dataWithContentsOfFile:tarPath];
-	NSData *gzipData = [tarData gzippedData];
-	NSError *writeError = nil;
-	[gzipData writeToFile:backupPath options:NSDataWritingAtomic error:&writeError];
-	if(writeError){
-		NSLog(@"[IAmLazyLog] Failed to write gzipData to file: %@", writeError.localizedDescription);
-	}
+		// signal that we're good to go
+		dispatch_semaphore_signal(sema);
+	});
+	while(dispatch_semaphore_wait(sema, DISPATCH_TIME_NOW)){ // stackoverflow magic (https://stackoverflow.com/a/4326754)
+		[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0]];
+    }
 
 	// confirm the gzip archive now exists where expected
 	[self verifyFileAtPath:backupPath];
