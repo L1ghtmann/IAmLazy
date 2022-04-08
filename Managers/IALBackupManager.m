@@ -494,6 +494,8 @@
 
 	// confirm the gzip archive now exists where expected
 	[self verifyFileAtPath:backupPath];
+
+	[_generalManager cleanupTmp];
 }
 
 -(void)verifyFileAtPath:(NSString *)filePath{

@@ -170,10 +170,6 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		// Note: the default compression for dpkg-deb is xz (as of 1.15.6), which will occassionally cause an error:
-		// "unexpected end of file in archive member header in packageName.deb" upon extraction/installation if there
-		// is a dpkg version conflict. in order to fix this, we need to use gzip compression
-
 		// build debs and remove respective dir when done
 		NSMutableString *logText = [NSMutableString new];
 		for(NSString *tweak in tweakDirs){
