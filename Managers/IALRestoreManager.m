@@ -5,10 +5,9 @@
 //	Created by Lightmann during COVID-19
 //
 
-#import "../Compression/Light-Untar/NSFileManager+Tar.h"
-#import "../Compression/GZIP/NSData+GZIP.h"
 #import "IALGeneralManager.h"
 #import "IALRestoreManager.h"
+#import "../libarchive.h"
 #import "../Common.h"
 
 @implementation IALRestoreManager
@@ -51,7 +50,7 @@
 
 	if(type == 0){
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
-		[self unpackArchive:backupName];
+		[self extractArchive:target];
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
 
 		// make log dir if it doesn't exist already
@@ -123,31 +122,16 @@
 	[_generalManager cleanupTmp];
 }
 
--(void)unpackArchive:(NSString *)backupName{
+-(void)extractArchive:(NSString *)backupPath{
+	// unpack tarball (and avoid stalling the main thread)
 	dispatch_semaphore_t sema = dispatch_semaphore_create(0); // wait for async block
-	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),^{ // prevent main thread from hanging
-		// convert backup to gzip data and then back to tar data
-		NSString *backupPath = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
-		NSData *gzipData = [NSData dataWithContentsOfFile:backupPath];
-		NSData *tarData = [gzipData gunzippedData];
+	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),^{
+		extract_archive([backupPath UTF8String]);
 
-		// extract tar data
-		NSError *writeError = nil;
-		[[NSFileManager defaultManager] createFilesAndDirectoriesAtPath:@"/tmp" withTarData:tarData error:&writeError progress:^(float progress){
-			// extraction (basically) completed
-			// math from (https://stackoverflow.com/a/18063950)
-			CGFloat nearest = floorf(progress * 100 + 0.5) / 100;
-			if(nearest == 1.0){
-				// signal that we're good to go
-				dispatch_semaphore_signal(sema);
-			}
-		}];
-		if(writeError){
-			NSLog(@"[IAmLazyLog] Failed to extract tar data: %@", writeError.localizedDescription);
-		}
+		// signal that we're good to go
+		dispatch_semaphore_signal(sema);
 	});
-	// more stackoverflow magic (https://stackoverflow.com/a/4326754)
-	while(dispatch_semaphore_wait(sema, DISPATCH_TIME_NOW)){
+	while(dispatch_semaphore_wait(sema, DISPATCH_TIME_NOW)){ // stackoverflow magic (https://stackoverflow.com/a/4326754)
 		[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0]];
     }
 }
