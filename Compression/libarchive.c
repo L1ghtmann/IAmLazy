@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
-#include <libgen.h>
 #include <archive.h>
 #include <sys/fcntl.h>
 #include <archive_entry.h>
@@ -17,7 +16,6 @@
 int get_file_count(){
 	int file_count = 0;
 
-	// get deb count
 	struct dirent *entry;
 	DIR *directory = opendir("/tmp/me.lightmann.iamlazy/");
 	if(!directory) return 0;
@@ -43,12 +41,12 @@ void write_archive(const char *outname){
 
 	// get file count for tmpDir
 	int file_count = get_file_count();
-	// create string array for filepaths
-	const char *filearr[file_count+1];
-	// get pointers (required by libarchive)
-	const char **ptrs = filearr;
 
-	// add filepaths to array
+	if(file_count == 0) return;
+
+	// create string array for filepaths
+	char *filearr[file_count+1];
+
 	struct dirent *ent;
 	DIR *directory = opendir("/tmp/me.lightmann.iamlazy/");
 	if(!directory) return;
@@ -66,10 +64,9 @@ void write_archive(const char *outname){
 			count++;
 		}
 	}
-
 	closedir(directory);
 
-	// change dir to avoid
+	// change CWD to avoid
 	// including it in archive
 	chdir("/tmp/");
 
@@ -79,7 +76,7 @@ void write_archive(const char *outname){
 	archive_write_set_format_pax_restricted(a);
 	archive_write_open_filename(a, outname);
 	for(int i = 0; i < file_count; i++){
-		const char *file = ptrs[i];
+		char *file = filearr[i];
 
 		if(!file) continue;
 
@@ -97,8 +94,7 @@ void write_archive(const char *outname){
 			len = read(fd, buff, sizeof(buff));
 		}
 		close(fd);
-		// must free after malloc
-		free((char *)filearr[i]);
+		free(filearr[i]); // malloc'd char
 		archive_entry_free(entry);
 	}
 	archive_write_close(a);
