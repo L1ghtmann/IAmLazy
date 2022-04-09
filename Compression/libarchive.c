@@ -44,7 +44,8 @@ void write_archive(const char *outname){
 	if(file_count == 0 || file_count > (SIZE_MAX - 1)) return;
 
 	// create string array for filepaths
-	char *filearr[file_count + 1];
+	const char *filearr[file_count + 1];
+	const char **arrptr = filearr;
 
 	struct dirent *ent;
 	DIR *directory = opendir("/tmp/me.lightmann.iamlazy/");
@@ -81,7 +82,7 @@ void write_archive(const char *outname){
 	archive_write_set_format_pax_restricted(a);
 	archive_write_open_filename(a, outname);
 	for(int i = 0; i < file_count; i++){
-		char *file = filearr[i];
+		const char *file = arrptr[i];
 
 		if(!file) continue;
 
@@ -99,7 +100,7 @@ void write_archive(const char *outname){
 			len = read(fd, buff, sizeof(buff));
 		}
 		close(fd);
-		free(filearr[i]); // malloc'd char
+		free((char *)filearr[i]); // malloc'd char
 		archive_entry_free(entry);
 	}
 	archive_write_close(a);
