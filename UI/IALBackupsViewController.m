@@ -188,7 +188,7 @@
 	UIAlertAction *okay = [UIAlertAction
 							actionWithTitle:@"Okay"
 							style:UIAlertActionStyleDefault
-							handler:^(UIAlertAction * action) {
+							handler:^(UIAlertAction *action){
 								[alert dismissViewControllerAnimated:YES completion:nil];
 							}];
 

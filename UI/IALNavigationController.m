@@ -19,7 +19,7 @@
 		[controller.navigationItem setTitleView:[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"AppIcon40x40@2x-clear"]]];
 
 		UIImage *githubMark = [UIImage imageNamed:@"GitHub-Mark-64px"];
-		githubMark = [UIImage imageWithCGImage:[githubMark CGImage] scale:[[UIScreen mainScreen] scale]*1.45 orientation:[githubMark imageOrientation]];
+		githubMark = [UIImage imageWithCGImage:[githubMark CGImage] scale:([[UIScreen mainScreen] scale] * 1.45) orientation:[githubMark imageOrientation]];
 		_srcItem = [[UIBarButtonItem alloc] initWithImage:githubMark style:UIBarButtonItemStylePlain target:self action:@selector(openSrc)];
 		[controller.navigationItem setLeftBarButtonItem:_srcItem];
 
@@ -79,7 +79,7 @@
 	UIAlertAction *okay = [UIAlertAction
 							actionWithTitle:@"Okay"
 							style:UIAlertActionStyleDefault
-							handler:^(UIAlertAction * action) {
+							handler:^(UIAlertAction *action){
 								[self dismissViewControllerAnimated:YES completion:nil];
 							}];
 

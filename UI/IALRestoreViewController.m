@@ -139,7 +139,7 @@
 	if(latest){
 		// get latest backup
 		__block NSString *backupName;
-		[backups enumerateObjectsUsingBlock: ^(id obj, NSUInteger idx, BOOL *stop) {
+		[backups enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop){
 			NSString *name = (NSString*)obj;
 			if([name containsString:extension]){
 				backupName = name;
@@ -157,14 +157,14 @@
 		UIAlertAction *yes = [UIAlertAction
 								actionWithTitle:@"Yes"
 								style:UIAlertActionStyleDefault
-								handler:^(UIAlertAction * action){
+								handler:^(UIAlertAction *action){
 									[self restoreFromBackup:backupName ofType:type];
 								}];
 
 		UIAlertAction *no = [UIAlertAction
 								actionWithTitle:@"No"
 								style:UIAlertActionStyleDefault
-								handler:^(UIAlertAction * action){
+								handler:^(UIAlertAction *action){
 									[self dismissViewControllerAnimated:YES completion:nil];
 								}];
 
@@ -176,33 +176,37 @@
 	else{
 		// get (sorted) backup filenames
 		NSMutableArray *backupNames = [NSMutableArray new];
-		[backups enumerateObjectsUsingBlock: ^(id obj, NSUInteger idx, BOOL *stop) {
-			NSString *name = (NSString*)obj;
+		for(NSString *name in backups){
 			if([name containsString:extension]){
-				[backupNames addObject:obj];
+				[backupNames addObject:name];
 			}
-		}];
+		}
 
 		// get backup creation dates
 		NSMutableArray *backupDates = [NSMutableArray new];
 		NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
 		[formatter setDateFormat:@"MMM dd, yyyy"];
+		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
+		[set addCharactersInString:@"+-."];
 		for(NSString *backup in backupNames){
-			NSString *dateString = nil;
+			BOOL valid = [[backup stringByTrimmingCharactersInSet:set] isEqualToString:@""];
+			if(valid){
+				NSString *dateString;
 
-			NSError *readError = nil;
-			NSString *path = [backupDir stringByAppendingPathComponent:backup];
-			NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:&readError];
-			if(readError){
-				NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", path, readError.localizedDescription);
-				dateString = @"Error";
-			}
-			else{
-				NSDate *creationDate = [fileAttributes fileCreationDate];
-				dateString = [formatter stringFromDate:creationDate];
-			}
+				NSError *readError = nil;
+				NSString *path = [backupDir stringByAppendingPathComponent:backup];
+				NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:&readError];
+				if(readError){
+					NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", path, readError.localizedDescription);
+					dateString = @"Error";
+				}
+				else{
+					NSDate *creationDate = [fileAttributes fileCreationDate];
+					dateString = [formatter stringFromDate:creationDate];
+				}
 
-			[backupDates addObject:dateString];
+				[backupDates addObject:dateString];
+			}
 		}
 
 		// post list of available backups
@@ -217,7 +221,7 @@
 			UIAlertAction *action = [UIAlertAction
 										actionWithTitle:backup
 										style:UIAlertActionStyleDefault
-										handler:^(UIAlertAction * action){
+										handler:^(UIAlertAction *action){
 											UIAlertController *subalert = [UIAlertController
 																			alertControllerWithTitle:@"IAmLazy"
 																			message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName]
@@ -226,14 +230,14 @@
 											UIAlertAction *yes = [UIAlertAction
 																	actionWithTitle:@"Yes"
 																	style:UIAlertActionStyleDefault
-																	handler:^(UIAlertAction * action){
+																	handler:^(UIAlertAction *action){
 																		[self restoreFromBackup:backupName ofType:type];
 																	}];
 
 											UIAlertAction *no = [UIAlertAction
 																	actionWithTitle:@"No"
 																	style:UIAlertActionStyleDefault
-																	handler:^(UIAlertAction * action){
+																	handler:^(UIAlertAction *action){
 																		[self dismissViewControllerAnimated:YES completion:nil];
 																	}];
 
@@ -249,7 +253,7 @@
 		UIAlertAction *cancel = [UIAlertAction
 									actionWithTitle:@"Cancel"
 									style:UIAlertActionStyleDefault
-									handler:^(UIAlertAction * action){
+									handler:^(UIAlertAction *action){
 										[self dismissViewControllerAnimated:YES completion:nil];
 									}];
 
@@ -284,7 +288,7 @@
 	UIAlertAction *uicache = [UIAlertAction
 								actionWithTitle:@"UICache"
 								style:UIAlertActionStyleDefault
-								handler:^(UIAlertAction * action){
+								handler:^(UIAlertAction *action){
 									NSTask *task = [[NSTask alloc] init];
 									[task setLaunchPath:@"/usr/bin/uicache"];
 									[task setArguments:@[@"-a"]];
@@ -294,7 +298,7 @@
 	UIAlertAction *respring = [UIAlertAction
 								actionWithTitle:@"Respring"
 								style:UIAlertActionStyleDefault
-								handler:^(UIAlertAction * action){
+								handler:^(UIAlertAction *action){
 									NSTask *task = [[NSTask alloc] init];
 									[task setLaunchPath:@"/usr/bin/sbreload"];
 									[task launch];
@@ -303,7 +307,7 @@
 	UIAlertAction *both = [UIAlertAction
 							actionWithTitle:@"UICache & Respring"
 							style:UIAlertActionStyleDefault
-							handler:^(UIAlertAction * action){
+							handler:^(UIAlertAction *action){
 								NSTask *task = [[NSTask alloc] init];
 								[task setLaunchPath:@"/usr/bin/uicache"];
 								[task setArguments:@[@"-a", @"-r"]];
@@ -313,7 +317,7 @@
 	UIAlertAction *none = [UIAlertAction
 							actionWithTitle:@"None"
 							style:UIAlertActionStyleDefault
-							handler:^(UIAlertAction * action){
+							handler:^(UIAlertAction *action){
 								[self dismissViewControllerAnimated:YES completion:nil];
 							}];
 

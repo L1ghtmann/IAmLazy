@@ -58,7 +58,7 @@
 
 	NSString *text = [NSString stringWithFormat:@"%@ Progress", purposeString];
 
-	UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(0,35,kWidth,30)];
+	UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(0, 35, kWidth, 30)];
 	[title setFont:[UIFont systemFontOfSize:30 weight:0.60]];
 	[title setText:[text uppercaseString]];
 	[title setTextColor:accentColor];
@@ -102,22 +102,22 @@
 	self.itemStatusIcons = [NSMutableArray new];
 
 	for(int i = 0; i < count; i++){
-		CGFloat y = 90+(i*100);
+		CGFloat y = 90 + (i * 100);
 
-		UIView *background = [[UIView alloc] initWithFrame:CGRectMake(10,y,60,60)];
+		UIView *background = [[UIView alloc] initWithFrame:CGRectMake(10, y, 60, 60)];
 		[background setBackgroundColor:accentColor];
 		[background.layer setCornerRadius:background.frame.size.height/2];
 
-		UIView *fill = [[UIView alloc] initWithFrame:CGRectInset(background.bounds,1,1)];
+		UIView *fill = [[UIView alloc] initWithFrame:CGRectInset(background.bounds, 1, 1)];
 		[fill setBackgroundColor:fillColor];
 		[fill.layer setCornerRadius:background.frame.size.height/2];
 		[background addSubview:fill];
 
-		UIImageView *item = [[UIImageView alloc] initWithFrame:CGRectInset(fill.bounds,7.5,7.5)];
+		UIImageView *item = [[UIImageView alloc] initWithFrame:CGRectInset(fill.bounds, 7.5, 7.5)];
 		[item setImage:[UIImage systemImageNamed:self.itemIcons[i]]];
 		[item setContentMode:UIViewContentModeScaleAspectFit];
 
-		UIView *status = [[UIView alloc] initWithFrame:CGRectMake(45,45,10,10)];
+		UIView *status = [[UIView alloc] initWithFrame:CGRectMake(45, 45, 10, 10)];
 		[status setBackgroundColor:[UIColor grayColor]];
 		[status.layer setCornerRadius:status.frame.size.height/2];
 
@@ -191,14 +191,14 @@
 			x = -10;
 		}
 		else{
-			x = position.x+35;
+			x = position.x + 35;
 		}
 
-		UILabel *itemDesc = [[UILabel alloc] initWithFrame:CGRectMake(x,position.y-28,kWidth,20)];
+		UILabel *itemDesc = [[UILabel alloc] initWithFrame:CGRectMake(x,position.y - 28, kWidth, 20)];
 		[itemDesc setText:self.itemDescriptions[i]];
 		[itemDesc setTextColor:accentColor];
 
-		UILabel *itemStatus = [[UILabel alloc] initWithFrame:CGRectMake(x,position.y-8,kWidth,20)];
+		UILabel *itemStatus = [[UILabel alloc] initWithFrame:CGRectMake(x,position.y - 8, kWidth, 20)];
 		[itemStatus setFont:[UIFont systemFontOfSize:14 weight:-0.60]];
 		[itemStatus setText:@"Waiting"];
 		[itemStatus setTextColor:accentColor];
@@ -212,7 +212,7 @@
 }
 
 -(void)makeLoadingWheel{
-	self.loading = [[UIActivityIndicatorView alloc] initWithFrame:CGRectMake((kWidth/2)-25,((kHeight*5)/6)+12.5,50,50)];
+	self.loading = [[UIActivityIndicatorView alloc] initWithFrame:CGRectMake((kWidth/2) - 25, (kHeight * (5/6)) + 12.5, 50, 50)];
 	[self.loading setActivityIndicatorViewStyle:UIActivityIndicatorViewStyleLarge];
 	[self.loading setColor:accentColor];
 	[self.loading setHidesWhenStopped:YES];

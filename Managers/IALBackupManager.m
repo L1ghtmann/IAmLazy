@@ -280,96 +280,101 @@
 
 -(void)gatherPackageFiles{
 	NSFileManager *fileManager = [NSFileManager defaultManager];
+	NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
+	[set addCharactersInString:@"+-."];
 	for(NSString *package in self.packages){
-		NSMutableArray *genericFiles = [NSMutableArray new];
-		NSMutableArray *directories = [NSMutableArray new];
+		BOOL valid = [[package stringByTrimmingCharactersInSet:set] isEqualToString:@""];
+		if(valid){
+			NSMutableArray *genericFiles = [NSMutableArray new];
+			NSMutableArray *directories = [NSMutableArray new];
 
-		// get installed files
-		NSError *readError = nil;
-		NSString *path = [NSString stringWithFormat:@"/var/lib/dpkg/info/%@.list", package];
-		NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&readError];
-		if(readError){
-			NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", path, readError.localizedDescription);
-			continue;
-		}
-
-		// get generic files and directories and sort into respective arrays
-		NSArray *lines = [contents componentsSeparatedByString:@"\n"];
-		for(NSString *line in lines){
-			if(![line length] || [line isEqualToString:@"/."]){
-				continue; // disregard
-			}
-
-			NSError *readError2 = nil;
-			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:line error:&readError2];
-			if(readError2){
-				NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", line, readError2.localizedDescription);
+			// get installed files
+			NSError *readError = nil;
+			NSString *path = [NSString stringWithFormat:@"/var/lib/dpkg/info/%@.list", package];
+			NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&readError];
+			if(readError){
+				NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", path, readError.localizedDescription);
 				continue;
 			}
 
-			NSString *type = [fileAttributes fileType];
+			// get generic files and directories and sort into respective arrays
+			NSArray *lines = [contents componentsSeparatedByString:@"\n"];
+			for(NSString *line in lines){
+				if(![line length] || [line isEqualToString:@"/."] || [[line lastPathComponent] isEqualToString:@".."] || [[line lastPathComponent] isEqualToString:@"."]){
+					continue; // disregard
+				}
 
-			// check to see how many times the current filepath is present in the list output
-			// shoutout Cœur on StackOverflow for this efficient code (https://stackoverflow.com/a/57869286)
-			int count = [[NSMutableString stringWithString:contents] replaceOccurrencesOfString:line withString:line options:NSLiteralSearch range:NSMakeRange(0, [contents length])];
+				NSError *readError2 = nil;
+				NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:line error:&readError2];
+				if(readError2){
+					NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", line, readError2.localizedDescription);
+					continue;
+				}
 
-			if(count == 1){ // this is good, means it's unique!
-				if([type isEqualToString:@"NSFileTypeDirectory"]){
-					[directories addObject:line];
-				}
-				else{
-					[genericFiles addObject:line];
-				}
-			}
-			else{
-				// sometimes files will have similar names (e.g., /usr/bin/zip, /usr/bin/zipcloak, /usr/bin/zipnote, /usr/bin/zipsplit)
-				// though /usr/bin/zip will have a count > 1, since it's present in the other filepaths, we want to avoid disregarding it
-				// since it's a valid file. instead, we want to disregard all dirs and symlinks that don't lead to files as they're simply
-				// part of the package's list structure. in the above example, that would mean disregarding /usr and /usr/bin
-				if(![type isEqualToString:@"NSFileTypeDirectory"] && ![type isEqualToString:@"NSFileTypeSymbolicLink"]){
-					[genericFiles addObject:line];
-				}
-				else if([type isEqualToString:@"NSFileTypeSymbolicLink"]){
-					// want to grab any symlniks that lead to files, but ignore those that lead to dirs
-					// this will traverse any links and check for the existence of a file at the link's final destination
-					BOOL isDir = NO;
-					if([fileManager fileExistsAtPath:line isDirectory:&isDir] && !isDir){
+				NSString *type = [fileAttributes fileType];
+
+				// check to see how many times the current filepath is present in the list output
+				// shoutout Cœur on StackOverflow for this efficient code (https://stackoverflow.com/a/57869286)
+				int count = [[NSMutableString stringWithString:contents] replaceOccurrencesOfString:line withString:line options:NSLiteralSearch range:NSMakeRange(0, [contents length])];
+
+				if(count == 1){ // this is good, means it's unique!
+					if([type isEqualToString:@"NSFileTypeDirectory"]){
+						[directories addObject:line];
+					}
+					else{
 						[genericFiles addObject:line];
 					}
 				}
+				else{
+					// sometimes files will have similar names (e.g., /usr/bin/zip, /usr/bin/zipcloak, /usr/bin/zipnote, /usr/bin/zipsplit)
+					// though /usr/bin/zip will have a count > 1, since it's present in the other filepaths, we want to avoid disregarding it
+					// since it's a valid file. instead, we want to disregard all dirs and symlinks that don't lead to files as they're simply
+					// part of the package's list structure. in the above example, that would mean disregarding /usr and /usr/bin
+					if(![type isEqualToString:@"NSFileTypeDirectory"] && ![type isEqualToString:@"NSFileTypeSymbolicLink"]){
+						[genericFiles addObject:line];
+					}
+					else if([type isEqualToString:@"NSFileTypeSymbolicLink"]){
+						// want to grab any symlniks that lead to files, but ignore those that lead to dirs
+						// this will traverse any links and check for the existence of a file at the link's final destination
+						BOOL isDir = NO;
+						if([fileManager fileExistsAtPath:line isDirectory:&isDir] && !isDir){
+							[genericFiles addObject:line];
+						}
+					}
+				}
 			}
-		}
 
-		// put the files we want to copy into lists for easier writing
-		NSString *gFilePaths = [[genericFiles valueForKey:@"description"] componentsJoinedByString:@"\n"];
-		if(![gFilePaths length]){
-			NSLog(@"[IAmLazyLog] gFilePaths list is blank for %@!", package);
-		}
+			// put the files we want to copy into lists for easier writing
+			NSString *gFilePaths = [[genericFiles valueForKey:@"description"] componentsJoinedByString:@"\n"];
+			if(![gFilePaths length]){
+				NSLog(@"[IAmLazyLog] gFilePaths list is blank for %@!", package);
+			}
 
-		// this is nice because it overwrites the file's content, unlike the write method from NSFileManager
-		NSError *writeError = nil;
-		[gFilePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
-		if(writeError){
-			NSLog(@"[IAmLazyLog] Failed to write gFilePaths to %@ for %@! Error: %@", filesToCopy, package, writeError.localizedDescription);
-			continue;
-		}
-
-		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:package];
-
-		// make dir to hold stuff for the tweak
-		if(![fileManager fileExistsAtPath:tweakDir]){
-			NSError *writeError3 = nil;
-			[fileManager createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&writeError3];
-			if(writeError3){
-				NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", tweakDir, writeError3.localizedDescription);
+			// this is nice because it overwrites the file's content, unlike the write method from NSFileManager
+			NSError *writeError = nil;
+			[gFilePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
+			if(writeError){
+				NSLog(@"[IAmLazyLog] Failed to write gFilePaths to %@ for %@! Error: %@", filesToCopy, package, writeError.localizedDescription);
 				continue;
 			}
-		}
 
-		[self makeSubDirectories:directories inDirectory:tweakDir];
-		[self copyGenericFiles];
-		[self makeControlForPackage:package inDirectory:tweakDir];
-		[self copyDEBIANFiles];
+			NSString *tweakDir = [tmpDir stringByAppendingPathComponent:package];
+
+			// make dir to hold stuff for the tweak
+			if(![fileManager fileExistsAtPath:tweakDir]){
+				NSError *writeError3 = nil;
+				[fileManager createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&writeError3];
+				if(writeError3){
+					NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", tweakDir, writeError3.localizedDescription);
+					continue;
+				}
+			}
+
+			[self makeSubDirectories:directories inDirectory:tweakDir];
+			[self copyGenericFiles];
+			[self makeControlForPackage:package inDirectory:tweakDir];
+			[self copyDEBIANFiles];
+		}
 	}
 
 	// remove list file now that we're done w it
@@ -482,7 +487,7 @@
 
 	// make tarball (and avoid stalling the main thread)
 	dispatch_semaphore_t sema = dispatch_semaphore_create(0); // wait for async block
-	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),^{
+	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 		write_archive([backupPath UTF8String]);
 
 		// signal that we're good to go

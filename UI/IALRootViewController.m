@@ -35,7 +35,7 @@
 	[self.tableView setScrollEnabled:NO];
 
 	// setup bottom tab bar
-	UITabBar *bottomBar = [[UITabBar alloc] initWithFrame:CGRectMake(0, kHeight-self.navigationController.navigationBar.frame.size.height-5, kWidth, self.navigationController.navigationBar.frame.size.height)];
+	UITabBar *bottomBar = [[UITabBar alloc] initWithFrame:CGRectMake(0, kHeight - self.navigationController.navigationBar.frame.size.height - 5, kWidth, self.navigationController.navigationBar.frame.size.height)];
 	[[[[UIApplication sharedApplication] windows] firstObject] addSubview:bottomBar];
 	[bottomBar setDelegate:self];
 
@@ -63,7 +63,7 @@
 
 	IALAppDelegate *delegate = (IALAppDelegate *)[[UIApplication sharedApplication] delegate];
 
-	if (selectedTag == 0){
+	if(selectedTag == 0){
 		[delegate.tabBarController setSelectedViewController:delegate.rootViewController];
 	}
 	else if(selectedTag == 1){
@@ -171,14 +171,14 @@
 	UIAlertAction *confirm = [UIAlertAction
 								actionWithTitle:@"Confirm"
 								style:UIAlertActionStyleDefault
-								handler:^(UIAlertAction * action){
+								handler:^(UIAlertAction *action){
 									[self makeBackupOfType:type withFilter:filter];
 								}];
 
 	UIAlertAction *cancel = [UIAlertAction
 								actionWithTitle:@"Cancel"
 								style:UIAlertActionStyleDefault
-								handler:^(UIAlertAction * action){
+								handler:^(UIAlertAction *action){
 									[self dismissViewControllerAnimated:YES completion:nil];
 								}];
 
@@ -213,7 +213,7 @@
 	UIAlertAction *export = [UIAlertAction
 								actionWithTitle:@"Export"
 								style:UIAlertActionStyleDefault
-								handler:^(UIAlertAction * action){
+								handler:^(UIAlertAction *action){
 									NSString *localPath = [NSString stringWithFormat:@"file://%@%@", backupDir, [[_manager getBackups] firstObject]];
 									NSURL *fileURL = [NSURL URLWithString:localPath]; // to actually export the file, needs to be an NSURL
 
@@ -226,7 +226,7 @@
 	UIAlertAction *okay = [UIAlertAction
 							actionWithTitle:@"Okay"
 							style:UIAlertActionStyleDefault
-							handler:^(UIAlertAction * action){
+							handler:^(UIAlertAction *action){
 								[self dismissViewControllerAnimated:YES completion:nil];
 							}];
 

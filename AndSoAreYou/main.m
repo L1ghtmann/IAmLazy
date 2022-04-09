@@ -16,15 +16,20 @@ NSString *getCurrentPackage(){
 
 	NSMutableDictionary *dirsAndCreationDates = [NSMutableDictionary new];
 	NSArray *tmpDirFiles = [fileManager contentsOfDirectoryAtPath:tmpDir error:NULL];
+	NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
+	[set addCharactersInString:@"+-."];
 	for(NSString *file in tmpDirFiles){
-		NSString *filePath = [tmpDir stringByAppendingPathComponent:file];
+		BOOL valid = [[file stringByTrimmingCharactersInSet:set] isEqualToString:@""];
+		if(valid){
+			NSString *filePath = [tmpDir stringByAppendingPathComponent:file];
 
-		BOOL isDir = NO;
-		if([fileManager fileExistsAtPath:filePath isDirectory:&isDir] && isDir){
-			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:filePath error:NULL];
-			NSDate *creationDate = [fileAttributes fileCreationDate];
-			NSString *dateString = [formatter stringFromDate:creationDate];
-			[dirsAndCreationDates setValue:file forKey:dateString];
+			BOOL isDir = NO;
+			if([fileManager fileExistsAtPath:filePath isDirectory:&isDir] && isDir){
+				NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:filePath error:NULL];
+				NSDate *creationDate = [fileAttributes fileCreationDate];
+				NSString *dateString = [formatter stringFromDate:creationDate];
+				[dirsAndCreationDates setValue:file forKey:dateString];
+			}
 		}
 	}
 
@@ -38,7 +43,7 @@ NSString *getCurrentPackage(){
 
 int proc_pidpath(int pid, void *buffer, uint32_t buffersize); // libproc.h
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]){
 	if(argc != 2){
 		printf("Houston, we have a problem: an invalid argument (or arguments) was provided!\n");
 		return 1;
@@ -95,7 +100,7 @@ int main(int argc, char *argv[]) {
 				// recreate parent directory structure
 				NSString *dirStructure = [file stringByDeletingLastPathComponent]; // grab parent directory structure
 				NSString *newPath = [NSString stringWithFormat:@"%@%@", tweakDir, dirStructure];
-				if(![[newPath substringFromIndex:[newPath length]-1] isEqualToString:@"/"]) newPath = [newPath stringByAppendingString:@"/"]; // add missing trailing slash
+				if(![[newPath substringFromIndex:[newPath length] - 1] isEqualToString:@"/"]) newPath = [newPath stringByAppendingString:@"/"]; // add missing trailing slash
 				[fileManager createDirectoryAtPath:newPath withIntermediateDirectories:YES attributes:nil error:NULL];
 
 				// 'reenable' tweaks that've been disabled with iCleaner Pro (i.e., change extension from .disabled back to .dylib)
@@ -169,10 +174,10 @@ int main(int argc, char *argv[]) {
 		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
 		[set addCharactersInString:@"+-."];
 		for(NSString *item in tmpDirContents){
-			NSString *path = [tmpDir stringByAppendingString:item];
-
 			BOOL valid = [[item stringByTrimmingCharactersInSet:set] isEqualToString:@""];
 			if(valid){
+				NSString *path = [tmpDir stringByAppendingString:item];
+
 				BOOL isDir = NO;
 				if([fileManager fileExistsAtPath:path isDirectory:&isDir] && isDir){
 					[tweakDirs addObject:path];
@@ -275,7 +280,9 @@ int main(int argc, char *argv[]) {
 	else if(strcmp(argv[1], "installList") == 0){
 		// get target list from tmpDir
 		NSArray *tmpDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:NULL];
-		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '.txt'"];
+		NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '.txt'"];
+		NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'IAmLazy-'"];
+		NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate, predicate2]];  // combine with "and"
 		NSArray *lists = [tmpDirContents filteredArrayUsingPredicate:thePredicate];
 		NSString *targetListFile = [tmpDir stringByAppendingPathComponent:[lists firstObject]];
 

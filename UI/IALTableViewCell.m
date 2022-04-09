@@ -14,7 +14,7 @@
 
 	self = [super initWithStyle:UITableViewCellStyleDefault reuseIdentifier:identifier];
 
-	if (self){
+	if(self){
 		// icon setup
 		// helpful link for available SFSymbols: https://github.com/cyanzhong/sf-symbols-online
 		// note: SFSymbols' width and height aren't equal, so need to set the content mode accordingly
@@ -40,7 +40,7 @@
 		[self addSubview:_container];
 
 		[_container setTranslatesAutoresizingMaskIntoConstraints:NO];
-		[_container.widthAnchor constraintEqualToConstant:(self.frame.size.width-75)].active = YES;
+		[_container.widthAnchor constraintEqualToConstant:(self.frame.size.width - 75)].active = YES;
 		[_container.heightAnchor constraintEqualToConstant:50].active = YES;
 		[_container.leftAnchor constraintEqualToAnchor:self.leftAnchor constant:105].active = YES;
 		[_container.centerYAnchor constraintEqualToAnchor:self.centerYAnchor].active = YES;
@@ -64,7 +64,7 @@
 		_descriptorLabel = [[UILabel alloc] initWithFrame:CGRectZero];
 		[_container addSubview:_descriptorLabel];
 
-		[_descriptorLabel setFont:[UIFont systemFontOfSize:_descriptorLabel.font.pointSize*0.75 weight:-0.40]];
+		[_descriptorLabel setFont:[UIFont systemFontOfSize:(_descriptorLabel.font.pointSize * 0.75) weight:-0.40]];
 		[_descriptorLabel setUserInteractionEnabled:NO];
 		[_descriptorLabel setNumberOfLines:0];
 		[_descriptorLabel setText:[self descriptionForPurpose:purpose andFunction:function]];

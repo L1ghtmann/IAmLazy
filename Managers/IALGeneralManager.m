@@ -73,7 +73,7 @@
 	NSArray *backups = [backupDirContents filteredArrayUsingPredicate:thePredicate];
 
 	// sort backups (https://stackoverflow.com/a/43096808)
-	NSSortDescriptor *nameDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self" ascending:YES comparator:^NSComparisonResult(id obj1, id obj2) {
+	NSSortDescriptor *nameDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self" ascending:YES comparator:^NSComparisonResult(id obj1, id obj2){
 		return - [(NSString *)obj1 compare:(NSString *)obj2 options:NSNumericSearch]; // note: "-" == NSOrderedDescending
 	}];
 	NSArray *sortedBackups = [backups sortedArrayUsingDescriptors:@[nameDescriptor]];
@@ -103,7 +103,7 @@
 	UIAlertAction *okay = [UIAlertAction
 							actionWithTitle:@"Okay"
 							style:UIAlertActionStyleDefault
-							handler:^(UIAlertAction * action) {
+							handler:^(UIAlertAction *action){
 								[self.rootVC dismissViewControllerAnimated:YES completion:nil];
 							}];
 
