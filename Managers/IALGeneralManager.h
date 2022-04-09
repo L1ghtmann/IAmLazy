@@ -13,7 +13,7 @@
 -(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type;
 -(void)cleanupTmp;
 -(NSString *)getLatestBackup;
--(NSArray *)getBackups;
+-(NSArray<NSString *> *)getBackups;
 -(void)executeCommandAsRoot:(NSString *)cmd;
 -(void)popErrorAlertWithReason:(NSString *)reason;
 @end

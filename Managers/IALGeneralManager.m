@@ -57,7 +57,7 @@
 	return backupName;
 }
 
--(NSArray *)getBackups{
+-(NSArray<NSString *> *)getBackups{
 	NSError *readError = nil;
 	NSArray *backupDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:backupDir error:&readError];
 	if(readError){

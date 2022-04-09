@@ -128,6 +128,17 @@
 			listName = [latest stringByAppendingString:@".txt"];
 		}
 
+		// make backup and log dirs if they don't exist already
+		if(![fileManager fileExistsAtPath:logDir]){
+			NSError *writeError = nil;
+			[fileManager createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
+			if(writeError){
+				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError.localizedDescription];
+				[_generalManager popErrorAlertWithReason:reason];
+				return;
+			}
+		}
+
 		// write to file
 		NSString *filePath = [NSString stringWithFormat:@"%@%@", backupDir, listName];
 		[fileManager createFileAtPath:filePath contents:[fileContent dataUsingEncoding:NSUTF8StringEncoding] attributes:nil];
@@ -152,7 +163,7 @@
 	[self setEndTime:[NSDate date]];
 }
 
--(NSArray *)getAllPackages{
+-(NSArray<NSString *> *)getAllPackages{
 	NSMutableArray *allPackages = [NSMutableArray new];
 
 	// get list of all installed packages and their priorities
@@ -192,7 +203,7 @@
 	return allPackages;
 }
 
--(NSArray *)getReposToFilter{
+-(NSArray<NSString *> *)getReposToFilter{
 	NSArray *reposToFilter = @[
 		@"apt.bingner.com",
 		@"apt.procurs.us",
@@ -201,7 +212,7 @@
 	return reposToFilter;
 }
 
--(NSArray *)getUserPackages{
+-(NSArray<NSString *> *)getUserPackages{
 	NSMutableArray *userPackages;
 
 	// get apt lists
@@ -220,6 +231,7 @@
 		NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"self BEGINSWITH %@", repo];
 		NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate1,predicate2]];
 		NSArray *pkgLists = [aptLists filteredArrayUsingPredicate:thePredicate];
+		if(![pkgLists count]) continue;
 		for(NSString *list in pkgLists){ // count should be 1
 			NSError *readError2 = nil;
 			NSString *content = [NSString stringWithContentsOfFile:[NSString stringWithFormat:@"%@%@", aptListsDir, list] encoding:NSUTF8StringEncoding error:&readError2];
@@ -247,7 +259,7 @@
 	return userPackages;
 }
 
--(NSArray *)getControlFiles{
+-(NSArray<NSString *> *)getControlFiles{
 	NSMutableArray *controls = [NSMutableArray new];
 
 	// get control files for all installed packages
@@ -385,7 +397,7 @@
 	}
 }
 
--(void)makeSubDirectories:(NSArray *)directories inDirectory:(NSString *)tweakDir{
+-(void)makeSubDirectories:(NSArray<NSString *> *)directories inDirectory:(NSString *)tweakDir{
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	for(NSString *dir in directories){
 		NSString *path = [NSString stringWithFormat:@"%@%@", tweakDir, dir];
@@ -410,13 +422,14 @@
 	NSString *pkg = [@"Package: " stringByAppendingString:package];
 	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH %@", pkg];
 	NSArray *theOne = [self.controls filteredArrayUsingPredicate:thePredicate];
+	if(![theOne count]) return;
 	NSString *relevantControl = [theOne firstObject]; // count should be 1
 	NSString *noStatusLine = [relevantControl stringByReplacingOccurrencesOfString:@"Status: install ok installed\n" withString:@""];
 	NSString *info = [noStatusLine stringByAppendingString:@"\n"]; // ensure final newline (deb will fail to build if missing)
 
 	// make DEBIAN dir
 	NSFileManager *fileManager = [NSFileManager defaultManager];
-	NSString *debian = [NSString stringWithFormat:@"%@/DEBIAN/", tweakDir];
+	NSString *debian = [tweakDir stringByAppendingString:@"/DEBIAN/"];
 	if(![fileManager fileExistsAtPath:debian]){
 		NSError *writeError = nil;
 		[fileManager createDirectoryAtPath:debian withIntermediateDirectories:YES attributes:nil error:&writeError];

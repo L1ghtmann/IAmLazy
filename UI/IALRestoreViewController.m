@@ -215,39 +215,43 @@
 		// make each available backup its own action
 		for(int i = 0; i < [backupNames count]; i++){
 			NSString *backupName = backupNames[i];
-			NSString *backupDate = backupDates[i];
-			NSString *backup = [NSString stringWithFormat:@"%@ [%@]", backupName, backupDate];
-			// get confirmation before proceeding
-			UIAlertAction *action = [UIAlertAction
-										actionWithTitle:backup
-										style:UIAlertActionStyleDefault
-										handler:^(UIAlertAction *action){
-											UIAlertController *subalert = [UIAlertController
-																			alertControllerWithTitle:@"IAmLazy"
-																			message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName]
-																			preferredStyle:UIAlertControllerStyleAlert];
 
-											UIAlertAction *yes = [UIAlertAction
-																	actionWithTitle:@"Yes"
-																	style:UIAlertActionStyleDefault
-																	handler:^(UIAlertAction *action){
-																		[self restoreFromBackup:backupName ofType:type];
-																	}];
+			BOOL valid = [[backupName stringByTrimmingCharactersInSet:set] isEqualToString:@""];
+			if(valid){
+				NSString *backupDate = backupDates[i];
+				NSString *backup = [NSString stringWithFormat:@"%@ [%@]", backupName, backupDate];
+				// get confirmation before proceeding
+				UIAlertAction *action = [UIAlertAction
+											actionWithTitle:backup
+											style:UIAlertActionStyleDefault
+											handler:^(UIAlertAction *action){
+												UIAlertController *subalert = [UIAlertController
+																				alertControllerWithTitle:@"IAmLazy"
+																				message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName]
+																				preferredStyle:UIAlertControllerStyleAlert];
 
-											UIAlertAction *no = [UIAlertAction
-																	actionWithTitle:@"No"
-																	style:UIAlertActionStyleDefault
-																	handler:^(UIAlertAction *action){
-																		[self dismissViewControllerAnimated:YES completion:nil];
-																	}];
+												UIAlertAction *yes = [UIAlertAction
+																		actionWithTitle:@"Yes"
+																		style:UIAlertActionStyleDefault
+																		handler:^(UIAlertAction *action){
+																			[self restoreFromBackup:backupName ofType:type];
+																		}];
 
-											[subalert addAction:yes];
-											[subalert addAction:no];
+												UIAlertAction *no = [UIAlertAction
+																		actionWithTitle:@"No"
+																		style:UIAlertActionStyleDefault
+																		handler:^(UIAlertAction *action){
+																			[self dismissViewControllerAnimated:YES completion:nil];
+																		}];
 
-											[self presentViewController:subalert animated:YES completion:nil];
-										}];
+												[subalert addAction:yes];
+												[subalert addAction:no];
 
-			[alert addAction:action];
+												[self presentViewController:subalert animated:YES completion:nil];
+											}];
+
+				[alert addAction:action];
+			}
 		}
 
 		UIAlertAction *cancel = [UIAlertAction
@@ -259,8 +263,17 @@
 
 		[alert addAction:cancel];
 
-		[self presentViewController:alert animated:YES completion:nil];
+		[self presentViewController:alert animated:YES completion:^{
+			// allow us to dismiss a UIAlertControllerStyleAlert when
+			// the user touches anywhere out of bounds of the view
+			[alert.view.superview setUserInteractionEnabled:YES];
+			[alert.view.superview addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(alertOOBTap)]];
+		}];
 	}
+}
+
+-(void)alertOOBTap{
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 -(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type{

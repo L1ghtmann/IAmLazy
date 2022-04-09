@@ -126,7 +126,6 @@ int copy_data(struct archive *ar, struct archive *aw){
 	}
 }
 
-// https://github.com/libarchive/libarchive/wiki/Examples#A_Complete_Extractor
 void extract_archive(const char *filename){
 	struct archive *a;
 	struct archive *ext;

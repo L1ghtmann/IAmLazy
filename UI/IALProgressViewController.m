@@ -183,8 +183,7 @@
 
 	for(int i = 0; i < [self.items count]; i++){
 		UIView *item = self.items[i];
-		CGPoint center = item.center;
-		CGPoint position = [item convertPoint:center toView:self.view];
+		CGPoint position = [item convertPoint:item.center toView:self.view];
 		CGFloat x = 0;
 		// RTL support
 		if([UIApplication sharedApplication].userInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft){
@@ -212,7 +211,7 @@
 }
 
 -(void)makeLoadingWheel{
-	self.loading = [[UIActivityIndicatorView alloc] initWithFrame:CGRectMake((kWidth/2) - 25, (kHeight * (5/6)) + 12.5, 50, 50)];
+	self.loading = [[UIActivityIndicatorView alloc] initWithFrame:CGRectMake((kWidth/2) - 25, ((kHeight * 5)/6) + 12.5, 50, 50)];
 	[self.loading setActivityIndicatorViewStyle:UIActivityIndicatorViewStyleLarge];
 	[self.loading setColor:accentColor];
 	[self.loading setHidesWhenStopped:YES];

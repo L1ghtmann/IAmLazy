@@ -16,6 +16,7 @@ NSString *getCurrentPackage(){
 
 	NSMutableDictionary *dirsAndCreationDates = [NSMutableDictionary new];
 	NSArray *tmpDirFiles = [fileManager contentsOfDirectoryAtPath:tmpDir error:NULL];
+	if(![tmpDirFiles count]) return @"";
 	NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
 	[set addCharactersInString:@"+-."];
 	for(NSString *file in tmpDirFiles){
@@ -116,7 +117,7 @@ int main(int argc, char *argv[]){
 	else if(strcmp(argv[1], "cpDFiles") == 0){
 		NSString *tweakName = getCurrentPackage();
 		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:tweakName];
-		NSString *debian = [NSString stringWithFormat:@"%@/DEBIAN/", tweakDir];
+		NSString *debian = [tweakDir stringByAppendingString:@"/DEBIAN/"];
 		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
 		[set addCharactersInString:@"+-."];
 
@@ -166,11 +167,12 @@ int main(int argc, char *argv[]){
 	}
 	else if(strcmp(argv[1], "buildDebs") == 0){
 		NSFileManager *fileManager = [NSFileManager defaultManager];
-		NSString *log = [NSString stringWithFormat:@"%@build_log.txt", logDir];
+		NSString *log = [logDir stringByAppendingString:@"build_log.txt"];
 
 		// get tweak dirs from tmpDir
 		NSMutableArray *tweakDirs = [NSMutableArray new];
 		NSArray *tmpDirContents = [fileManager contentsOfDirectoryAtPath:tmpDir error:NULL];
+		if(![tmpDirContents count]) return 1;
 		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
 		[set addCharactersInString:@"+-."];
 		for(NSString *item in tmpDirContents){
@@ -187,6 +189,7 @@ int main(int argc, char *argv[]){
 
 		// build debs and remove respective dir when done
 		NSMutableString *logText = [NSMutableString new];
+		if(![tweakDirs count]) return 1;
 		for(NSString *tweak in tweakDirs){
 			NSTask *task = [[NSTask alloc] init];
 			[task setLaunchPath:@"/usr/bin/dpkg-deb"];
@@ -219,7 +222,7 @@ int main(int argc, char *argv[]){
 	}
 	else if(strcmp(argv[1], "installDebs") == 0){
 		// install debs
-		NSString *log = [NSString stringWithFormat:@"%@restore_log.txt", logDir];
+		NSString *log = [logDir stringByAppendingString:@"restore_log.txt"];
 		NSMutableString *logText = [NSMutableString new];
 
 		NSTask *task = [[NSTask alloc] init];
@@ -248,7 +251,7 @@ int main(int argc, char *argv[]){
 		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 
 		// resolve any lingering things (e.g., conflicts, partial installs due to dependencies, etc)
-		NSString *log2 = [NSString stringWithFormat:@"%@fixup_log.txt", logDir];
+		NSString *log2 = [logDir stringByAppendingString:@"fixup_log.txt"];
 		NSMutableString *log2Text = [NSMutableString new];
 
 		NSTask *task2 = [[NSTask alloc] init];
@@ -284,11 +287,13 @@ int main(int argc, char *argv[]){
 		NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'IAmLazy-'"];
 		NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate, predicate2]];  // combine with "and"
 		NSArray *lists = [tmpDirContents filteredArrayUsingPredicate:thePredicate];
+		if(![lists count]) return 1;
 		NSString *targetListFile = [tmpDir stringByAppendingPathComponent:[lists firstObject]];
 
 		// get packages to install
 		NSString *tweakList = [NSString stringWithContentsOfFile:targetListFile encoding:NSUTF8StringEncoding error:NULL];
 		NSArray	*tweaks = [tweakList componentsSeparatedByString:@"\n"];
+		if(![tweaks count]) return 1;
 
 		// make sure info on available packages is up-to-date
 		// Note: if list isn't in /var/lib/apt/lists/ it isn't queried
@@ -299,7 +304,7 @@ int main(int argc, char *argv[]){
 		[updateTask waitUntilExit];
 
 		// install packages from tweak list
-		NSString *log = [NSString stringWithFormat:@"%@restore_log.txt", logDir];
+		NSString *log = [logDir stringByAppendingString:@"restore_log.txt"];
 		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
 		[set addCharactersInString:@"+-."];
 		NSMutableString *logText = [NSMutableString new];
@@ -335,7 +340,7 @@ int main(int argc, char *argv[]){
 		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 
 		// nothing else to do
-		NSString *log2 = [NSString stringWithFormat:@"%@fixup_log.txt", logDir];
+		NSString *log2 = [logDir stringByAppendingString:@"fixup_log.txt"];
 		NSString *log2Text = @"There's no fixup log for a list restore.\n";
 		[log2Text writeToFile:log2 atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 	}

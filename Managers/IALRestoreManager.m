@@ -152,6 +152,7 @@
 	else{ // list backup
 		NSString *content = [NSString stringWithContentsOfFile:targetBackup encoding:NSUTF8StringEncoding error:NULL];
 		NSArray *bits = [content componentsSeparatedByString:@"\n"];
+		if(![bits count]) return NO;
 		check = [[bits firstObject] isEqualToString:bootstrap];
 	}
 
