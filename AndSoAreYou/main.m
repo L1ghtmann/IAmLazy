@@ -31,8 +31,8 @@ NSString *getCurrentPackage(){
 	NSArray *dates = [dirsAndCreationDates allKeys];
 	NSSortDescriptor *descriptor = [NSSortDescriptor sortDescriptorWithKey:nil ascending:NO selector:@selector(compare:)];
 	NSArray *sortedDates = [dates sortedArrayUsingDescriptors:@[descriptor]];
-
 	NSString *latestDir = [dirsAndCreationDates objectForKey:[sortedDates firstObject]];
+
 	return latestDir;
 }
 
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 		NSArray *files = [toCopy componentsSeparatedByString:@"\n"];
 		if([files count]){
 			for(NSString *file in files){
-				if(![file length] || ![fileManager fileExistsAtPath:file]){
+				if(![file length] || ![fileManager fileExistsAtPath:file] || [[file lastPathComponent] isEqualToString:@".."] || [[file lastPathComponent] isEqualToString:@"."]){
 					continue;
 				}
 
@@ -112,45 +112,50 @@ int main(int argc, char *argv[]) {
 		NSString *tweakName = getCurrentPackage();
 		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:tweakName];
 		NSString *debian = [NSString stringWithFormat:@"%@/DEBIAN/", tweakDir];
+		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
+		[set addCharactersInString:@"+-."];
 
-		// get DEBIAN files (e.g., pre/post scripts)
-		NSTask *task = [[NSTask alloc] init];
-		[task setLaunchPath:@"/usr/bin/dpkg-query"];
-		[task setArguments:@[@"-c", tweakName]];
+		BOOL valid = [[tweakName stringByTrimmingCharactersInSet:set] isEqualToString:@""];
+		if(valid){
+			// get DEBIAN files (e.g., pre/post scripts)
+			NSTask *task = [[NSTask alloc] init];
+			[task setLaunchPath:@"/usr/bin/dpkg-query"];
+			[task setArguments:@[@"-c", tweakName]];
 
-		NSPipe *pipe = [NSPipe pipe];
-		[task setStandardOutput:pipe];
+			NSPipe *pipe = [NSPipe pipe];
+			[task setStandardOutput:pipe];
 
-		[task launch];
+			[task launch];
 
-		NSFileHandle *handle = [pipe fileHandleForReading];
-		NSData *data = [handle readDataToEndOfFile];
-		[handle closeFile];
+			NSFileHandle *handle = [pipe fileHandleForReading];
+			NSData *data = [handle readDataToEndOfFile];
+			[handle closeFile];
 
-		// have to call after ^ to ensure that the output pipe doesn't fill
-		// if it does, the process will hang and block waitUntilExit from returning
-		[task waitUntilExit];
+			// have to call after ^ to ensure that the output pipe doesn't fill
+			// if it does, the process will hang and block waitUntilExit from returning
+			[task waitUntilExit];
 
-		NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-		NSArray *lines = [output componentsSeparatedByString:@"\n"];
+			NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+			NSArray *lines = [output componentsSeparatedByString:@"\n"];
 
-		// grab the files
-		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS '.md5sums'"]; // dpkg generates this dynamically at installation
-		NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate];
-		NSArray *debianFiles = [lines filteredArrayUsingPredicate:theAntiPredicate];
+			// grab the files
+			NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS '.md5sums'"]; // dpkg generates this dynamically at installation
+			NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate];
+			NSArray *debianFiles = [lines filteredArrayUsingPredicate:theAntiPredicate];
 
-		// copy files
-		NSFileManager *fileManager = [NSFileManager defaultManager];
-		if([debianFiles count]){
-			for(NSString *file in debianFiles){
-				if(![file length] || ![fileManager fileExistsAtPath:file]){
-					continue;
+			// copy files
+			NSFileManager *fileManager = [NSFileManager defaultManager];
+			if([debianFiles count]){
+				for(NSString *file in debianFiles){
+					if(![file length] || ![fileManager fileExistsAtPath:file] || [[file lastPathComponent] isEqualToString:@".."] || [[file lastPathComponent] isEqualToString:@"."]){
+						continue;
+					}
+
+					// remove tweakName prefix and copy file
+					NSString *fileName = [file lastPathComponent];
+					NSString *strippedName = [fileName stringByReplacingOccurrencesOfString:[tweakName stringByAppendingString:@"."] withString:@""];
+					[fileManager copyItemAtPath:file toPath:[NSString stringWithFormat:@"%@%@", debian, strippedName] error:NULL];
 				}
-
-				// remove tweakName prefix and copy file
-				NSString *fileName = [file lastPathComponent];
-				NSString *strippedName = [fileName stringByReplacingOccurrencesOfString:[tweakName stringByAppendingString:@"."] withString:@""];
-				[fileManager copyItemAtPath:file toPath:[NSString stringWithFormat:@"%@%@", debian, strippedName] error:NULL];
 			}
 		}
 	}
@@ -161,12 +166,17 @@ int main(int argc, char *argv[]) {
 		// get tweak dirs from tmpDir
 		NSMutableArray *tweakDirs = [NSMutableArray new];
 		NSArray *tmpDirContents = [fileManager contentsOfDirectoryAtPath:tmpDir error:NULL];
+		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
+		[set addCharactersInString:@"+-."];
 		for(NSString *item in tmpDirContents){
 			NSString *path = [tmpDir stringByAppendingString:item];
 
-			BOOL isDir = NO;
-			if([fileManager fileExistsAtPath:path isDirectory:&isDir] && isDir){
-				[tweakDirs addObject:path];
+			BOOL valid = [[item stringByTrimmingCharactersInSet:set] isEqualToString:@""];
+			if(valid){
+				BOOL isDir = NO;
+				if([fileManager fileExistsAtPath:path isDirectory:&isDir] && isDir){
+					[tweakDirs addObject:path];
+				}
 			}
 		}
 
@@ -283,12 +293,11 @@ int main(int argc, char *argv[]) {
 
 		// install packages from tweak list
 		NSString *log = [NSString stringWithFormat:@"%@restore_log.txt", logDir];
+		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
+		[set addCharactersInString:@"+-."];
 		NSMutableString *logText = [NSMutableString new];
 		for(NSString *tweak in tweaks){
-			NSCharacterSet *alphaSet = [NSCharacterSet alphanumericCharacterSet];
-			NSString *run1 = [tweak stringByReplacingOccurrencesOfString:@"." withString:@""];
-			NSString *run2 = [run1 stringByReplacingOccurrencesOfString:@"-" withString:@""];
-			BOOL valid = [[run2 stringByTrimmingCharactersInSet:alphaSet] isEqualToString:@""];
+			BOOL valid = [[tweak stringByTrimmingCharactersInSet:set] isEqualToString:@""];
 			if(valid){
 				NSTask *task = [[NSTask alloc] init];
 				[task setLaunchPath:@"/usr/bin/apt-get"];

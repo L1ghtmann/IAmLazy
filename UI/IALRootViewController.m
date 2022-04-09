@@ -45,9 +45,10 @@
 	UITabBarItem *backups = [[UITabBarItem alloc] initWithTitle:@"Backups" image:[UIImage systemImageNamed:@"folder.fill"] tag:1];
 	UITabBarItem *restore = [[UITabBarItem alloc] initWithTitle:@"Restore" image:[UIImage systemImageNamed:@"arrow.counterclockwise.circle"] tag:2];
 
-	[create setTitlePositionAdjustment:UIOffsetMake(0.0, -2.0)];
-	[backups setTitlePositionAdjustment:UIOffsetMake(0.0, -2.0)];
-	[restore setTitlePositionAdjustment:UIOffsetMake(0.0, -2.0)];
+	UIOffset offset = UIOffsetMake(0.0, -2.0);
+	[create setTitlePositionAdjustment:offset];
+	[backups setTitlePositionAdjustment:offset];
+	[restore setTitlePositionAdjustment:offset];
 
 	[tabBarItems addObject:create];
 	[tabBarItems addObject:backups];

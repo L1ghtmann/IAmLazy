@@ -102,7 +102,7 @@
 		// for unfiltered backups, create hidden file specifying the bootstrap it was created on
 		if(!filter) [self makeBootstrapFile];
 
-		// make archive of all packages
+		// make archive of packages
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2.7"];
 		[self makeTarballWithFilter:filter];
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"3"];
@@ -492,7 +492,7 @@
 		[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0]];
     }
 
-	// confirm the gzip archive now exists where expected
+	// confirm the gzip archive now exists
 	[self verifyFileAtPath:backupPath];
 
 	[_generalManager cleanupTmp];

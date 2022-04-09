@@ -8,11 +8,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <limits.h>
 #include <archive.h>
 #include <sys/fcntl.h>
 #include <archive_entry.h>
 
-// https://stackoverflow.com/a/4204758
 int get_file_count(){
 	int file_count = 0;
 
@@ -30,7 +30,6 @@ int get_file_count(){
 	return file_count;
 }
 
-// https://github.com/libarchive/libarchive/wiki/Examples#A_Basic_Write_Example
 void write_archive(const char *outname){
 	struct archive *a;
 	struct archive_entry *entry;
@@ -42,10 +41,10 @@ void write_archive(const char *outname){
 	// get file count for tmpDir
 	int file_count = get_file_count();
 
-	if(file_count == 0) return;
+	if(file_count == 0 || file_count > (SIZE_MAX - 1)) return;
 
 	// create string array for filepaths
-	char *filearr[file_count+1];
+	char *filearr[file_count + 1];
 
 	struct dirent *ent;
 	DIR *directory = opendir("/tmp/me.lightmann.iamlazy/");
@@ -54,8 +53,14 @@ void write_archive(const char *outname){
 	while((ent = readdir(directory)) != NULL){
 		// if entry is a regular file
 		if(ent->d_type == DT_REG){
-			// https://stackoverflow.com/a/8465083
-			char *str = malloc(strlen("me.lightmann.iamlazy/") + strlen(ent->d_name) + 1);
+			size_t IAL = strlen("me.lightmann.iamlazy/");
+			size_t FILE = strlen(ent->d_name);
+
+			if(FILE > (PATH_MAX - (IAL + 1))){
+				continue;
+			}
+
+			char *str = malloc(IAL + FILE + 1);
 			strcpy(str, "me.lightmann.iamlazy/");
 			strcat(str, ent->d_name);
 
