@@ -124,44 +124,30 @@ int main(int argc, char *argv[]){
 		BOOL valid = [[tweakName stringByTrimmingCharactersInSet:set] isEqualToString:@""];
 		if(valid){
 			// get DEBIAN files (e.g., pre/post scripts)
-			NSTask *task = [[NSTask alloc] init];
-			[task setLaunchPath:@"/usr/bin/dpkg-query"];
-			[task setArguments:@[@"-c", tweakName]];
+			NSString *dpkgInfoDir = @"/var/lib/dpkg/info/";
+			NSFileManager *fileManager = [NSFileManager defaultManager];
+			NSArray *dpkgInfo = [fileManager contentsOfDirectoryAtPath:dpkgInfoDir error:NULL];
+			if(![dpkgInfo count]) return 1;
 
-			NSPipe *pipe = [NSPipe pipe];
-			[task setStandardOutput:pipe];
-
-			[task launch];
-
-			NSFileHandle *handle = [pipe fileHandleForReading];
-			NSData *data = [handle readDataToEndOfFile];
-			[handle closeFile];
-
-			// have to call after ^ to ensure that the output pipe doesn't fill
-			// if it does, the process will hang and block waitUntilExit from returning
-			[task waitUntilExit];
-
-			NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-			NSArray *lines = [output componentsSeparatedByString:@"\n"];
-
-			// grab the files
-			NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS '.md5sums'"]; // dpkg generates this dynamically at installation
-			NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate];
-			NSArray *debianFiles = [lines filteredArrayUsingPredicate:theAntiPredicate];
+			NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH %@", tweakName];
+			NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF CONTAINS '.md5sums'"];
+			NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF CONTAINS '.list'"];
+			NSPredicate *predicate23 = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicate2, predicate3]];
+			NSPredicate *antiPredicate23 = [NSCompoundPredicate notPredicateWithSubpredicate:predicate23]; // dpkg generates these at installation
+			NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate1, antiPredicate23]];
+			NSArray *debainFiles = [dpkgInfo filteredArrayUsingPredicate:thePredicate];
+			if(![debainFiles count]) return 1;
 
 			// copy files
-			NSFileManager *fileManager = [NSFileManager defaultManager];
-			if([debianFiles count]){
-				for(NSString *file in debianFiles){
-					if(![file length] || ![fileManager fileExistsAtPath:file] || [[file lastPathComponent] isEqualToString:@".."] || [[file lastPathComponent] isEqualToString:@"."]){
-						continue;
-					}
-
-					// remove tweakName prefix and copy file
-					NSString *fileName = [file lastPathComponent];
-					NSString *strippedName = [fileName stringByReplacingOccurrencesOfString:[tweakName stringByAppendingString:@"."] withString:@""];
-					[fileManager copyItemAtPath:file toPath:[NSString stringWithFormat:@"%@%@", debian, strippedName] error:NULL];
+			for(NSString *file in debainFiles){
+				NSString *filePath = [dpkgInfoDir stringByAppendingString:file];
+				if(![file length] || ![fileManager fileExistsAtPath:filePath] || [file isEqualToString:@".."] || [file isEqualToString:@"."]){
+					continue;
 				}
+
+				// remove tweakName prefix and copy file
+				NSString *strippedName = [file stringByReplacingOccurrencesOfString:[tweakName stringByAppendingString:@"."] withString:@""];
+				[fileManager copyItemAtPath:filePath toPath:[debian stringByAppendingString:strippedName] error:NULL];
 			}
 		}
 	}

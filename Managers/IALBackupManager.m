@@ -227,8 +227,8 @@
 	// get packages to ignore
 	NSMutableArray *packagesToIgnore = [NSMutableArray new];
 	for(NSString *repo in [self getReposToFilter]){
-		NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"self ENDSWITH '_Packages'"];
-		NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"self BEGINSWITH %@", repo];
+		NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '_Packages'"];
+		NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH %@", repo];
 		NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate1,predicate2]];
 		NSArray *pkgLists = [aptLists filteredArrayUsingPredicate:thePredicate];
 		if(![pkgLists count]) continue;
