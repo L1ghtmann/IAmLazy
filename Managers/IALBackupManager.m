@@ -125,7 +125,7 @@
 			listName = [latest stringByAppendingString:@"u.txt"];
 		}
 		else{
-			listName = [latest stringByAppendingString:@".txt"];
+			listName = [latest stringByAppendingPathExtension:@"txt"];
 		}
 
 		// make backup and log dirs if they don't exist already
@@ -140,7 +140,7 @@
 		}
 
 		// write to file
-		NSString *filePath = [NSString stringWithFormat:@"%@%@", backupDir, listName];
+		NSString *filePath = [backupDir stringByAppendingPathComponent:listName];
 		[fileManager createFileAtPath:filePath contents:[fileContent dataUsingEncoding:NSUTF8StringEncoding] attributes:nil];
 
 		// note bootstrap the list was made on
@@ -234,7 +234,7 @@
 		if(![pkgLists count]) continue;
 		for(NSString *list in pkgLists){ // count should be 1
 			NSError *readError2 = nil;
-			NSString *content = [NSString stringWithContentsOfFile:[NSString stringWithFormat:@"%@%@", aptListsDir, list] encoding:NSUTF8StringEncoding error:&readError2];
+			NSString *content = [NSString stringWithContentsOfFile:[aptListsDir stringByAppendingPathComponent:list] encoding:NSUTF8StringEncoding error:&readError2];
 			if(readError2){
 				NSLog(@"[IAmLazyLog] Failed to get contents of %@%@! Error: %@", aptListsDir, list, readError2.localizedDescription);
 				continue;
@@ -400,7 +400,7 @@
 -(void)makeSubDirectories:(NSArray<NSString *> *)directories inDirectory:(NSString *)tweakDir{
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	for(NSString *dir in directories){
-		NSString *path = [NSString stringWithFormat:@"%@%@", tweakDir, dir];
+		NSString *path = [tweakDir stringByAppendingPathComponent:dir];
 		if(![fileManager fileExistsAtPath:path]){
 			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&writeError];
@@ -494,9 +494,9 @@
 		backupName = [latest stringByAppendingString:@"u.tar.gz"];
 	}
 	else{
-		backupName = [latest stringByAppendingString:@".tar.gz"];
+		backupName = [latest stringByAppendingPathExtension:@"tar.gz"];
 	}
-	NSString *backupPath = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
+	NSString *backupPath = [backupDir stringByAppendingPathComponent:backupName];
 
 	// make tarball (and avoid stalling the main thread)
 	dispatch_semaphore_t sema = dispatch_semaphore_create(0); // wait for async block

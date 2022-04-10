@@ -75,21 +75,21 @@
 	// eval sections
 	if(indexPath.section == 0){
 		type = 0;
-		functionDescriptor = @" Backup";
+		functionDescriptor = @"Backup";
 	}
 	else{
 		type = 1;
-		functionDescriptor = @" List";
+		functionDescriptor = @"List";
 	}
 
 	// eval rows
 	if(indexPath.row == 0){
 		function = 0;
-		functionDescriptor = [@"From Latest" stringByAppendingString:functionDescriptor];
+		functionDescriptor = [NSString stringWithFormat:@"From Latest %@", functionDescriptor];
 	}
 	else{
 		function = 1;
-		functionDescriptor = [@"From Specific" stringByAppendingString:functionDescriptor];
+		functionDescriptor = [NSString stringWithFormat:@"From Specific %@", functionDescriptor];
 	}
 
 	if(!cell){

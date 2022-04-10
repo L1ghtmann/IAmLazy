@@ -108,7 +108,7 @@
 	if(editingStyle == UITableViewCellEditingStyleDelete){
 		// remove backup
 		NSString *backupName = [tableView cellForRowAtIndexPath:indexPath].textLabel.text;
-		NSString *filePath = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
+		NSString *filePath = [backupDir stringByAppendingPathComponent:backupName];
 		NSFileManager *fileManager = [NSFileManager defaultManager];
 		if([fileManager isDeletableFileAtPath:filePath]){
 			NSError *deleteError = nil;
@@ -161,7 +161,7 @@
 }
 
 -(void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls{
-	NSURL *url = [urls firstObject];
+	NSURL *url = [urls firstObject]; // count will be >= 1
 
 	// Note: need to have the path be /destDir/filename.extension otherwise it'll try to overwrite the destDir??
 	NSString *localPath = [NSString stringWithFormat:@"file://%@%@", backupDir, [url lastPathComponent]];

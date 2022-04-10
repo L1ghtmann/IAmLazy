@@ -34,7 +34,7 @@
 	}
 
 	// check for target backup
-	NSString *target = [NSString stringWithFormat:@"%@%@", backupDir, backupName];
+	NSString *target = [backupDir stringByAppendingPathComponent:backupName];
 	if(![fileManager fileExistsAtPath:target]){
 		NSString *reason = [NSString stringWithFormat:@"The target backup -- %@ -- could not be found!", backupName];
 		[_generalManager popErrorAlertWithReason:reason];

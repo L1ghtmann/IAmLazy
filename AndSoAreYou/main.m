@@ -92,26 +92,25 @@ int main(int argc, char *argv[]){
 		NSFileManager *fileManager = [NSFileManager defaultManager];
 		NSString *toCopy = [NSString stringWithContentsOfFile:filesToCopy encoding:NSUTF8StringEncoding error:NULL];
 		NSArray *files = [toCopy componentsSeparatedByString:@"\n"];
-		if([files count]){
-			for(NSString *file in files){
-				if(![file length] || ![fileManager fileExistsAtPath:file] || [[file lastPathComponent] isEqualToString:@".."] || [[file lastPathComponent] isEqualToString:@"."]){
-					continue;
-				}
-
-				// recreate parent directory structure
-				NSString *dirStructure = [file stringByDeletingLastPathComponent]; // grab parent directory structure
-				NSString *newPath = [NSString stringWithFormat:@"%@%@", tweakDir, dirStructure];
-				if(![[newPath substringFromIndex:[newPath length] - 1] isEqualToString:@"/"]) newPath = [newPath stringByAppendingString:@"/"]; // add missing trailing slash
-				[fileManager createDirectoryAtPath:newPath withIntermediateDirectories:YES attributes:nil error:NULL];
-
-				// 'reenable' tweaks that've been disabled with iCleaner Pro (i.e., change extension from .disabled back to .dylib)
-				NSString *extension = [file pathExtension];
-				if([[[file pathExtension] lowercaseString] isEqualToString:@"disabled"]) extension = @"dylib";
-				NSString *newFile = [newPath stringByAppendingString:[[[file lastPathComponent] stringByDeletingPathExtension] stringByAppendingPathExtension:extension]];
-
-				// copy file
-				[fileManager copyItemAtPath:file toPath:newFile error:NULL];
+		if(![files count]) return 1;
+		for(NSString *file in files){
+			if(![file length] || ![fileManager fileExistsAtPath:file] || [[file lastPathComponent] isEqualToString:@".."] || [[file lastPathComponent] isEqualToString:@"."]){
+				continue;
 			}
+
+			// recreate parent directory structure
+			NSString *dirStructure = [file stringByDeletingLastPathComponent]; // grab parent directory structure
+			NSString *newPath = [tweakDir stringByAppendingPathComponent:dirStructure];
+			if(![[newPath substringFromIndex:[newPath length] - 1] isEqualToString:@"/"]) newPath = [newPath stringByAppendingString:@"/"]; // add missing trailing slash
+			[fileManager createDirectoryAtPath:newPath withIntermediateDirectories:YES attributes:nil error:NULL];
+
+			// 'reenable' tweaks that've been disabled with iCleaner Pro (i.e., change extension from .disabled back to .dylib)
+			NSString *extension = [file pathExtension];
+			if([[[file pathExtension] lowercaseString] isEqualToString:@"disabled"]) extension = @"dylib";
+			NSString *newFile = [newPath stringByAppendingPathComponent:[[[file lastPathComponent] stringByDeletingPathExtension] stringByAppendingPathExtension:extension]];
+
+			// copy file
+			[fileManager copyItemAtPath:file toPath:newFile error:NULL];
 		}
 	}
 	else if(strcmp(argv[1], "cpDFiles") == 0){
@@ -140,20 +139,20 @@ int main(int argc, char *argv[]){
 
 			// copy files
 			for(NSString *file in debainFiles){
-				NSString *filePath = [dpkgInfoDir stringByAppendingString:file];
+				NSString *filePath = [dpkgInfoDir stringByAppendingPathComponent:file];
 				if(![file length] || ![fileManager fileExistsAtPath:filePath] || [file isEqualToString:@".."] || [file isEqualToString:@"."]){
 					continue;
 				}
 
 				// remove tweakName prefix and copy file
 				NSString *strippedName = [file stringByReplacingOccurrencesOfString:[tweakName stringByAppendingString:@"."] withString:@""];
-				[fileManager copyItemAtPath:filePath toPath:[debian stringByAppendingString:strippedName] error:NULL];
+				[fileManager copyItemAtPath:filePath toPath:[debian stringByAppendingPathComponent:strippedName] error:NULL];
 			}
 		}
 	}
 	else if(strcmp(argv[1], "buildDebs") == 0){
 		NSFileManager *fileManager = [NSFileManager defaultManager];
-		NSString *log = [logDir stringByAppendingString:@"build_log.txt"];
+		NSString *log = [logDir stringByAppendingPathComponent:@"build_log.txt"];
 
 		// get tweak dirs from tmpDir
 		NSMutableArray *tweakDirs = [NSMutableArray new];
@@ -164,7 +163,7 @@ int main(int argc, char *argv[]){
 		for(NSString *item in tmpDirContents){
 			BOOL valid = [[item stringByTrimmingCharactersInSet:set] isEqualToString:@""];
 			if(valid){
-				NSString *path = [tmpDir stringByAppendingString:item];
+				NSString *path = [tmpDir stringByAppendingPathComponent:item];
 
 				BOOL isDir = NO;
 				if([fileManager fileExistsAtPath:path isDirectory:&isDir] && isDir){
@@ -208,7 +207,7 @@ int main(int argc, char *argv[]){
 	}
 	else if(strcmp(argv[1], "installDebs") == 0){
 		// install debs
-		NSString *log = [logDir stringByAppendingString:@"restore_log.txt"];
+		NSString *log = [logDir stringByAppendingPathComponent:@"restore_log.txt"];
 		NSMutableString *logText = [NSMutableString new];
 
 		NSTask *task = [[NSTask alloc] init];
@@ -237,7 +236,7 @@ int main(int argc, char *argv[]){
 		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 
 		// resolve any lingering things (e.g., conflicts, partial installs due to dependencies, etc)
-		NSString *log2 = [logDir stringByAppendingString:@"fixup_log.txt"];
+		NSString *log2 = [logDir stringByAppendingPathComponent:@"fixup_log.txt"];
 		NSMutableString *log2Text = [NSMutableString new];
 
 		NSTask *task2 = [[NSTask alloc] init];
@@ -290,7 +289,7 @@ int main(int argc, char *argv[]){
 		[updateTask waitUntilExit];
 
 		// install packages from tweak list
-		NSString *log = [logDir stringByAppendingString:@"restore_log.txt"];
+		NSString *log = [logDir stringByAppendingPathComponent:@"restore_log.txt"];
 		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
 		[set addCharactersInString:@"+-."];
 		NSMutableString *logText = [NSMutableString new];
@@ -326,7 +325,7 @@ int main(int argc, char *argv[]){
 		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 
 		// nothing else to do
-		NSString *log2 = [logDir stringByAppendingString:@"fixup_log.txt"];
+		NSString *log2 = [logDir stringByAppendingPathComponent:@"fixup_log.txt"];
 		NSString *log2Text = @"There's no fixup log for a list restore.\n";
 		[log2Text writeToFile:log2 atomically:YES encoding:NSUTF8StringEncoding error:NULL];
 	}
