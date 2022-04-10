@@ -14,9 +14,16 @@ NSString *getCurrentPackage(){
 	NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
 	[formatter setDateFormat:@"HH:mm:ss.SSS"];
 
+	NSError *readError = nil;
+	NSArray *tmpDirFiles = [fileManager contentsOfDirectoryAtPath:tmpDir error:&readError];
+	if(readError){
+		NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", tmpDir, readError.localizedDescription);
+		return @"";
+	}
+	else if(![tmpDirFiles count]){
+		return @"";
+	}
 	NSMutableDictionary *dirsAndCreationDates = [NSMutableDictionary new];
-	NSArray *tmpDirFiles = [fileManager contentsOfDirectoryAtPath:tmpDir error:NULL];
-	if(![tmpDirFiles count]) return @"";
 	NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
 	[set addCharactersInString:@"+-."];
 	for(NSString *file in tmpDirFiles){
@@ -26,7 +33,12 @@ NSString *getCurrentPackage(){
 
 			BOOL isDir = NO;
 			if([fileManager fileExistsAtPath:filePath isDirectory:&isDir] && isDir){
-				NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:filePath error:NULL];
+				NSError *readError2 = nil;
+				NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:filePath error:&readError2];
+				if(readError2){
+					NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get atributes of %@! Error: %@", filePath, readError2.localizedDescription);
+					continue;
+				}
 				NSDate *creationDate = [fileAttributes fileCreationDate];
 				NSString *dateString = [formatter stringFromDate:creationDate];
 				[dirsAndCreationDates setValue:file forKey:dateString];
@@ -82,17 +94,27 @@ int main(int argc, char *argv[]){
 
 	if(strcmp(argv[1], "cleanTmp") == 0){
 		// delete temporary directory
-		[[NSFileManager defaultManager] removeItemAtPath:tmpDir error:NULL];
+		NSError *deleteError = nil;
+		[[NSFileManager defaultManager] removeItemAtPath:tmpDir error:&deleteError];
+		if(deleteError){
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to delete %@! Error: %@", tmpDir, deleteError.localizedDescription);
+			return 1;
+		}
 	}
 	else if(strcmp(argv[1], "cpGFiles") == 0){
 		NSString *tweakName = getCurrentPackage();
 		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:tweakName];
 
 		// recreate directory structure and copy files
-		NSFileManager *fileManager = [NSFileManager defaultManager];
-		NSString *toCopy = [NSString stringWithContentsOfFile:filesToCopy encoding:NSUTF8StringEncoding error:NULL];
+		NSError *readError = nil;
+		NSString *toCopy = [NSString stringWithContentsOfFile:filesToCopy encoding:NSUTF8StringEncoding error:&readError];
+		if(readError){
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", filesToCopy, readError.localizedDescription);
+			return 1;
+		}
 		NSArray *files = [toCopy componentsSeparatedByString:@"\n"];
 		if(![files count]) return 1;
+		NSFileManager *fileManager = [NSFileManager defaultManager];
 		for(NSString *file in files){
 			if(![file length] || ![fileManager fileExistsAtPath:file] || [[file lastPathComponent] isEqualToString:@".."] || [[file lastPathComponent] isEqualToString:@"."]){
 				continue;
@@ -102,7 +124,12 @@ int main(int argc, char *argv[]){
 			NSString *dirStructure = [file stringByDeletingLastPathComponent]; // grab parent directory structure
 			NSString *newPath = [tweakDir stringByAppendingPathComponent:dirStructure];
 			if(![[newPath substringFromIndex:[newPath length] - 1] isEqualToString:@"/"]) newPath = [newPath stringByAppendingString:@"/"]; // add missing trailing slash
-			[fileManager createDirectoryAtPath:newPath withIntermediateDirectories:YES attributes:nil error:NULL];
+			NSError *writeError = nil;
+			[fileManager createDirectoryAtPath:newPath withIntermediateDirectories:YES attributes:nil error:&writeError];
+			if(writeError){
+				NSLog(@"[IAmLazyLog] AndSoAreYou: failed to create %@! Error: %@", newPath, writeError.localizedDescription);
+				continue;
+			}
 
 			// 'reenable' tweaks that've been disabled with iCleaner Pro (i.e., change extension from .disabled back to .dylib)
 			NSString *extension = [file pathExtension];
@@ -110,7 +137,11 @@ int main(int argc, char *argv[]){
 			NSString *newFile = [newPath stringByAppendingPathComponent:[[[file lastPathComponent] stringByDeletingPathExtension] stringByAppendingPathExtension:extension]];
 
 			// copy file
-			[fileManager copyItemAtPath:file toPath:newFile error:NULL];
+			NSError *writeError2 = nil;
+			[fileManager copyItemAtPath:file toPath:newFile error:&writeError2];
+			if(writeError2){
+				NSLog(@"[IAmLazyLog] AndSoAreYou: failed to copy %@! Error: %@", file, writeError2.localizedDescription);
+			}
 		}
 	}
 	else if(strcmp(argv[1], "cpDFiles") == 0){
@@ -125,8 +156,15 @@ int main(int argc, char *argv[]){
 			// get DEBIAN files (e.g., pre/post scripts)
 			NSString *dpkgInfoDir = @"/var/lib/dpkg/info/";
 			NSFileManager *fileManager = [NSFileManager defaultManager];
-			NSArray *dpkgInfo = [fileManager contentsOfDirectoryAtPath:dpkgInfoDir error:NULL];
-			if(![dpkgInfo count]) return 1;
+			NSError *readError = nil;
+			NSArray *dpkgInfo = [fileManager contentsOfDirectoryAtPath:dpkgInfoDir error:&readError];
+			if(readError){
+				NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", dpkgInfoDir, readError.localizedDescription);
+				return 1;
+			}
+			else if(![dpkgInfo count]){
+				return 1;
+			}
 
 			NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH %@", tweakName];
 			NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF CONTAINS '.md5sums'"];
@@ -146,7 +184,11 @@ int main(int argc, char *argv[]){
 
 				// remove tweakName prefix and copy file
 				NSString *strippedName = [file stringByReplacingOccurrencesOfString:[tweakName stringByAppendingString:@"."] withString:@""];
-				[fileManager copyItemAtPath:filePath toPath:[debian stringByAppendingPathComponent:strippedName] error:NULL];
+				NSError *writeError = nil;
+				[fileManager copyItemAtPath:filePath toPath:[debian stringByAppendingPathComponent:strippedName] error:&writeError];
+				if(writeError){
+					NSLog(@"[IAmLazyLog] AndSoAreYou: failed to copy %@! Error: %@", filePath, writeError.localizedDescription);
+				}
 			}
 		}
 	}
@@ -155,9 +197,16 @@ int main(int argc, char *argv[]){
 		NSString *log = [logDir stringByAppendingPathComponent:@"build_log.txt"];
 
 		// get tweak dirs from tmpDir
+		NSError *readError = nil;
+		NSArray *tmpDirContents = [fileManager contentsOfDirectoryAtPath:tmpDir error:&readError];
+		if(readError){
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", tmpDir, readError.localizedDescription);
+			return 1;
+		}
+		else if(![tmpDirContents count]){
+			return 1;
+		}
 		NSMutableArray *tweakDirs = [NSMutableArray new];
-		NSArray *tmpDirContents = [fileManager contentsOfDirectoryAtPath:tmpDir error:NULL];
-		if(![tmpDirContents count]) return 1;
 		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
 		[set addCharactersInString:@"+-."];
 		for(NSString *item in tmpDirContents){
@@ -201,9 +250,17 @@ int main(int argc, char *argv[]){
 			NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 			[logText appendString:output];
 
-			[fileManager removeItemAtPath:tweak error:NULL];
+			NSError *deleteError = nil;
+			[fileManager removeItemAtPath:tweak error:&deleteError];
+			if(deleteError){
+				NSLog(@"[IAmLazyLog] AndSoAreYou: failed to delete %@! Error: %@", tweak, deleteError.localizedDescription);
+			}
 		}
-		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+		NSError *writeError = nil;
+		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
+		if(writeError){
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to write to %@! Error: %@", log, writeError.localizedDescription);
+		}
 	}
 	else if(strcmp(argv[1], "installDebs") == 0){
 		// install debs
@@ -233,7 +290,11 @@ int main(int argc, char *argv[]){
 		NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 		[logText appendString:output];
 
-		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+		NSError *writeError = nil;
+		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
+		if(writeError){
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to write to %@! Error: %@", log, writeError.localizedDescription);
+		}
 
 		// resolve any lingering things (e.g., conflicts, partial installs due to dependencies, etc)
 		NSString *log2 = [logDir stringByAppendingPathComponent:@"fixup_log.txt"];
@@ -263,11 +324,20 @@ int main(int argc, char *argv[]){
 		NSString *output2 = [[NSString alloc] initWithData:data2 encoding:NSUTF8StringEncoding];
 		[log2Text appendString:output2];
 
-		[log2Text writeToFile:log2 atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+		NSError *writeError2 = nil;
+		[log2Text writeToFile:log2 atomically:YES encoding:NSUTF8StringEncoding error:&writeError2];
+		if(writeError2){
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to write to %@! Error: %@", log2, writeError2.localizedDescription);
+		}
 	}
 	else if(strcmp(argv[1], "installList") == 0){
 		// get target list from tmpDir
-		NSArray *tmpDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:NULL];
+		NSError *readError = nil;
+		NSArray *tmpDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:&readError];
+		if(readError){
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", tmpDir, readError.localizedDescription);
+			return 1;
+		}
 		NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '.txt'"];
 		NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'IAmLazy-'"];
 		NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate, predicate2]];  // combine with "and"
@@ -276,7 +346,12 @@ int main(int argc, char *argv[]){
 		NSString *targetListFile = [tmpDir stringByAppendingPathComponent:[lists firstObject]];
 
 		// get packages to install
-		NSString *tweakList = [NSString stringWithContentsOfFile:targetListFile encoding:NSUTF8StringEncoding error:NULL];
+		NSError *readError2 = nil;
+		NSString *tweakList = [NSString stringWithContentsOfFile:targetListFile encoding:NSUTF8StringEncoding error:&readError2];
+		if(readError2){
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", targetListFile, readError2.localizedDescription);
+			return 1;
+		}
 		NSArray	*tweaks = [tweakList componentsSeparatedByString:@"\n"];
 		if(![tweaks count]) return 1;
 
@@ -322,12 +397,20 @@ int main(int argc, char *argv[]){
 				[logText appendString:output];
 			}
 		}
-		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+		NSError *writeError = nil;
+		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
+		if(writeError){
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to write to %@! Error: %@", log, writeError.localizedDescription);
+		}
 
 		// nothing else to do
 		NSString *log2 = [logDir stringByAppendingPathComponent:@"fixup_log.txt"];
 		NSString *log2Text = @"There's no fixup log for a list restore.\n";
-		[log2Text writeToFile:log2 atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+		NSError *writeError2 = nil;
+		[log2Text writeToFile:log2 atomically:YES encoding:NSUTF8StringEncoding error:&writeError2];
+		if(writeError2){
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to write to %@! Error: %@", log2, writeError2.localizedDescription);
+		}
 	}
 	else{
 		printf("Houston, we have a problem: an invalid argument was provided!\n");

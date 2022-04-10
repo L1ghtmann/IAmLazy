@@ -182,7 +182,7 @@ void extract_archive(const char *filename){
 		}
 		r = archive_write_finish_entry(ext);
 		if(r < ARCHIVE_OK){
-			os_log(OS_LOG_DEFAULT, "[IAmLazyLog] libarchive libarchive: extract_archive: %s", archive_error_string(ext));
+			os_log(OS_LOG_DEFAULT, "[IAmLazyLog] libarchive: extract_archive error: %s", archive_error_string(ext));
 		}
 		if(r < ARCHIVE_WARN){
 			return;
