@@ -215,7 +215,6 @@
 		// make each available backup its own action
 		for(int i = 0; i < [backupNames count]; i++){
 			NSString *backupName = backupNames[i];
-
 			BOOL valid = [[backupName stringByTrimmingCharactersInSet:set] isEqualToString:@""];
 			if(valid){
 				NSString *backupDate = backupDates[i];
