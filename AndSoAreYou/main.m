@@ -17,7 +17,7 @@ NSString *getCurrentPackage(){
 	NSError *readError = nil;
 	NSArray *tmpDirFiles = [fileManager contentsOfDirectoryAtPath:tmpDir error:&readError];
 	if(readError){
-		NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", tmpDir, readError.localizedDescription);
+		NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", tmpDir, readError);
 		return @"";
 	}
 	else if(![tmpDirFiles count]){
@@ -36,7 +36,7 @@ NSString *getCurrentPackage(){
 				NSError *readError2 = nil;
 				NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:filePath error:&readError2];
 				if(readError2){
-					NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get atributes of %@! Error: %@", filePath, readError2.localizedDescription);
+					NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get atributes of %@! Error: %@", filePath, readError2);
 					continue;
 				}
 				NSDate *creationDate = [fileAttributes fileCreationDate];
@@ -97,23 +97,23 @@ int main(int argc, char *argv[]){
 		NSError *deleteError = nil;
 		[[NSFileManager defaultManager] removeItemAtPath:tmpDir error:&deleteError];
 		if(deleteError){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to delete %@! Error: %@", tmpDir, deleteError.localizedDescription);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to delete %@! Error: %@", tmpDir, deleteError);
 			return 1;
 		}
 	}
 	else if(strcmp(argv[1], "cpGFiles") == 0){
-		NSString *tweakName = getCurrentPackage();
-		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:tweakName];
-
 		// recreate directory structure and copy files
 		NSError *readError = nil;
 		NSString *toCopy = [NSString stringWithContentsOfFile:filesToCopy encoding:NSUTF8StringEncoding error:&readError];
 		if(readError){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", filesToCopy, readError.localizedDescription);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", filesToCopy, readError);
 			return 1;
 		}
 		NSArray *files = [toCopy componentsSeparatedByString:@"\n"];
 		if(![files count]) return 1;
+
+		NSString *tweakName = getCurrentPackage();
+		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:tweakName];
 		NSFileManager *fileManager = [NSFileManager defaultManager];
 		for(NSString *file in files){
 			if(![file length] || ![fileManager fileExistsAtPath:file] || [[file lastPathComponent] isEqualToString:@".."] || [[file lastPathComponent] isEqualToString:@"."]){
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]){
 			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:newPath withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
-				NSLog(@"[IAmLazyLog] AndSoAreYou: failed to create %@! Error: %@", newPath, writeError.localizedDescription);
+				NSLog(@"[IAmLazyLog] AndSoAreYou: failed to create %@! Error: %@", newPath, writeError);
 				continue;
 			}
 
@@ -140,14 +140,12 @@ int main(int argc, char *argv[]){
 			NSError *writeError2 = nil;
 			[fileManager copyItemAtPath:file toPath:newFile error:&writeError2];
 			if(writeError2){
-				NSLog(@"[IAmLazyLog] AndSoAreYou: failed to copy %@! Error: %@", file, writeError2.localizedDescription);
+				NSLog(@"[IAmLazyLog] AndSoAreYou: failed to copy %@! Error: %@", file, writeError2);
 			}
 		}
 	}
 	else if(strcmp(argv[1], "cpDFiles") == 0){
 		NSString *tweakName = getCurrentPackage();
-		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:tweakName];
-		NSString *debian = [tweakDir stringByAppendingString:@"/DEBIAN/"];
 		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
 		[set addCharactersInString:@"+-."];
 
@@ -159,7 +157,7 @@ int main(int argc, char *argv[]){
 			NSError *readError = nil;
 			NSArray *dpkgInfo = [fileManager contentsOfDirectoryAtPath:dpkgInfoDir error:&readError];
 			if(readError){
-				NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", dpkgInfoDir, readError.localizedDescription);
+				NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", dpkgInfoDir, readError);
 				return 1;
 			}
 			else if(![dpkgInfo count]){
@@ -176,6 +174,8 @@ int main(int argc, char *argv[]){
 			if(![debainFiles count]) return 1;
 
 			// copy files
+			NSString *tweakDir = [tmpDir stringByAppendingPathComponent:tweakName];
+			NSString *debian = [tweakDir stringByAppendingString:@"/DEBIAN/"];
 			for(NSString *file in debainFiles){
 				NSString *filePath = [dpkgInfoDir stringByAppendingPathComponent:file];
 				if(![file length] || ![fileManager fileExistsAtPath:filePath] || [file isEqualToString:@".."] || [file isEqualToString:@"."]){
@@ -187,20 +187,19 @@ int main(int argc, char *argv[]){
 				NSError *writeError = nil;
 				[fileManager copyItemAtPath:filePath toPath:[debian stringByAppendingPathComponent:strippedName] error:&writeError];
 				if(writeError){
-					NSLog(@"[IAmLazyLog] AndSoAreYou: failed to copy %@! Error: %@", filePath, writeError.localizedDescription);
+					NSLog(@"[IAmLazyLog] AndSoAreYou: failed to copy %@! Error: %@", filePath, writeError);
 				}
 			}
 		}
 	}
 	else if(strcmp(argv[1], "buildDebs") == 0){
 		NSFileManager *fileManager = [NSFileManager defaultManager];
-		NSString *log = [logDir stringByAppendingPathComponent:@"build_log.txt"];
 
 		// get tweak dirs from tmpDir
 		NSError *readError = nil;
 		NSArray *tmpDirContents = [fileManager contentsOfDirectoryAtPath:tmpDir error:&readError];
 		if(readError){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", tmpDir, readError.localizedDescription);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", tmpDir, readError);
 			return 1;
 		}
 		else if(![tmpDirContents count]){
@@ -220,10 +219,11 @@ int main(int argc, char *argv[]){
 				}
 			}
 		}
+		if(![tweakDirs count]) return 1;
 
 		// build debs and remove respective dir when done
+		NSString *log = [logDir stringByAppendingPathComponent:@"build_log.txt"];
 		NSMutableString *logText = [NSMutableString new];
-		if(![tweakDirs count]) return 1;
 		for(NSString *tweak in tweakDirs){
 			NSTask *task = [[NSTask alloc] init];
 			[task setLaunchPath:@"/usr/bin/dpkg-deb"];
@@ -253,47 +253,75 @@ int main(int argc, char *argv[]){
 			NSError *deleteError = nil;
 			[fileManager removeItemAtPath:tweak error:&deleteError];
 			if(deleteError){
-				NSLog(@"[IAmLazyLog] AndSoAreYou: failed to delete %@! Error: %@", tweak, deleteError.localizedDescription);
+				NSLog(@"[IAmLazyLog] AndSoAreYou: failed to delete %@! Error: %@", tweak, deleteError);
 			}
 		}
+
 		NSError *writeError = nil;
 		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
 		if(writeError){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to write to %@! Error: %@", log, writeError.localizedDescription);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to write to %@! Error: %@", log, writeError);
 		}
 	}
 	else if(strcmp(argv[1], "installDebs") == 0){
-		// install debs
+		NSFileManager *fileManager = [NSFileManager defaultManager];
+
+		// get debs from tmpDir
+		NSError *readError = nil;
+		NSArray *tmpDirContents = [fileManager contentsOfDirectoryAtPath:tmpDir error:&readError];
+		if(readError){
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", tmpDir, readError);
+			return 1;
+		}
+		else if(![tmpDirContents count]){
+			return 1;
+		}
+		NSMutableArray *debs = [NSMutableArray new];
+		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
+		[set addCharactersInString:@"+-."];
+		for(NSString *item in tmpDirContents){
+			BOOL valid = [[item stringByTrimmingCharactersInSet:set] isEqualToString:@""];
+			if(valid){
+				NSString *path = [tmpDir stringByAppendingPathComponent:item];
+				if([[item pathExtension] isEqualToString:@"deb"]){
+					[debs addObject:path];
+				}
+			}
+		}
+		if(![debs count]) return 1;
+
+		// install debs one by one
 		NSString *log = [logDir stringByAppendingPathComponent:@"restore_log.txt"];
 		NSMutableString *logText = [NSMutableString new];
+		for(NSString *deb in debs){
+			NSTask *task = [[NSTask alloc] init];
+			[task setLaunchPath:@"/usr/bin/dpkg"];
+			[task setArguments:@[
+				@"-i",
+				deb
+			]];
 
-		NSTask *task = [[NSTask alloc] init];
-		[task setLaunchPath:@"/usr/bin/dpkg"];
-		[task setArguments:@[
-			@"-iR",
-			tmpDir
-		]];
+			NSPipe *pipe = [NSPipe pipe];
+			[task setStandardOutput:pipe];
 
-		NSPipe *pipe = [NSPipe pipe];
-		[task setStandardOutput:pipe];
+			[task launch];
 
-		[task launch];
+			NSFileHandle *handle = [pipe fileHandleForReading];
+			NSData *data = [handle readDataToEndOfFile];
+			[handle closeFile];
 
-		NSFileHandle *handle = [pipe fileHandleForReading];
-		NSData *data = [handle readDataToEndOfFile];
-		[handle closeFile];
+			// have to call after ^ to ensure that the output pipe doesn't fill
+			// if it does, the process will hang and block waitUntilExit from returning
+			[task waitUntilExit];
 
-		// have to call after ^ to ensure that the output pipe doesn't fill
-		// if it does, the process will hang and block waitUntilExit from returning
-		[task waitUntilExit];
-
-		NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-		[logText appendString:output];
+			NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+			[logText appendString:output];
+		}
 
 		NSError *writeError = nil;
 		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
 		if(writeError){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to write to %@! Error: %@", log, writeError.localizedDescription);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to write to %@! Error: %@", log, writeError);
 		}
 
 		// resolve any lingering things (e.g., conflicts, partial installs due to dependencies, etc)
@@ -327,7 +355,7 @@ int main(int argc, char *argv[]){
 		NSError *writeError2 = nil;
 		[log2Text writeToFile:log2 atomically:YES encoding:NSUTF8StringEncoding error:&writeError2];
 		if(writeError2){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to write to %@! Error: %@", log2, writeError2.localizedDescription);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to write to %@! Error: %@", log2, writeError2);
 		}
 	}
 	else if(strcmp(argv[1], "installList") == 0){
@@ -335,7 +363,7 @@ int main(int argc, char *argv[]){
 		NSError *readError = nil;
 		NSArray *tmpDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:&readError];
 		if(readError){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", tmpDir, readError.localizedDescription);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", tmpDir, readError);
 			return 1;
 		}
 		NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '.txt'"];
@@ -343,13 +371,13 @@ int main(int argc, char *argv[]){
 		NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate, predicate2]];  // combine with "and"
 		NSArray *lists = [tmpDirContents filteredArrayUsingPredicate:thePredicate];
 		if(![lists count]) return 1;
-		NSString *targetListFile = [tmpDir stringByAppendingPathComponent:[lists firstObject]];
 
 		// get packages to install
 		NSError *readError2 = nil;
+		NSString *targetListFile = [tmpDir stringByAppendingPathComponent:[lists firstObject]];
 		NSString *tweakList = [NSString stringWithContentsOfFile:targetListFile encoding:NSUTF8StringEncoding error:&readError2];
 		if(readError2){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", targetListFile, readError2.localizedDescription);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to get contents of %@! Error: %@", targetListFile, readError2);
 			return 1;
 		}
 		NSArray	*tweaks = [tweakList componentsSeparatedByString:@"\n"];
@@ -363,11 +391,11 @@ int main(int argc, char *argv[]){
 		[updateTask launch];
 		[updateTask waitUntilExit];
 
-		// install packages from tweak list
+		// install packages from tweak list one by one
 		NSString *log = [logDir stringByAppendingPathComponent:@"restore_log.txt"];
+		NSMutableString *logText = [NSMutableString new];
 		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
 		[set addCharactersInString:@"+-."];
-		NSMutableString *logText = [NSMutableString new];
 		for(NSString *tweak in tweaks){
 			BOOL valid = [[tweak stringByTrimmingCharactersInSet:set] isEqualToString:@""];
 			if(valid){
@@ -397,10 +425,11 @@ int main(int argc, char *argv[]){
 				[logText appendString:output];
 			}
 		}
+
 		NSError *writeError = nil;
 		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
 		if(writeError){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to write to %@! Error: %@", log, writeError.localizedDescription);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to write to %@! Error: %@", log, writeError);
 		}
 
 		// nothing else to do
@@ -409,7 +438,7 @@ int main(int argc, char *argv[]){
 		NSError *writeError2 = nil;
 		[log2Text writeToFile:log2 atomically:YES encoding:NSUTF8StringEncoding error:&writeError2];
 		if(writeError2){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to write to %@! Error: %@", log2, writeError2.localizedDescription);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to write to %@! Error: %@", log2, writeError2);
 		}
 	}
 	else{

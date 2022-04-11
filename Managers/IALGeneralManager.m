@@ -61,7 +61,7 @@
 	NSError *readError = nil;
 	NSArray *backupDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:backupDir error:&readError];
 	if(readError){
-		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", backupDir, readError.localizedDescription);
+		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", backupDir, readError);
 		return [NSArray new];
 	}
 

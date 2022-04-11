@@ -65,7 +65,7 @@
 			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
-				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", tmpDir, writeError.localizedDescription];
+				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", tmpDir, writeError];
 				[_generalManager popErrorAlertWithReason:reason];
 				return;
 			}
@@ -88,7 +88,7 @@
 			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
-				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError.localizedDescription];
+				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError];
 				[_generalManager popErrorAlertWithReason:reason];
 				return;
 			}
@@ -133,7 +133,7 @@
 			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
-				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError.localizedDescription];
+				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError];
 				[_generalManager popErrorAlertWithReason:reason];
 				return;
 			}
@@ -220,7 +220,7 @@
 	NSString *aptListsDir = @"/var/lib/apt/lists/";
 	NSArray *aptLists = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:aptListsDir error:&readError];
 	if(readError){
-		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", aptListsDir, readError.localizedDescription);
+		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", aptListsDir, readError);
 		return nil;
 	}
 
@@ -236,7 +236,7 @@
 			NSError *readError2 = nil;
 			NSString *content = [NSString stringWithContentsOfFile:[aptListsDir stringByAppendingPathComponent:list] encoding:NSUTF8StringEncoding error:&readError2];
 			if(readError2){
-				NSLog(@"[IAmLazyLog] Failed to get contents of %@%@! Error: %@", aptListsDir, list, readError2.localizedDescription);
+				NSLog(@"[IAmLazyLog] Failed to get contents of %@%@! Error: %@", aptListsDir, list, readError2);
 				continue;
 			}
 			NSArray *lines = [content componentsSeparatedByString:@"\n"];
@@ -267,7 +267,7 @@
 	NSString *path = @"/var/lib/dpkg/status";
 	NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&readError];
 	if(readError){
-		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", path, readError.localizedDescription);
+		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", path, readError);
 		return nil;
 	}
 
@@ -305,7 +305,7 @@
 			NSString *path = [NSString stringWithFormat:@"/var/lib/dpkg/info/%@.list", package];
 			NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&readError];
 			if(readError){
-				NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", path, readError.localizedDescription);
+				NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", path, readError);
 				continue;
 			}
 
@@ -319,7 +319,7 @@
 				NSError *readError2 = nil;
 				NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:line error:&readError2];
 				if(readError2){
-					NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", line, readError2.localizedDescription);
+					NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", line, readError2);
 					continue;
 				}
 
@@ -366,7 +366,7 @@
 			NSError *writeError = nil;
 			[gFilePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
 			if(writeError){
-				NSLog(@"[IAmLazyLog] Failed to write gFilePaths to %@ for %@! Error: %@", filesToCopy, package, writeError.localizedDescription);
+				NSLog(@"[IAmLazyLog] Failed to write gFilePaths to %@ for %@! Error: %@", filesToCopy, package, writeError);
 				continue;
 			}
 
@@ -377,7 +377,7 @@
 				NSError *writeError3 = nil;
 				[fileManager createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&writeError3];
 				if(writeError3){
-					NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", tweakDir, writeError3.localizedDescription);
+					NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", tweakDir, writeError3);
 					continue;
 				}
 			}
@@ -393,7 +393,7 @@
 	NSError *deleteError = nil;
 	[fileManager removeItemAtPath:filesToCopy error:&deleteError];
 	if(deleteError){
-		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", filesToCopy, deleteError.localizedDescription);
+		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", filesToCopy, deleteError);
 	}
 }
 
@@ -405,7 +405,7 @@
 			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
-				NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", path, writeError.localizedDescription);
+				NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", path, writeError);
 				continue;
 			}
 		}
@@ -434,7 +434,7 @@
 		NSError *writeError = nil;
 		[fileManager createDirectoryAtPath:debian withIntermediateDirectories:YES attributes:nil error:&writeError];
 		if(writeError){
-			NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", debian, writeError.localizedDescription);
+			NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", debian, writeError);
 			return;
 		}
 	}
@@ -464,7 +464,7 @@
 	NSError *readError = nil;
 	NSArray *tmp = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:&readError];
 	if(readError){
-		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", tmpDir, readError.localizedDescription);
+		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", tmpDir, readError);
 	}
 
 	NSArray *debs = [tmp filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"SELF ENDSWITH '.deb'"]];

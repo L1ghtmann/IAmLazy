@@ -58,7 +58,7 @@
 			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
-				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError.localizedDescription];
+				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError];
 				[_generalManager popErrorAlertWithReason:reason];
 				return;
 			}
@@ -82,7 +82,7 @@
 			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
-				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", tmpDir, writeError.localizedDescription];
+				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", tmpDir, writeError];
 				[_generalManager popErrorAlertWithReason:reason];
 				return;
 			}
@@ -90,7 +90,7 @@
 		NSError *writeError = nil;
 		[fileManager copyItemAtPath:target toPath:[tmpDir stringByAppendingPathComponent:backupName] error:&writeError];
 		if(writeError){
-			NSString *reason = [NSString stringWithFormat:@"Failed to copy %@. \n\nError: %@", target, writeError.localizedDescription];
+			NSString *reason = [NSString stringWithFormat:@"Failed to copy %@. \n\nError: %@", target, writeError];
 			[_generalManager popErrorAlertWithReason:reason];
 			return;
 		}
@@ -101,7 +101,7 @@
 			NSError *writeError2 = nil;
 			[fileManager createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError2];
 			if(writeError2){
-				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError2.localizedDescription];
+				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError2];
 				[_generalManager popErrorAlertWithReason:reason];
 				return;
 			}

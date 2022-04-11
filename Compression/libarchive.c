@@ -53,6 +53,9 @@ void write_archive(const char *outname){
 	if(!directory) return;
 	int count = 0;
 	while((ent = readdir(directory)) != NULL){
+		// prevent a buffer overflow
+		if(count > file_count) break;
+
 		// if entry is a regular file
 		if(ent->d_type == DT_REG){
 			size_t IAL = strlen("me.lightmann.iamlazy/");

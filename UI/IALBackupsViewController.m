@@ -114,7 +114,7 @@
 			NSError *deleteError = nil;
 			BOOL success = [fileManager removeItemAtPath:filePath error:&deleteError];
 			if(!success){
-				NSString *reason = [NSString stringWithFormat:@"An error occured and %@ was not deleted! \n\nError: %@", backupName, deleteError.localizedDescription];
+				NSString *reason = [NSString stringWithFormat:@"An error occured and %@ was not deleted! \n\nError: %@", backupName, deleteError];
 				[self popErrorAlertWithReason:reason];
 				return;
 			}
@@ -170,7 +170,7 @@
 	NSError *writeError = nil;
 	BOOL success = [[NSFileManager defaultManager] copyItemAtURL:url toURL:backupDirURL error:&writeError];
 	if(!success){
-		NSString *reason = [NSString stringWithFormat:@"An error occured and %@ could not be imported! \n\nError: %@", [url absoluteString], writeError.localizedDescription];
+		NSString *reason = [NSString stringWithFormat:@"An error occured and %@ could not be imported! \n\nError: %@", [url absoluteString], writeError];
 		[self popErrorAlertWithReason:reason];
 	}
 

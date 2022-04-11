@@ -197,7 +197,7 @@
 				NSString *path = [backupDir stringByAppendingPathComponent:backup];
 				NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:&readError];
 				if(readError){
-					NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", path, readError.localizedDescription);
+					NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", path, readError);
 					dateString = @"Error";
 				}
 				else{
