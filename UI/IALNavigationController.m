@@ -37,8 +37,6 @@
 	_webViewConfiguration = [[WKWebViewConfiguration alloc] init];
 	_webView = [[WKWebView alloc] initWithFrame:self.view.frame configuration:_webViewConfiguration];
 	[_webView setNavigationDelegate:self];
-	NSURL *url = [NSURL URLWithString:@"https://github.com/L1ghtmann/IAmLazy"];
-	NSURLRequest *request = [NSURLRequest requestWithURL:url];
 
 	// create back and close nav bar buttons for use with webview
 	UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"arrow.left"] style:UIBarButtonItemStylePlain target:_webView action:@selector(goBack)];
@@ -49,19 +47,22 @@
 	[self.visibleViewController.navigationItem.rightBarButtonItem setTintColor:[UIColor clearColor]];
 
 	// present the webview
-	[_webView loadRequest:request];
+	NSURL *url = [NSURL URLWithString:@"https://github.com/L1ghtmann/IAmLazy"];
+	[_webView loadRequest:[NSURLRequest requestWithURL:url]];
 	[self.visibleViewController.view addSubview:_webView];
 }
 
 -(void)closeWebView{
 	// dispose of webview
 	[UIView animateWithDuration:0.2
-			animations:^{[_webView setAlpha:0];}
+			animations:^{
+				[_webView setAlpha:0];
+			}
 	 		completion:^(BOOL finished){
 				[_webView removeFromSuperview];
 			}];
-	_webView = nil;
 	_webViewConfiguration = nil;
+	_webView = nil;
 
 	// reset left nav bar buttons (set to just the src button)
 	[self.visibleViewController.navigationItem setLeftBarButtonItems:@[_srcItem]];

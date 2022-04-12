@@ -9,7 +9,6 @@
 #import "IALGeneralManager.h"
 #import "IALBackupManager.h"
 #import "../Common.h"
-#import <NSTask.h>
 
 @implementation IALBackupManager
 
@@ -23,8 +22,8 @@
 	// check if Documents/ has root ownership (it shouldn't)
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if([fileManager isWritableFileAtPath:@"/var/mobile/Documents/"] == 0){
-		NSString *reason = @"/var/mobile/Documents is not writeable. \n\nPlease ensure that the directory's owner is mobile and not root.";
-		[_generalManager popErrorAlertWithReason:reason];
+		NSString *msg = @"/var/mobile/Documents is not writeable. \n\nPlease ensure that the directory's owner is mobile and not root.";
+		[_generalManager displayErrorWithMessage:msg];
 		return;
 	}
 
@@ -33,31 +32,30 @@
 		[_generalManager cleanupTmp];
 	}
 
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"null"];
+
 	// get all packages
 	if(!filter){
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"null"];
 		NSArray *allPackages = [self getAllPackages];
 		if(![allPackages count]){
-			NSString *reason = @"Failed to generate list of installed packages! \n\nPlease try again.";
-			[_generalManager popErrorAlertWithReason:reason];
+			NSString *msg = @"Failed to generate list of installed packages! \n\nPlease try again.";
+			[_generalManager displayErrorWithMessage:msg];
 			return;
 		}
 		[self setPackages:allPackages];
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0"];
 	}
-
 	// get user packages (filter out bootstrap packages)
 	else{
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"null"];
 		NSArray *userPackages = [self getUserPackages];
 		if(![userPackages count]){
-			NSString *reason = @"Failed to generate list of user packages! \n\nPlease try again.";
-			[_generalManager popErrorAlertWithReason:reason];
+			NSString *msg = @"Failed to generate list of user packages! \n\nPlease try again.";
+			[_generalManager displayErrorWithMessage:msg];
 			return;
 		}
 		[self setPackages:userPackages];
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0"];
 	}
+
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0"];
 
 	if(type == 0){
 		// make fresh tmp directory
@@ -65,22 +63,24 @@
 			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
-				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", tmpDir, writeError];
-				[_generalManager popErrorAlertWithReason:reason];
+				NSString *msg = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", tmpDir, writeError];
+				[_generalManager displayErrorWithMessage:msg];
 				return;
 			}
 		}
 
-		// gather bits for packages
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
+
+		// gather bits for packages
 		NSArray *controls = [self getControlFiles];
 		if(![controls count]){
-			NSString *reason = @"Failed to generate controls for installed packages! \n\nPlease try again.";
-			[_generalManager popErrorAlertWithReason:reason];
+			NSString *msg = @"Failed to generate controls for installed packages! \n\nPlease try again.";
+			[_generalManager displayErrorWithMessage:msg];
 			return;
 		}
 		[self setControls:controls];
 		[self gatherPackageFiles];
+
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
 
 		// make backup and log dirs if they don't exist already
@@ -88,8 +88,8 @@
 			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
-				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError];
-				[_generalManager popErrorAlertWithReason:reason];
+				NSString *msg = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError];
+				[_generalManager displayErrorWithMessage:msg];
 				return;
 			}
 		}
@@ -109,18 +109,20 @@
 	}
 	else{
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
+
 		// put all packages in a list for easier writing
 		NSString *fileContent = [[self.packages valueForKey:@"description"] componentsJoinedByString:@"\n"];
 		if(![fileContent length]){
-			NSLog(@"[IAmLazyLog] fileContent is blank!");
+			[_generalManager displayErrorWithMessage:@"fileContent is blank!"];
 			return;
 		}
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
 
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
+
 		// get latest backup name and append the text file extension
-		NSString *latest = [_generalManager getLatestBackup];
 		NSString *listName;
+		NSString *latest = [_generalManager getLatestBackup];
 		if(!filter){
 			listName = [latest stringByAppendingString:@"u.txt"];
 		}
@@ -133,8 +135,8 @@
 			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
-				NSString *reason = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError];
-				[_generalManager popErrorAlertWithReason:reason];
+				NSString *msg = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError];
+				[_generalManager displayErrorWithMessage:msg];
 				return;
 			}
 		}
@@ -154,6 +156,7 @@
 			[fileHandle writeData:[[bootstrap stringByAppendingString:@"\n"] dataUsingEncoding:NSUTF8StringEncoding]];
 			[fileHandle closeFile];
 		}
+
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
 
 		[self verifyFileAtPath:filePath];
@@ -164,8 +167,6 @@
 }
 
 -(NSArray<NSString *> *)getAllPackages{
-	NSMutableArray *allPackages = [NSMutableArray new];
-
 	// get list of all installed packages and their priorities
 	NSTask *task = [[NSTask alloc] init];
 	[task setLaunchPath:@"/usr/bin/dpkg-query"];
@@ -186,16 +187,19 @@
 
 	NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 	NSArray *lines = [output componentsSeparatedByString:@"\n"];
+	if(![lines count]) return [NSArray new];
 
 	// filter out packages with the 'requried' priorty
 	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH 'required'"];
 	NSPredicate *theAntiPredicate = [NSCompoundPredicate notPredicateWithSubpredicate:thePredicate];
 	NSArray *packages = [lines filteredArrayUsingPredicate:theAntiPredicate];
+	NSCharacterSet *whiteSpace = [NSCharacterSet whitespaceCharacterSet];
+	NSMutableArray *allPackages = [NSMutableArray new];
 	for(NSString *line in packages){
 		// filter out IAmLazy since it'll be installed by the user anyway
 		if([line length] && ![line containsString:@"me.lightmann.iamlazy"]){
 			// split the package name from its priority and then add the package name to the allPackages array
-			NSArray *bits = [line componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+			NSArray *bits = [line componentsSeparatedByCharactersInSet:whiteSpace];
 			if([bits count]) [allPackages addObject:[bits firstObject]];
 		}
 	}
@@ -213,36 +217,38 @@
 }
 
 -(NSArray<NSString *> *)getUserPackages{
-	NSMutableArray *userPackages;
-
 	// get apt lists
 	NSError *readError = nil;
 	NSString *aptListsDir = @"/var/lib/apt/lists/";
 	NSArray *aptLists = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:aptListsDir error:&readError];
 	if(readError){
 		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", aptListsDir, readError);
-		return nil;
+		return [NSArray new];
 	}
 
 	// get packages to ignore
 	NSMutableArray *packagesToIgnore = [NSMutableArray new];
+	NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '_Packages'"];
+	NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'Package:'"];
 	for(NSString *repo in [self getReposToFilter]){
-		NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '_Packages'"];
 		NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH %@", repo];
 		NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate1,predicate2]];
 		NSArray *pkgLists = [aptLists filteredArrayUsingPredicate:thePredicate];
 		if(![pkgLists count]) continue;
-		for(NSString *list in pkgLists){ // count should be 1
+
+		// count should be one for pkgLists
+		for(NSString *list in pkgLists){
 			NSError *readError2 = nil;
 			NSString *content = [NSString stringWithContentsOfFile:[aptListsDir stringByAppendingPathComponent:list] encoding:NSUTF8StringEncoding error:&readError2];
 			if(readError2){
 				NSLog(@"[IAmLazyLog] Failed to get contents of %@%@! Error: %@", aptListsDir, list, readError2);
 				continue;
 			}
-			NSArray *lines = [content componentsSeparatedByString:@"\n"];
 
-			NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'Package:'"];
-			NSArray *packages = [lines filteredArrayUsingPredicate:predicate];
+			NSArray *lines = [content componentsSeparatedByString:@"\n"];
+			if(![lines count]) continue;
+
+			NSArray *packages = [lines filteredArrayUsingPredicate:predicate3];
 			NSArray *packagesWithNoDups = [[NSOrderedSet orderedSetWithArray:packages] array]; // remove dups and retain order
 			for(NSString *line in packagesWithNoDups){
 				if(![line length]) continue;
@@ -253,27 +259,27 @@
 	}
 
 	// grab all installed packages and remove the ones we want to ignore
-	userPackages = [[self getAllPackages] mutableCopy];
+	NSMutableArray *userPackages = [[self getAllPackages] mutableCopy];
 	[userPackages removeObjectsInArray:packagesToIgnore];
-
 	return userPackages;
 }
 
 -(NSArray<NSString *> *)getControlFiles{
-	NSMutableArray *controls = [NSMutableArray new];
-
 	// get control files for all installed packages
 	NSError *readError = nil;
 	NSString *path = @"/var/lib/dpkg/status";
 	NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&readError];
 	if(readError){
 		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", path, readError);
-		return nil;
+		return [NSArray new];
 	}
 
-	// divvy up massive control string into individual strings
-	NSMutableString *controlFile = [NSMutableString new];
 	NSArray *lines = [contents componentsSeparatedByString:@"\n"];
+	if(![lines count]) return [NSArray new];
+
+	// divvy up massive control string into individual strings
+	NSMutableArray *controls = [NSMutableArray new];
+	NSMutableString *controlFile = [NSMutableString new];
 	for(int i = 0; i < [lines count]; i++){
 		NSString *line = lines[i];
 		if([line length]){
@@ -286,7 +292,6 @@
 			else controlFile = nil;
 		}
 	}
-
 	return controls;
 }
 
@@ -294,12 +299,11 @@
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
 	[set addCharactersInString:@"+-."];
+	NSString *dir = @"NSFileTypeDirectory";
+	NSString *symLink = @"NSFileTypeSymbolicLink";
 	for(NSString *package in self.packages){
 		BOOL valid = [[package stringByTrimmingCharactersInSet:set] isEqualToString:@""];
 		if(valid){
-			NSMutableArray *genericFiles = [NSMutableArray new];
-			NSMutableArray *directories = [NSMutableArray new];
-
 			// get installed files
 			NSError *readError = nil;
 			NSString *path = [NSString stringWithFormat:@"/var/lib/dpkg/info/%@.list", package];
@@ -309,8 +313,12 @@
 				continue;
 			}
 
-			// get generic files and directories and sort into respective arrays
 			NSArray *lines = [contents componentsSeparatedByString:@"\n"];
+			if(![lines count]) continue;
+
+			// get generic files and directories and sort into respective arrays
+			NSMutableArray *genericFiles = [NSMutableArray new];
+			NSMutableArray *directories = [NSMutableArray new];
 			for(NSString *line in lines){
 				if(![line length] || [line isEqualToString:@"/."] || [[line lastPathComponent] isEqualToString:@".."] || [[line lastPathComponent] isEqualToString:@"."]){
 					continue; // disregard
@@ -323,6 +331,7 @@
 					continue;
 				}
 
+				// for categorization below
 				NSString *type = [fileAttributes fileType];
 
 				// check to see how many times the current filepath is present in the list output
@@ -330,7 +339,7 @@
 				int count = [[NSMutableString stringWithString:contents] replaceOccurrencesOfString:line withString:line options:NSLiteralSearch range:NSMakeRange(0, [contents length])];
 
 				if(count == 1){ // this is good, means it's unique!
-					if([type isEqualToString:@"NSFileTypeDirectory"]){
+					if([type isEqualToString:dir]){
 						[directories addObject:line];
 					}
 					else{
@@ -342,10 +351,10 @@
 					// though /usr/bin/zip will have a count > 1, since it's present in the other filepaths, we want to avoid disregarding it
 					// since it's a valid file. instead, we want to disregard all dirs and symlinks that don't lead to files as they're simply
 					// part of the package's list structure. in the above example, that would mean disregarding /usr and /usr/bin
-					if(![type isEqualToString:@"NSFileTypeDirectory"] && ![type isEqualToString:@"NSFileTypeSymbolicLink"]){
+					if(![type isEqualToString:dir] && ![type isEqualToString:symLink]){
 						[genericFiles addObject:line];
 					}
-					else if([type isEqualToString:@"NSFileTypeSymbolicLink"]){
+					else if([type isEqualToString:symLink]){
 						// want to grab any symlniks that lead to files, but ignore those that lead to dirs
 						// this will traverse any links and check for the existence of a file at the link's final destination
 						BOOL isDir = NO;
@@ -370,9 +379,8 @@
 				continue;
 			}
 
-			NSString *tweakDir = [tmpDir stringByAppendingPathComponent:package];
-
 			// make dir to hold stuff for the tweak
+			NSString *tweakDir = [tmpDir stringByAppendingPathComponent:package];
 			if(![fileManager fileExistsAtPath:tweakDir]){
 				NSError *writeError3 = nil;
 				[fileManager createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&writeError3];
@@ -423,6 +431,7 @@
 	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH %@", pkg];
 	NSArray *theOne = [self.controls filteredArrayUsingPredicate:thePredicate];
 	if(![theOne count]) return;
+
 	NSString *relevantControl = [theOne firstObject]; // count should be 1
 	NSString *noStatusLine = [relevantControl stringByReplacingOccurrencesOfString:@"Status: install ok installed\n" withString:@""];
 	NSString *info = [noStatusLine stringByAppendingString:@"\n"]; // ensure final newline (deb will fail to build if missing)
@@ -451,9 +460,7 @@
 }
 
 -(void)buildDebs{
-	// have to run as root for some packages to be built correctly (e.g., sudo, openssh-client, etc)
-	// if this isn't done as root, said packages will be corrupt and produce the error:
-	// "unexpected end of file in archive member header in packageName.deb" upon extraction/installation
+	// have to run as root in order to retain file attributes (ownership, etc)
 	[_generalManager executeCommandAsRoot:@"buildDebs"];
 
 	// confirm that we successfully built debs
@@ -464,13 +471,15 @@
 	NSError *readError = nil;
 	NSArray *tmp = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:&readError];
 	if(readError){
-		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", tmpDir, readError);
+		NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", tmpDir, readError];
+		[_generalManager displayErrorWithMessage:msg];
+		return;
 	}
 
 	NSArray *debs = [tmp filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"SELF ENDSWITH '.deb'"]];
 	if(![debs count]){
-		NSString *reason = [NSString stringWithFormat:@"Failed to build debs! Please check %@build_log.txt.", logDir];
-		[_generalManager popErrorAlertWithReason:reason];
+		NSString *msg = [NSString stringWithFormat:@"Failed to build debs! Please check %@build_log.txt.", logDir];
+		[_generalManager displayErrorWithMessage:msg];
 		return;
 	}
 }
@@ -518,8 +527,8 @@
 
 -(void)verifyFileAtPath:(NSString *)filePath{
 	if(![[NSFileManager defaultManager] fileExistsAtPath:filePath]){
-		NSString *reason = [NSString stringWithFormat:@"%@ DNE!", filePath];
-		[_generalManager popErrorAlertWithReason:reason];
+		NSString *msg = [NSString stringWithFormat:@"%@ DNE!", filePath];
+		[_generalManager displayErrorWithMessage:msg];
 		return;
 	}
 }

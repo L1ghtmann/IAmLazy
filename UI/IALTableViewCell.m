@@ -11,7 +11,6 @@
 @implementation IALTableViewCell
 
 -(instancetype)initWithIdentifier:(NSString *)identifier purpose:(NSInteger)purpose type:(NSInteger)type function:(NSInteger)function functionDescriptor:(NSString *)descriptor{
-
 	self = [super initWithStyle:UITableViewCellStyleDefault reuseIdentifier:identifier];
 
 	if(self){

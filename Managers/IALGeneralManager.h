@@ -8,12 +8,12 @@
 @property (nonatomic, retain) IALBackupManager *backupManager;
 @property (nonatomic, retain) UIViewController *rootVC;
 @property (nonatomic) BOOL encounteredError;
-+(instancetype)sharedInstance;
++(instancetype)sharedManager;
 -(void)makeBackupOfType:(NSInteger)type withFilter:(BOOL)filter;
 -(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type;
 -(void)cleanupTmp;
 -(NSString *)getLatestBackup;
 -(NSArray<NSString *> *)getBackups;
 -(void)executeCommandAsRoot:(NSString *)cmd;
--(void)popErrorAlertWithReason:(NSString *)reason;
+-(void)displayErrorWithMessage:(NSString *)msg;
 @end

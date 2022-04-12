@@ -9,17 +9,16 @@
 #import "IALRestoreManager.h"
 #import "IALBackupManager.h"
 #import "../Common.h"
-#import <NSTask.h>
 
 @implementation IALGeneralManager
 
-+(instancetype)sharedInstance{
++(instancetype)sharedManager{
 	static dispatch_once_t p = 0;
-	__strong static IALGeneralManager *sharedInstance = nil;
+	__strong static IALGeneralManager *sharedManager = nil;
 	dispatch_once(&p, ^{
-		sharedInstance = [[self alloc] init];
+		sharedManager = [[self alloc] init];
 	});
-	return sharedInstance;
+	return sharedManager;
 }
 
 #pragma mark Functionality
@@ -45,12 +44,10 @@
 
 -(NSString *)getLatestBackup{
 	// get number from latest backup
-	NSString *numberString;
-	NSCharacterSet *numbers = [NSCharacterSet characterSetWithCharactersInString:@"0123456789"];
-	NSScanner *scanner = [NSScanner scannerWithString:[[self getBackups] firstObject]]; // get latest backup filename
-	[scanner scanUpToCharactersFromSet:numbers intoString:NULL]; // remove bit before the number(s)
-	[scanner scanCharactersFromSet:numbers intoString:&numberString]; // get number(s)
-	int latestBackup = [numberString intValue];
+	int latestBackup;
+	NSScanner *scanner = [[NSScanner alloc] initWithString:[[self getBackups] firstObject]];
+	[scanner setCharactersToBeSkipped:[[NSCharacterSet decimalDigitCharacterSet] invertedSet]];
+	[scanner scanInt:&latestBackup];
 
 	// craft new backup name
 	NSString *backupName = [NSString stringWithFormat:@"IAmLazy-%d", latestBackup+1];
@@ -61,7 +58,7 @@
 	NSError *readError = nil;
 	NSArray *backupDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:backupDir error:&readError];
 	if(readError){
-		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", backupDir, readError);
+		[self displayErrorWithMessage:[NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", backupDir, readError]];
 		return [NSArray new];
 	}
 
@@ -71,6 +68,10 @@
 	NSPredicate *predicate12 = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicate1, predicate2]];  // combine with "or"
 	NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate12, predicate3]];  // combine with "and"
 	NSArray *backups = [backupDirContents filteredArrayUsingPredicate:thePredicate];
+	if(![backups count]){
+		[self displayErrorWithMessage:[NSString stringWithFormat:@"%@ contains no backups!", backupDir]];
+		return [NSArray new];
+	}
 
 	// sort backups (https://stackoverflow.com/a/43096808)
 	NSSortDescriptor *nameDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self" ascending:YES comparator:^NSComparisonResult(id obj1, id obj2){
@@ -92,12 +93,12 @@
 	}
 }
 
--(void)popErrorAlertWithReason:(NSString *)reason{
+-(void)displayErrorWithMessage:(NSString *)msg{
 	[self setEncounteredError:YES];
 
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy Error:"
-								message:reason
+								message:msg
 								preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *okay = [UIAlertAction
@@ -109,11 +110,11 @@
 
 	[alert addAction:okay];
 
-	[self.rootVC dismissViewControllerAnimated:YES completion:^ {
+	[self.rootVC dismissViewControllerAnimated:YES completion:^{
 		[self.rootVC presentViewController:alert animated:YES completion:nil];
 	}];
 
-	NSLog(@"[IAmLazyLog] %@", [reason stringByReplacingOccurrencesOfString:@"\n" withString:@""]);
+	NSLog(@"[IAmLazyLog] %@", [msg stringByReplacingOccurrencesOfString:@"\n" withString:@""]);
 }
 
 @end

@@ -11,7 +11,6 @@
 #import "IALRestoreViewController.h"
 #import "IALTableViewCell.h"
 #import "../Common.h"
-#import <NSTask.h>
 
 @implementation IALRestoreViewController
 
@@ -21,7 +20,7 @@
 	self = [super initWithStyle:UITableViewStyleGrouped];
 
 	if(self){
-		_manager = [IALGeneralManager sharedInstance];
+		_manager = [IALGeneralManager sharedManager];
 	}
 
 	return self;
@@ -67,7 +66,6 @@
 	static NSString *identifier = @"cell";
 	IALTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
 
-	NSInteger purpose = 1; // restore
 	NSInteger type; // 0 = deb | 1 = list
 	NSInteger function; // 0 = latest | 1 = specific
 	NSString *functionDescriptor;
@@ -93,7 +91,7 @@
 	}
 
 	if(!cell){
-		cell = [[IALTableViewCell alloc] initWithIdentifier:identifier purpose:purpose type:type function:function functionDescriptor:functionDescriptor];
+		cell = [[IALTableViewCell alloc] initWithIdentifier:identifier purpose:1 type:type function:function functionDescriptor:functionDescriptor];
 	}
 
 	return cell;
@@ -135,6 +133,7 @@
 	}
 
 	NSArray *backups = [_manager getBackups];
+	if(![backups count]) return;
 
 	if(latest){
 		// get latest backup
@@ -175,12 +174,8 @@
 	}
 	else{
 		// get (sorted) backup filenames
-		NSMutableArray *backupNames = [NSMutableArray new];
-		for(NSString *name in backups){
-			if([name containsString:extension]){
-				[backupNames addObject:name];
-			}
-		}
+		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH %@", extension];
+		NSArray *backupNames = [backups filteredArrayUsingPredicate:thePredicate];
 
 		// get backup creation dates
 		NSMutableArray *backupDates = [NSMutableArray new];
@@ -192,7 +187,6 @@
 			BOOL valid = [[backup stringByTrimmingCharactersInSet:set] isEqualToString:@""];
 			if(valid){
 				NSString *dateString;
-
 				NSError *readError = nil;
 				NSString *path = [backupDir stringByAppendingPathComponent:backup];
 				NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:&readError];
@@ -201,8 +195,7 @@
 					dateString = @"Error";
 				}
 				else{
-					NSDate *creationDate = [fileAttributes fileCreationDate];
-					dateString = [formatter stringFromDate:creationDate];
+					dateString = [formatter stringFromDate:[fileAttributes fileCreationDate]];
 				}
 
 				[backupDates addObject:dateString];
@@ -210,7 +203,10 @@
 		}
 
 		// post list of available backups
-		UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy" message:@"Choose the backup you'd like to restore from:" preferredStyle:UIAlertControllerStyleAlert];
+		UIAlertController *alert = [UIAlertController
+									alertControllerWithTitle:@"IAmLazy"
+									message:@"Choose the backup you'd like to restore from:"
+									preferredStyle:UIAlertControllerStyleAlert];
 
 		// make each available backup its own action
 		for(int i = 0; i < [backupNames count]; i++){
@@ -219,6 +215,7 @@
 			if(valid){
 				NSString *backupDate = backupDates[i];
 				NSString *backup = [NSString stringWithFormat:@"%@ [%@]", backupName, backupDate];
+
 				// get confirmation before proceeding
 				UIAlertAction *action = [UIAlertAction
 											actionWithTitle:backup
@@ -297,16 +294,6 @@
 								message:@"Choose a post-restore command:"
 								preferredStyle:UIAlertControllerStyleAlert];
 
-	UIAlertAction *uicache = [UIAlertAction
-								actionWithTitle:@"UICache"
-								style:UIAlertActionStyleDefault
-								handler:^(UIAlertAction *action){
-									NSTask *task = [[NSTask alloc] init];
-									[task setLaunchPath:@"/usr/bin/uicache"];
-									[task setArguments:@[@"-a"]];
-									[task launch];
-								}];
-
 	UIAlertAction *respring = [UIAlertAction
 								actionWithTitle:@"Respring"
 								style:UIAlertActionStyleDefault
@@ -326,6 +313,13 @@
 								[task launch];
 							}];
 
+	UIAlertAction *ldrestart = [UIAlertAction
+								actionWithTitle:@"Userspace Reboot"
+								style:UIAlertActionStyleDefault
+								handler:^(UIAlertAction *action){
+									[_manager executeCommandAsRoot:@"rebootUserspace"];
+								}];
+
 	UIAlertAction *none = [UIAlertAction
 							actionWithTitle:@"None"
 							style:UIAlertActionStyleDefault
@@ -333,9 +327,9 @@
 								[self dismissViewControllerAnimated:YES completion:nil];
 							}];
 
-	[alert addAction:uicache];
 	[alert addAction:respring];
 	[alert addAction:both];
+	[alert addAction:ldrestart];
 	[alert addAction:none];
 
  	[self presentViewController:alert animated:YES completion:nil];

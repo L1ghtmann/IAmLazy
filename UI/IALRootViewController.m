@@ -22,7 +22,7 @@
 	self = [super initWithStyle:UITableViewStyleGrouped];
 
 	if(self){
-		_manager = [IALGeneralManager sharedInstance];
+		_manager = [IALGeneralManager sharedManager];
 		[_manager setRootVC:self];
 	}
 
@@ -108,7 +108,6 @@
 	static NSString *identifier = @"cell";
 	IALTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
 
-	NSInteger purpose = 0; // backup
 	NSInteger type; // 0 = deb | 1 = list
 	NSInteger function; // 0 = filtered | 1 = unfiltered
 	NSString *functionDescriptor;
@@ -135,7 +134,7 @@
 	}
 
 	if(!cell){
-		cell = [[IALTableViewCell alloc] initWithIdentifier:identifier purpose:purpose type:type function:function functionDescriptor:functionDescriptor];
+		cell = [[IALTableViewCell alloc] initWithIdentifier:identifier purpose:0 type:type function:function functionDescriptor:functionDescriptor];
 	}
 
 	return cell;

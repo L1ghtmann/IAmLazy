@@ -5,7 +5,7 @@
 //	Created by Lightmann during COVID-19
 //
 
-#include "IALProgressViewController.h"
+#import "IALProgressViewController.h"
 #import "../Common.h"
 
 #define fillColor [UIColor colorWithRed:16.0f/255.0f green:16.0f/255.0f blue:16.0f/255.0f alpha:1.0f]
@@ -60,9 +60,9 @@
 
 	UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(0, 35, kWidth, 30)];
 	[title setFont:[UIFont systemFontOfSize:30 weight:0.60]];
+	[title setTextAlignment:NSTextAlignmentCenter];
 	[title setText:[text uppercaseString]];
 	[title setTextColor:accentColor];
-	[title setTextAlignment:NSTextAlignmentCenter];
 
 	[self.view addSubview:title];
 }
@@ -184,7 +184,7 @@
 	for(int i = 0; i < [self.items count]; i++){
 		UIView *item = self.items[i];
 		CGPoint position = [item convertPoint:item.center toView:self.view];
-		CGFloat x = 0;
+		CGFloat x;
 		// RTL support
 		if([UIApplication sharedApplication].userInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft){
 			x = -10;
@@ -227,7 +227,7 @@
 	if(isInteger){
 		[UIView animateWithDuration:0.5 animations:^{
 			// Note: colorWithRed:green:blue:alpha: seems to use sRGB, not Adobe RGB (https://stackoverflow.com/a/40052756)
-			// super helpful link -- https://www.easyrgb.com/en/convert.php#inputFORM
+			// A helpful link -- https://www.easyrgb.com/en/convert.php#inputFORM
 			[self.itemStatusIcons[itemInt] setBackgroundColor:[UIColor colorWithRed:0.04716 green:0.73722 blue:0.09512 alpha:1.00000]];
 			[self.itemStatusText[itemInt] setText:@"Completed"];
 		}];
@@ -239,7 +239,7 @@
 		}];
 	}
 
-	if(item+1 == [self.items count]){
+	if(item + 1 == [self.items count]){
 		[self.loading stopAnimating];
 	}
 }

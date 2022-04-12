@@ -12,7 +12,7 @@
 #import "../Common.h"
 
 // https://stackoverflow.com/a/5337804
-#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v) ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 
 @implementation IALBackupsViewController
 
@@ -22,6 +22,7 @@
 	self = [super initWithStyle:UITableViewStyleGrouped];
 
 	if(self){
+		_generalManager = [IALGeneralManager sharedManager];
 		[self getBackups];
 	}
 
@@ -114,14 +115,14 @@
 			NSError *deleteError = nil;
 			BOOL success = [fileManager removeItemAtPath:filePath error:&deleteError];
 			if(!success){
-				NSString *reason = [NSString stringWithFormat:@"An error occured and %@ was not deleted! \n\nError: %@", backupName, deleteError];
-				[self popErrorAlertWithReason:reason];
+				NSString *msg = [NSString stringWithFormat:@"An error occured and %@ was not deleted! \n\nError: %@", backupName, deleteError];
+				[_generalManager displayErrorWithMessage:msg];
 				return;
 			}
 		}
 		else{
-			NSString *reason = [NSString stringWithFormat:@"%@ cannot be deleted?!", filePath];
-			[self popErrorAlertWithReason:reason];
+			NSString *msg = [NSString stringWithFormat:@"%@ cannot be deleted?!", filePath];
+			[_generalManager displayErrorWithMessage:msg];
 			return;
 		}
 
@@ -142,7 +143,7 @@
 }
 
 -(void)getBackups{
-	_backups = [[[IALGeneralManager sharedInstance] getBackups] mutableCopy];
+	_backups = [[_generalManager getBackups] mutableCopy];
 }
 
 #pragma mark Functionality
@@ -170,33 +171,11 @@
 	NSError *writeError = nil;
 	BOOL success = [[NSFileManager defaultManager] copyItemAtURL:url toURL:backupDirURL error:&writeError];
 	if(!success){
-		NSString *reason = [NSString stringWithFormat:@"An error occured and %@ could not be imported! \n\nError: %@", [url absoluteString], writeError];
-		[self popErrorAlertWithReason:reason];
+		NSString *msg = [NSString stringWithFormat:@"An error occured and %@ could not be imported! \n\nError: %@", [url absoluteString], writeError];
+		[_generalManager displayErrorWithMessage:msg];
 	}
 
 	[self refreshTable];
-}
-
-#pragma mark Popups
-
--(void)popErrorAlertWithReason:(NSString *)reason{
-	UIAlertController *alert = [UIAlertController
-								alertControllerWithTitle:@"IAmLazy Error:"
-								message:reason
-								preferredStyle:UIAlertControllerStyleAlert];
-
-	UIAlertAction *okay = [UIAlertAction
-							actionWithTitle:@"Okay"
-							style:UIAlertActionStyleDefault
-							handler:^(UIAlertAction *action){
-								[alert dismissViewControllerAnimated:YES completion:nil];
-							}];
-
-	[alert addAction:okay];
-
-	[self presentViewController:alert animated:YES completion:nil];
-
-	NSLog(@"[IAmLazyLog] %@", [reason stringByReplacingOccurrencesOfString:@"\n" withString:@""]);
 }
 
 @end
