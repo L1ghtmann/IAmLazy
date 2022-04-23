@@ -127,7 +127,7 @@ int copy_data(struct archive *ar, struct archive *aw){
 		}
 		r = archive_write_data_block(aw, buff, size, offset);
 		if(r < ARCHIVE_OK){
-			os_log(OS_LOG_DEFAULT, "[IAmLazyLog] libarchive: copy_data error: %s", archive_error_string(aw));
+			os_log_error(OS_LOG_DEFAULT, "[IAmLazyLog] libarchive: copy_data: %s", archive_error_string(aw));
 			return r;
 		}
 	}
@@ -165,19 +165,19 @@ void extract_archive(const char *filename){
 			break;
 		}
 		if(r < ARCHIVE_OK){
-			os_log(OS_LOG_DEFAULT, "[IAmLazyLog] libarchive: extract_archive error: %s", archive_error_string(a));
+			os_log_error(OS_LOG_DEFAULT, "[IAmLazyLog] libarchive: extract_archive: %s", archive_error_string(a));
 		}
 		if(r < ARCHIVE_WARN){
 			return;
 		}
 		r = archive_write_header(ext, entry);
 		if(r < ARCHIVE_OK){
-			os_log(OS_LOG_DEFAULT, "[IAmLazyLog] libarchive: extract_archive error: %s", archive_error_string(ext));
+			os_log_error(OS_LOG_DEFAULT, "[IAmLazyLog] libarchive: extract_archive: %s", archive_error_string(ext));
 		}
 		else if(archive_entry_size(entry) > 0){
 			r = copy_data(a, ext);
 			if(r < ARCHIVE_OK){
-				os_log(OS_LOG_DEFAULT, "[IAmLazyLog] libarchive: extract_archive error: %s", archive_error_string(ext));
+				os_log_error(OS_LOG_DEFAULT, "[IAmLazyLog] libarchive: extract_archive: %s", archive_error_string(ext));
 			}
 			if(r < ARCHIVE_WARN){
 				return;
@@ -185,7 +185,7 @@ void extract_archive(const char *filename){
 		}
 		r = archive_write_finish_entry(ext);
 		if(r < ARCHIVE_OK){
-			os_log(OS_LOG_DEFAULT, "[IAmLazyLog] libarchive: extract_archive error: %s", archive_error_string(ext));
+			os_log_error(OS_LOG_DEFAULT, "[IAmLazyLog] libarchive: extract_archive: %s", archive_error_string(ext));
 		}
 		if(r < ARCHIVE_WARN){
 			return;

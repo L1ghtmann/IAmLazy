@@ -10,9 +10,6 @@
 		<dict>
 			<key>CFBundleIconFiles</key>
 			<array>
-				<string>AppIcon29x29</string>
-				<string>AppIcon40x40</string>
-				<string>AppIcon57x57</string>
 				<string>AppIcon60x60</string>
 			</array>
 			<key>UIPrerenderedIcon</key>
@@ -25,13 +22,8 @@
 		<dict>
 			<key>CFBundleIconFiles</key>
 			<array>
-				<string>AppIcon29x29</string>
-				<string>AppIcon40x40</string>
-				<string>AppIcon57x57</string>
-				<string>AppIcon60x60</string>
-				<string>AppIcon50x50</string>
-				<string>AppIcon72x72</string>
 				<string>AppIcon76x76</string>
+				<string>AppIcon83.5x83.5</string>
 			</array>
 			<key>UIPrerenderedIcon</key>
 			<true/>
@@ -48,9 +40,10 @@
 	<key>CFBundleSupportedPlatforms</key>
 	<array>
 		<string>iPhoneOS</string>
+		<string>iPadOS</string>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>1.0</string>
+	<string>2.0</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIDeviceFamily</key>
@@ -62,61 +55,148 @@
 	<array>
 		<string>arm64</string>
 	</array>
-	<key>UILaunchImageFile</key>
+	<!-- <key>UILaunchScreen</key>
+	<dict>
+		<key>UIImageName</key>
+		<string>LaunchImage</string>
+		<key>UIImageRespectsSafeAreaInsets</key>
+		<true/>
+	</dict> -->
+	<!-- <key>UILaunchImageFile</key>
 	<string>LaunchImage</string>
 	<key>UILaunchImages</key>
 	<array>
 		<dict>
 			<key>UILaunchImageMinimumOSVersion</key>
-			<string>7.0</string>
+			<string>13.0</string>
 			<key>UILaunchImageName</key>
-			<string>LaunchImage</string>
+			<string>LaunchImage320x568@2x</string>
 			<key>UILaunchImageOrientation</key>
 			<string>Portrait</string>
 			<key>UILaunchImageSize</key>
-			<string>{320, 480}</string>
+			<string>{640, 1136}</string>
 		</dict>
 		<dict>
 			<key>UILaunchImageMinimumOSVersion</key>
-			<string>7.0</string>
+			<string>13.0</string>
 			<key>UILaunchImageName</key>
-			<string>LaunchImage-700-568h</string>
+			<string>LaunchImage375x667@2x</string>
 			<key>UILaunchImageOrientation</key>
 			<string>Portrait</string>
 			<key>UILaunchImageSize</key>
-			<string>{320, 568}</string>
+			<string>{750, 1334}</string>
 		</dict>
 		<dict>
 			<key>UILaunchImageMinimumOSVersion</key>
-			<string>7.0</string>
+			<string>13.0</string>
 			<key>UILaunchImageName</key>
-			<string>LaunchImage-Portrait</string>
+			<string>LaunchImage375x812@3x</string>
 			<key>UILaunchImageOrientation</key>
 			<string>Portrait</string>
 			<key>UILaunchImageSize</key>
-			<string>{768, 1024}</string>
+			<string>{1125, 2436}</string>
 		</dict>
 		<dict>
 			<key>UILaunchImageMinimumOSVersion</key>
-			<string>8.0</string>
+			<string>13.0</string>
 			<key>UILaunchImageName</key>
-			<string>LaunchImage-800-667h</string>
+			<string>LaunchImage390x844@3x</string>
 			<key>UILaunchImageOrientation</key>
 			<string>Portrait</string>
 			<key>UILaunchImageSize</key>
-			<string>{375, 667}</string>
+			<string>{1170, 2532}</string>
 		</dict>
 		<dict>
 			<key>UILaunchImageMinimumOSVersion</key>
-			<string>8.0</string>
+			<string>13.0</string>
 			<key>UILaunchImageName</key>
-			<string>LaunchImage-800-Portrait-736h</string>
+			<string>LaunchImage414x736@3x</string>
 			<key>UILaunchImageOrientation</key>
 			<string>Portrait</string>
 			<key>UILaunchImageSize</key>
-			<string>{414, 736}</string>
+			<string>{1242, 2208}</string>
 		</dict>
-	</array>
+		<dict>
+			<key>UILaunchImageMinimumOSVersion</key>
+			<string>13.0</string>
+			<key>UILaunchImageName</key>
+			<string>LaunchImage414x896@2x</string>
+			<key>UILaunchImageOrientation</key>
+			<string>Portrait</string>
+			<key>UILaunchImageSize</key>
+			<string>{828, 1792}</string>
+		</dict>
+		<dict>
+			<key>UILaunchImageMinimumOSVersion</key>
+			<string>13.0</string>
+			<key>UILaunchImageName</key>
+			<string>LaunchImage414x896@3x</string>
+			<key>UILaunchImageOrientation</key>
+			<string>Portrait</string>
+			<key>UILaunchImageSize</key>
+			<string>{1242, 2688}</string>
+		</dict>
+		<dict>
+			<key>UILaunchImageMinimumOSVersion</key>
+			<string>13.0</string>
+			<key>UILaunchImageName</key>
+			<string>LaunchImage428x926@3x</string>
+			<key>UILaunchImageOrientation</key>
+			<string>Portrait</string>
+			<key>UILaunchImageSize</key>
+			<string>{1284, 2778}</string>
+		</dict>
+		<dict>
+			<key>UILaunchImageMinimumOSVersion</key>
+			<string>13.0</string>
+			<key>UILaunchImageName</key>
+			<string>LaunchImage768x1024@2x</string>
+			<key>UILaunchImageOrientation</key>
+			<string>Portrait</string>
+			<key>UILaunchImageSize</key>
+			<string>{1537, 2048}</string>
+		</dict>
+		<dict>
+			<key>UILaunchImageMinimumOSVersion</key>
+			<string>13.0</string>
+			<key>UILaunchImageName</key>
+			<string>LaunchImage810x1080@2x</string>
+			<key>UILaunchImageOrientation</key>
+			<string>Portrait</string>
+			<key>UILaunchImageSize</key>
+			<string>{1620, 2160}</string>
+		</dict>
+		<dict>
+			<key>UILaunchImageMinimumOSVersion</key>
+			<string>13.0</string>
+			<key>UILaunchImageName</key>
+			<string>LaunchImage834x1112@2x</string>
+			<key>UILaunchImageOrientation</key>
+			<string>Portrait</string>
+			<key>UILaunchImageSize</key>
+			<string>{1668, 2224}</string>
+		</dict>
+		<dict>
+			<key>UILaunchImageMinimumOSVersion</key>
+			<string>13.0</string>
+			<key>UILaunchImageName</key>
+			<string>LaunchImage834x1194@2x</string>
+			<key>UILaunchImageOrientation</key>
+			<string>Portrait</string>
+			<key>UILaunchImageSize</key>
+			<string>{1668, 2388}</string>
+		</dict>
+		<dict>
+			<key>UILaunchImageMinimumOSVersion</key>
+			<string>13.0</string>
+			<key>UILaunchImageName</key>
+			<string>LaunchImage1024x1366@2x</string>
+			<key>UILaunchImageOrientation</key>
+			<string>Portrait</string>
+			<key>UILaunchImageSize</key>
+			<string>{2048, 2732}</string>
+		</dict>
+	</array> -->
 	<key>UIUserInterfaceStyle</key>
 	<string>Dark</string>
 	<key>UISupportedInterfaceOrientations</key>

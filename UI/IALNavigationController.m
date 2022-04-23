@@ -16,7 +16,7 @@
 
 	if(self){
 		// setup top nav bar
-		[controller.navigationItem setTitleView:[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"AppIcon40x40@2x-clear"]]];
+		[controller.navigationItem setTitleView:[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Clear-Icon-40"]]];
 
 		UIImage *githubMark = [UIImage imageNamed:@"GitHub-Mark-64px"];
 		githubMark = [UIImage imageWithCGImage:[githubMark CGImage] scale:([[UIScreen mainScreen] scale] * 1.45) orientation:[githubMark imageOrientation]];

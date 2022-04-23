@@ -32,7 +32,7 @@
 	if([[NSFileManager defaultManager] isWritableFileAtPath:@"/"] == 1){
 		UIAlertController *alert = [UIAlertController
 							alertControllerWithTitle:@"IAmLazy"
-							message:@"Note: your device is running a rootless jailbreak.\n\nThis version of IAmLazy does not support rootless jailbreaks.\n\nPlease use [xxx] instead."
+							message:@"Note: your device is running a rootless jailbreak.\n\nThis version of IAmLazy does not support rootless jailbreaks.\n\nPlease use 'IAmLazy (Rootless)' instead."
 							preferredStyle:UIAlertControllerStyleAlert];
 
 		[_tabBarController presentViewController:alert animated:YES completion:nil];

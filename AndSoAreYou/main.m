@@ -40,7 +40,7 @@ NSString *getCurrentPackage(){
 				NSError *readError2 = nil;
 				NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:filePath error:&readError2];
 				if(readError2){
-					NSString *msg = [NSString stringWithFormat:@"Failed to get atributes of %@! Error: %@", filePath, readError2];
+					NSString *msg = [NSString stringWithFormat:@"Failed to get attributes of %@! Error: %@", filePath, readError2];
 					logErrorWithMessage(msg);
 					continue;
 				}
@@ -190,7 +190,8 @@ int main(int argc, char *argv[]){
 			NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate1, antiPredicate23]];
 			NSArray *debainFiles = [dpkgInfo filteredArrayUsingPredicate:thePredicate];
 			if(![debainFiles count]){
-				logErrorWithMessage(@"debianFiles is empty!");
+				NSString *msg = [NSString stringWithFormat:@"debianFiles is empty for %@", tweakName];
+				logErrorWithMessage(msg);
 				return 1;
 			}
 
@@ -292,13 +293,6 @@ int main(int argc, char *argv[]){
 			NSString *msg = [NSString stringWithFormat:@"Failed to write to %@! Error: %@", log, writeError];
 			logErrorWithMessage(msg);
 		}
-	}
-	else if(strcmp(argv[1], "rebootUserspace") == 0){
-		NSTask *task = [[NSTask alloc] init];
-		[task setLaunchPath:@"/bin/launchctl"];
-		[task setArguments:@[@"reboot", @"userspace"]];
-		[task launch];
-		[task waitUntilExit];
 	}
 	else if(strcmp(argv[1], "installDebs") == 0){
 		// get debs from tmpDir
@@ -433,7 +427,7 @@ int main(int argc, char *argv[]){
 
 		NSArray	*tweaks = [tweakList componentsSeparatedByString:@"\n"];
 		if(![tweaks count]){
-			NSString *msg = [NSString stringWithFormat:@"%@ is blank!", tweakList];
+			NSString *msg = [NSString stringWithFormat:@"%@ is blank!", targetListFile];
 			logErrorWithMessage(msg);
 			return 1;
 		}
@@ -497,6 +491,13 @@ int main(int argc, char *argv[]){
 			NSString *msg = [NSString stringWithFormat:@"Failed to write to %@! Error: %@", log2, writeError2];
 			logErrorWithMessage(msg);
 		}
+	}
+	else if(strcmp(argv[1], "rebootUserspace") == 0){
+		NSTask *task = [[NSTask alloc] init];
+		[task setLaunchPath:@"/bin/launchctl"];
+		[task setArguments:@[@"reboot", @"userspace"]];
+		[task launch];
+		[task waitUntilExit];
 	}
 	else{
 		printf("Houston, we have a problem: an invalid argument was provided!\n");

@@ -5,6 +5,7 @@
 //	Created by Lightmann during COVID-19
 //
 
+#import "../Reachability/Reachability.h"
 #import "IALGeneralManager.h"
 #import "IALRestoreManager.h"
 #import "IALBackupManager.h"
@@ -30,6 +31,11 @@
 }
 
 -(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type{
+	if(![self hasConnection]){
+		[self displayErrorWithMessage:@"A network connection is required for restores!\n\nThis is so dependencies can be downloaded if need be."];
+		return;
+	}
+
 	if(!_restoreManager) _restoreManager = [[IALRestoreManager alloc] init];
 	[_restoreManager setGeneralManager:self];
 	[_restoreManager restoreFromBackup:backupName ofType:type];
@@ -115,6 +121,15 @@
 	}];
 
 	NSLog(@"[IAmLazyLog] %@", [msg stringByReplacingOccurrencesOfString:@"\n" withString:@""]);
+}
+
+-(BOOL)hasConnection{
+	Reachability *reachability = [Reachability reachabilityForInternetConnection];
+	BOOL reachable = YES;
+	if([reachability currentReachabilityStatus] == NotReachable){
+		reachable = NO;
+	}
+	return reachable;
 }
 
 @end

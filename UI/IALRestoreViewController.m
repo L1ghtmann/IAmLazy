@@ -269,7 +269,7 @@
 }
 
 -(void)alertOOBTap{
-    [self dismissViewControllerAnimated:YES completion:nil];
+	[self dismissViewControllerAnimated:YES completion:nil];
 }
 
 -(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type{
@@ -294,6 +294,13 @@
 								message:@"Choose a post-restore command:"
 								preferredStyle:UIAlertControllerStyleAlert];
 
+	UIAlertAction *uReboot = [UIAlertAction
+								actionWithTitle:@"Userspace Reboot"
+								style:UIAlertActionStyleDefault
+								handler:^(UIAlertAction *action){
+									[_manager executeCommandAsRoot:@"rebootUserspace"];
+								}];
+
 	UIAlertAction *respring = [UIAlertAction
 								actionWithTitle:@"Respring"
 								style:UIAlertActionStyleDefault
@@ -303,7 +310,7 @@
 									[task launch];
 								}];
 
-	UIAlertAction *both = [UIAlertAction
+	UIAlertAction *uicache = [UIAlertAction
 							actionWithTitle:@"UICache & Respring"
 							style:UIAlertActionStyleDefault
 							handler:^(UIAlertAction *action){
@@ -313,13 +320,6 @@
 								[task launch];
 							}];
 
-	UIAlertAction *ldrestart = [UIAlertAction
-								actionWithTitle:@"Userspace Reboot"
-								style:UIAlertActionStyleDefault
-								handler:^(UIAlertAction *action){
-									[_manager executeCommandAsRoot:@"rebootUserspace"];
-								}];
-
 	UIAlertAction *none = [UIAlertAction
 							actionWithTitle:@"None"
 							style:UIAlertActionStyleDefault
@@ -327,9 +327,9 @@
 								[self dismissViewControllerAnimated:YES completion:nil];
 							}];
 
+	[alert addAction:uReboot];
 	[alert addAction:respring];
-	[alert addAction:both];
-	[alert addAction:ldrestart];
+	[alert addAction:uicache];
 	[alert addAction:none];
 
  	[self presentViewController:alert animated:YES completion:nil];
