@@ -16,9 +16,9 @@
 
 	if(self){
 		// setup top nav bar
-		[controller.navigationItem setTitleView:[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Clear-Icon-40"]]];
+		[controller.navigationItem setTitleView:[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Assets/Clear-Icon-40"]]];
 
-		UIImage *githubMark = [UIImage imageNamed:@"GitHub-Mark-64px"];
+		UIImage *githubMark = [UIImage imageNamed:@"Assets/GitHub-Mark-64px"];
 		githubMark = [UIImage imageWithCGImage:[githubMark CGImage] scale:([[UIScreen mainScreen] scale] * 1.45) orientation:[githubMark imageOrientation]];
 		_srcItem = [[UIBarButtonItem alloc] initWithImage:githubMark style:UIBarButtonItemStylePlain target:self action:@selector(openSrc)];
 		[controller.navigationItem setLeftBarButtonItem:_srcItem];

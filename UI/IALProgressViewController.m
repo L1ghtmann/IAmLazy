@@ -90,8 +90,8 @@
 	else{
 		[icons addObject:@"text.badge.checkmark"];
 		if(type == 0) [icons addObject:@"wrench"];
-		else [icons addObject:@"magnifyingglass.circle"];
-		[icons addObject:@"arrow.down.circle"];
+		else [icons addObject:@"icloud.and.arrow.down"];
+		[icons addObject:@"wand.and.stars"];
 	}
 
 	return icons;
@@ -167,12 +167,11 @@
 		[itemDescs addObject:@"Completing pre-restore checks"];
 		if(type == 0){
 			[itemDescs addObject:@"Unpacking backup"];
-			[itemDescs addObject:@"Installing debs"];
 		}
 		else{
-			[itemDescs addObject:@"Preparing the target list"];
-			[itemDescs addObject:@"Installing packages from list"];
+			[itemDescs addObject:@"Downloading debs"];
 		}
+		[itemDescs addObject:@"Installing debs"];
 	}
 
 	return itemDescs;
