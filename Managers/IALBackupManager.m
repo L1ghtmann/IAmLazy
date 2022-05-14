@@ -17,7 +17,7 @@
 	[_generalManager setEncounteredError:NO];
 
 	// make note of start time
-	[self setStartTime:[NSDate date]];
+	_startTime = [NSDate date];
 
 	// check if Documents/ has root ownership (it shouldn't)
 	NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -32,30 +32,20 @@
 		[_generalManager cleanupTmp];
 	}
 
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"null"];
+	NSNotificationCenter *notifCenter = [NSNotificationCenter defaultCenter];
+	[notifCenter postNotificationName:@"updateProgress" object:@"null"];
 
-	// get all packages
-	if(!filter){
-		NSArray *allPackages = [self getAllPackages];
-		if(![allPackages count]){
-			NSString *msg = @"Failed to generate list of installed packages! \n\nPlease try again.";
-			[_generalManager displayErrorWithMessage:msg];
-			return;
-		}
-		[self setPackages:allPackages];
-	}
-	// get user packages (filter out bootstrap packages)
-	else{
-		NSArray *userPackages = [self getUserPackages];
-		if(![userPackages count]){
-			NSString *msg = @"Failed to generate list of user packages! \n\nPlease try again.";
-			[_generalManager displayErrorWithMessage:msg];
-			return;
-		}
-		[self setPackages:userPackages];
+	// get packages
+	NSArray *packages;
+	if(!filter) packages = [self getAllPackages];
+	else packages = [self getUserPackages];
+	if(![packages count]){
+		NSString *msg = @"Failed to generate list of packages! \n\nPlease try again.";
+		[_generalManager displayErrorWithMessage:msg];
+		return;
 	}
 
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0"];
+	[notifCenter postNotificationName:@"updateProgress" object:@"0"];
 
 	if(type == 0){
 		// make fresh tmp directory
@@ -69,19 +59,18 @@
 			}
 		}
 
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
+		[notifCenter postNotificationName:@"updateProgress" object:@"0.7"];
 
 		// gather bits for packages
-		NSArray *controls = [self getControlFiles];
-		if(![controls count]){
+		_controlFiles = [self getControlFiles];
+		if(![_controlFiles count]){
 			NSString *msg = @"Failed to generate controls for installed packages! \n\nPlease try again.";
 			[_generalManager displayErrorWithMessage:msg];
 			return;
 		}
-		[self setControls:controls];
-		[self gatherPackageFiles];
+		[self gatherFilesForPackages:packages];
 
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
+		[notifCenter postNotificationName:@"updateProgress" object:@"1"];
 
 		// make backup and log dirs if they don't exist already
 		if(![fileManager fileExistsAtPath:logDir]){
@@ -95,40 +84,36 @@
 		}
 
 		// build debs from bits
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
+		[notifCenter postNotificationName:@"updateProgress" object:@"1.7"];
 		[self buildDebs];
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
+		[notifCenter postNotificationName:@"updateProgress" object:@"2"];
 
 		// for unfiltered backups, create hidden file specifying the bootstrap it was created on
 		if(!filter) [self makeBootstrapFile];
 
 		// make archive of packages
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2.7"];
+		[notifCenter postNotificationName:@"updateProgress" object:@"2.7"];
 		[self makeTarballWithFilter:filter];
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"3"];
+		[notifCenter postNotificationName:@"updateProgress" object:@"3"];
 	}
 	else{
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
+		[notifCenter postNotificationName:@"updateProgress" object:@"0.7"];
 
 		// put all packages in a list for easier writing
-		NSString *fileContent = [[self.packages valueForKey:@"description"] componentsJoinedByString:@"\n"];
+		NSString *fileContent = [[packages valueForKey:@"description"] componentsJoinedByString:@"\n"];
 		if(![fileContent length]){
 			[_generalManager displayErrorWithMessage:@"fileContent is blank!"];
 			return;
 		}
 
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
+		[notifCenter postNotificationName:@"updateProgress" object:@"1"];
+		[notifCenter postNotificationName:@"updateProgress" object:@"1.7"];
 
 		// get latest backup name and append the text file extension
 		NSString *listName;
 		NSString *latest = [_generalManager getLatestBackup];
-		if(!filter){
-			listName = [latest stringByAppendingString:@"u.txt"];
-		}
-		else{
-			listName = [latest stringByAppendingPathExtension:@"txt"];
-		}
+		if(!filter) listName = [latest stringByAppendingString:@"u.txt"];
+		else listName = [latest stringByAppendingPathExtension:@"txt"];
 
 		// make backup and log dirs if they don't exist already
 		if(![fileManager fileExistsAtPath:logDir]){
@@ -157,13 +142,13 @@
 			[fileHandle closeFile];
 		}
 
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
+		[notifCenter postNotificationName:@"updateProgress" object:@"2"];
 
 		[self verifyFileAtPath:filePath];
 	}
 
 	// make note of end time
-	[self setEndTime:[NSDate date]];
+	_endTime = [NSDate date];
 }
 
 -(NSArray<NSString *> *)getAllPackages{
@@ -203,7 +188,6 @@
 			if([bits count]) [allPackages addObject:[bits firstObject]];
 		}
 	}
-
 	return allPackages;
 }
 
@@ -295,13 +279,13 @@
 	return controls;
 }
 
--(void)gatherPackageFiles{
+-(void)gatherFilesForPackages:(NSArray<NSString *> *)packages{
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
 	[set addCharactersInString:@"+-."];
 	NSString *dir = @"NSFileTypeDirectory";
 	NSString *symLink = @"NSFileTypeSymbolicLink";
-	for(NSString *package in self.packages){
+	for(NSString *package in packages){
 		BOOL valid = [[package stringByTrimmingCharactersInSet:set] isEqualToString:@""];
 		if(valid){
 			// get installed files
@@ -429,7 +413,7 @@
 	// get info for package
 	NSString *pkg = [@"Package: " stringByAppendingString:package];
 	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH %@", pkg];
-	NSArray *theOne = [self.controls filteredArrayUsingPredicate:thePredicate];
+	NSArray *theOne = [_controlFiles filteredArrayUsingPredicate:thePredicate];
 	if(![theOne count]) return;
 
 	NSString *relevantControl = [theOne firstObject]; // count should be 1
@@ -534,7 +518,7 @@
 }
 
 -(NSString *)getDuration{
-	NSTimeInterval duration = [self.endTime timeIntervalSinceDate:self.startTime];
+	NSTimeInterval duration = [_endTime timeIntervalSinceDate:_startTime];
 	return [NSString stringWithFormat:@"%.02f", duration];
 }
 

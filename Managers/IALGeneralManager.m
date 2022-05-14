@@ -100,7 +100,7 @@
 }
 
 -(void)displayErrorWithMessage:(NSString *)msg{
-	[self setEncounteredError:YES];
+	_encounteredError = YES;
 
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy Error:"
@@ -111,13 +111,13 @@
 							actionWithTitle:@"Okay"
 							style:UIAlertActionStyleDefault
 							handler:^(UIAlertAction *action){
-								[self.rootVC dismissViewControllerAnimated:YES completion:nil];
+								[_rootVC dismissViewControllerAnimated:YES completion:nil];
 							}];
 
 	[alert addAction:okay];
 
-	[self.rootVC dismissViewControllerAnimated:YES completion:^{
-		[self.rootVC presentViewController:alert animated:YES completion:nil];
+	[_rootVC dismissViewControllerAnimated:YES completion:^{
+		[_rootVC presentViewController:alert animated:YES completion:nil];
 	}];
 
 	NSLog(@"[IAmLazyLog] %@", [msg stringByReplacingOccurrencesOfString:@"\n" withString:@""]);

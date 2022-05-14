@@ -87,8 +87,9 @@
 
 	// export backup
 	NSString *backupName = [tableView cellForRowAtIndexPath:indexPath].textLabel.text;
-	NSString *localPath = [NSString stringWithFormat:@"file://%@%@", backupDir, backupName];
-	NSURL *fileURL = [NSURL URLWithString:localPath]; // to actually export the file, needs to be an NSURL
+
+	// Note: to export a local file, need to use an NSURL
+	NSURL *fileURL = [NSURL fileURLWithPath:[backupDir stringByAppendingString:backupName]];
 
 	UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
 	[activityViewController setModalTransitionStyle:UIModalTransitionStyleCoverVertical];
@@ -113,9 +114,9 @@
 		NSFileManager *fileManager = [NSFileManager defaultManager];
 		if([fileManager isDeletableFileAtPath:filePath]){
 			NSError *deleteError = nil;
-			BOOL success = [fileManager removeItemAtPath:filePath error:&deleteError];
-			if(!success){
-				NSString *msg = [NSString stringWithFormat:@"An error occured and %@ was not deleted! \n\nError: %@", backupName, deleteError];
+			[fileManager removeItemAtPath:filePath error:&deleteError];
+			if(deleteError){
+				NSString *msg = [NSString stringWithFormat:@"An error occured and %@ was not deleted!\n\nError: %@", backupName, deleteError];
 				[_generalManager displayErrorWithMessage:msg];
 				return;
 			}
@@ -162,15 +163,15 @@
 }
 
 -(void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls{
-	NSURL *url = [urls firstObject]; // count will be >= 1
+	// url array count will be >= 1
+	NSURL *url = [urls firstObject];
 
 	// Note: need to have the path be /destDir/filename.extension otherwise it'll try to overwrite the destDir??
-	NSString *localPath = [NSString stringWithFormat:@"file://%@%@", backupDir, [url lastPathComponent]];
-	NSURL *backupDirURL = [NSURL URLWithString:localPath];
+	NSURL *backupDirURL = [NSURL fileURLWithPath:[backupDir stringByAppendingPathComponent:[url lastPathComponent]]];
 
 	NSError *writeError = nil;
-	BOOL success = [[NSFileManager defaultManager] copyItemAtURL:url toURL:backupDirURL error:&writeError];
-	if(!success){
+	[[NSFileManager defaultManager] copyItemAtURL:url toURL:backupDirURL error:&writeError];
+	if(!writeError){
 		NSString *msg = [NSString stringWithFormat:@"An error occured and %@ could not be imported! \n\nError: %@", [url absoluteString], writeError];
 		[_generalManager displayErrorWithMessage:msg];
 	}

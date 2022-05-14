@@ -16,7 +16,8 @@
 	// reset errors
 	[_generalManager setEncounteredError:NO];
 
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"null"];
+	NSNotificationCenter *notifCenter = [NSNotificationCenter defaultCenter];
+	[notifCenter postNotificationName:@"updateProgress" object:@"null"];
 
 	// check for backup dir
 	NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -41,7 +42,7 @@
 		return;
 	}
 
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0"];
+	[notifCenter postNotificationName:@"updateProgress" object:@"0"];
 
 	// check for old tmp files
 	if([fileManager fileExistsAtPath:tmpDir]){
@@ -60,9 +61,9 @@
 	}
 
 	if(type == 0){
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
+		[notifCenter postNotificationName:@"updateProgress" object:@"0.7"];
 		[self extractArchive:target];
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
+		[notifCenter postNotificationName:@"updateProgress" object:@"1"];
 
 		BOOL compatible = YES;
 		if([backupName containsString:@"u.tar.gz"]){
@@ -70,9 +71,9 @@
 		}
 
 		if(compatible){
-			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
+			[notifCenter postNotificationName:@"updateProgress" object:@"1.7"];
 			[self installDebs];
-			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
+			[notifCenter postNotificationName:@"updateProgress" object:@"2"];
 		}
 	}
 	else{
@@ -82,90 +83,13 @@
 		}
 
 		if(compatible){
-			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"0.7"];
+			[notifCenter postNotificationName:@"updateProgress" object:@"0.7"];
+			[self downloadDebsFromURLS:[self getDebURLSForList:target]];
+			[notifCenter postNotificationName:@"updateProgress" object:@"1"];
 
-			dispatch_semaphore_t sema = dispatch_semaphore_create(0); // wait for async block
-			dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-				// get pkgs available from installed repos
-				NSArray *availablePkgs = [self getAvailablePackages];
-				if(![availablePkgs count]){
-					NSString *msg = @"Failed to generate list of available packages! \n\nPlease try again.";
-					[_generalManager displayErrorWithMessage:msg];
-					return;
-				}
-
-				// get packages from list
-				NSArray *listPkgs = [self getPackagesForList:target];
-				if(![listPkgs count]){
-					NSString *msg = @"Failed to find valid packages in the target list! \n\nPlease try again.";
-					[_generalManager displayErrorWithMessage:msg];
-					return;
-				}
-
-				// get download url for pkg deb
-				NSMutableArray *debUrls = [NSMutableArray new];
-				for(NSString *pkg in listPkgs){
-					NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"ANY SELF.@allKeys ==[cd] %@", pkg];
-					NSArray *results = [availablePkgs filteredArrayUsingPredicate:thePredicate];
-					if(![results count]){
-						NSLog(@"[IAmLazyLog] %@ has no download candidate!", pkg);
-						continue;
-					}
-					[debUrls addObject:[[[results lastObject] allValues] firstObject]];
-				}
-				if(![debUrls count]){
-					NSString *msg = @"Failed to determine deb urls for desired packages! \n\nPlease try again.";
-					[_generalManager displayErrorWithMessage:msg];
-					return;
-				}
-				[self setDebURLS:debUrls];
-
-				// signal that we're good to go
-				dispatch_semaphore_signal(sema);
-			});
-			while(dispatch_semaphore_wait(sema, DISPATCH_TIME_NOW)){ // stackoverflow magic (https://stackoverflow.com/a/4326754)
-				[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0]];
-			}
-
-			// create tmpDir
-			if(![fileManager fileExistsAtPath:tmpDir]){
-				NSError *writeError = nil;
-				[fileManager createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&writeError];
-				if(writeError){
-					NSString *msg = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", tmpDir, writeError];
-					[_generalManager displayErrorWithMessage:msg];
-					return;
-				}
-			}
-
-			// prep for download tasks
-			__block BOOL downloadsComplete = NO;
-			[[NSNotificationCenter defaultCenter] addObserverForName:@"downloadsComplete" object:nil queue:nil usingBlock:^(NSNotification *notif) {
-				downloadsComplete = YES;
-			}];
-
-			// used below to determine when to post ^ notif
-			[self setExpectedDownloads:[_debURLS count]];
-
-			// download debs from urls
-			NSURLSessionConfiguration *config = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:@"me.lightmann.iamlazy"];
-			NSURLSession *session = [NSURLSession sessionWithConfiguration:config delegate:self delegateQueue:nil];
-			for(NSURL *url in _debURLS){
-				NSURLRequest *request = [NSURLRequest requestWithURL:url];
-				NSURLSessionTask *task = [session downloadTaskWithRequest:request];
-				[task resume];
-			}
-
-			// wait for 'done' notif
-			while(!downloadsComplete){
-				[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0]];
-			}
-
-			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1"];
-
-			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"1.7"];
+			[notifCenter postNotificationName:@"updateProgress" object:@"1.7"];
 			[self installDebs];
-			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateProgress" object:@"2"];
+			[notifCenter postNotificationName:@"updateProgress" object:@"2"];
 		}
 	}
 
@@ -174,13 +98,14 @@
 
 -(void)extractArchive:(NSString *)backupPath{
 	// extract tarball contents (and avoid stalling the main thread)
-	dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+	dispatch_semaphore_t sema = dispatch_semaphore_create(0); // wait for async block
 	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 		extract_archive([backupPath UTF8String]);
 
+		// signal that we're good to go
 		dispatch_semaphore_signal(sema);
 	});
-	while(dispatch_semaphore_wait(sema, DISPATCH_TIME_NOW)){
+	while(dispatch_semaphore_wait(sema, DISPATCH_TIME_NOW)){ // stackoverflow magic (https://stackoverflow.com/a/4326754)
 		[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0]];
 	}
 }
@@ -228,10 +153,12 @@
 -(NSDictionary<NSString *, NSString *> *)getAptListLocations{
 	NSDictionary *aptListLocations = @{
 		@"cydia" : @"/var/lib/apt/lists/",
-		@"sileo" : @"/var/mobile/Documents", // NEED TO DETERMINE
-		@"sileo2" : @"/var/mobile/Documents", // NEED TO DETERMINE
-		@"zebra" : @"/var/mobile/Library/Application Support/xyz.willy.Zebra/lists/",
-		@"installer" : @"/var/mobile/Library/Application Support/Installer/SourcesFiles/"
+		@"zebra" : @"/var/mobile/Library/Application Support/xyz.willy.Zebra/lists/"
+		/*
+		@"sileo" : @"/var/lib/apt/lists/",
+		@"sileo2" : @"/var/lib/apt/sileolists/", // superfluous
+		@"installer" : @"/var/mobile/Library/Application Support/Installer/SourcesFiles/" // these are XZ-compressed?!
+		*/
 	};
 	return aptListLocations;
 }
@@ -239,38 +166,43 @@
 -(NSDictionary<NSString *, NSString *> *)getSourceListLocations{
 	NSDictionary *sourceListLocations = @{
 		@"cydia" : @"/etc/apt/sources.list.d/cydia.list",
-		@"sileo" : @"/var/mobile/Documents/me.lightmann.iamlazy/IAL-49u.txt", // NEED TO DETERMINE
-		@"sileo2" : @"/var/mobile/Documents/me.lightmann.iamlazy/IAL-49u.txt", // NEED TO DETERMINE
-		@"zebra" : @"/var/mobile/Library/Application Support/xyz.willy.Zebra/sources.list",
+		@"zebra" : @"/var/mobile/Library/Application Support/xyz.willy.Zebra/sources.list"
+		/*
+		@"sileo" : @[@"/etc/apt/sources.list.d/sileo.sources", // bruh.
+						@"/etc/apt/sources.list.d/procursus.sources", // "URIs:" not "deb"
+						@"/etc/apt/sources.list.d/odyssey.sources",
+						@"/etc/apt/sources.list.d/taurine.sources"],
+		@"sileo2" : @"/etc/apt/sileo.list.d/sileo.sources", // not sure if this is still a thing?
 		@"installer" : @"/var/mobile/Library/Application Support/Installer/APT/sources.list"
+		*/
 	};
 	return sourceListLocations;
 }
 
--(NSArray<NSString *> *)getAvailablePackages{
+-(NSArray<NSDictionary<NSString *, NSString *> *> *)getAvailablePackages{
 	// check for installed pkg managers
 	NSMutableArray *pkgManagers = [NSMutableArray new];
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if([fileManager fileExistsAtPath:@"/Applications/Cydia.app/Cydia"]){
 		[pkgManagers addObject:@"cydia"];
 	}
-	if([fileManager fileExistsAtPath:@"/Applications/Sileo.app/Sileo"]){
-		// check device jailbroken with checkra1n
-		if([fileManager fileExistsAtPath:@"/.bootstrapped"]){
-			[pkgManagers addObject:@"sileo2"];
-		}
-		else{
-			[pkgManagers addObject:@"sileo"];
-		}
-	}
 	if([fileManager fileExistsAtPath:@"/Applications/Zebra.app/Zebra"]){
 		[pkgManagers addObject:@"zebra"];
+	}
+	/*
+	if([fileManager fileExistsAtPath:@"/Applications/Sileo.app/Sileo"]){
+		// check if device is running Procursus
+		if([fileManager fileExistsAtPath:@"/.procursus_strapped"]){
+			[pkgManagers addObject:@"sileo"];
+		}
+		// if device is running Elucubratus, the ported Sileo uses Cydia's list
 	}
 	if([fileManager fileExistsAtPath:@"/Applications/Installer.app/Installer"]){
 		[pkgManagers addObject:@"installer"];
 	}
-	else{
-		NSLog(@"[IAmLazyLog] There appear to be no package managers installed!");
+	*/
+	if(![pkgManagers count]){
+		NSLog(@"[IAmLazyLog] There appear to be no supported package managers installed.");
 		return [NSArray new];
 	}
 
@@ -284,8 +216,8 @@
 		[aptListPaths addObject:[apt valueForKey:key]];
 	}
 
-	// get installed repo links
-	NSMutableArray *srcLinkPaths = [NSMutableArray new];
+	// get installed repo urls
+	NSMutableArray *repoURLS = [NSMutableArray new];
 	for(NSString *path in srcListPaths){
 		if([fileManager fileExistsAtPath:path]){
 			NSError *readError = nil;
@@ -302,15 +234,16 @@
 				if([line length] && [line containsString:@"deb"]){
 					NSArray *bits = [line componentsSeparatedByString:@" "];
 					if([bits count] >= 2){
-						// first entry is "deb" and second is the repo url
-						[srcLinkPaths addObject:bits[1]];
+						// first obj is "deb" and second is the repo url
+						// this array *will* contain duplicate repo urls
+						[repoURLS addObject:bits[1]];
 					}
 				}
 			}
 		}
 	}
 
-	// get Packages files for each installed repo
+	// assign available packages to their respective download url
 	NSMutableArray *pkgsAndUrls = [NSMutableArray new];
 	for(NSString *path in aptListPaths){
 		if([fileManager fileExistsAtPath:path]){
@@ -321,6 +254,7 @@
 				continue;
 			}
 
+			// grab repos' *Packages files
 			NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH 'Packages'"];
 			NSArray *packageFiles = [listDirContents filteredArrayUsingPredicate:thePredicate];
 			if(![packageFiles count]){
@@ -340,7 +274,7 @@
 				NSArray *lines = [contents componentsSeparatedByString:@"\n"];
 				if(![lines count]) continue;
 
-				// get available pkgs and their respective deb links
+				// grab package names and make download urls
 				NSMutableArray *pkgs = [NSMutableArray new];
 				NSMutableArray *urls = [NSMutableArray new];
 				for(int i = 0; i < [lines count]; i++){
@@ -356,7 +290,7 @@
 							NSString *repo = [justFile substringWithRange:NSMakeRange(0, [justFile rangeOfString:@"_"].location)];
 
 							NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS %@", repo];
-							NSArray *repoUrl = [srcLinkPaths filteredArrayUsingPredicate:thePredicate];
+							NSArray *repoUrl = [repoURLS filteredArrayUsingPredicate:thePredicate];
 							if([repoUrl count]){
 								NSURL *baseUrl = [NSURL URLWithString:[repoUrl firstObject]];
 								NSURL *url = [baseUrl URLByAppendingPathComponent:localFilePath];
@@ -366,7 +300,7 @@
 					}
 				}
 
-				// assign each pkg (key) and url (value) to a dictionary
+				// assign key (package) value (url) pairs
 				for(int i = 0; i < [urls count]; i++){
 					NSDictionary *dict = @{
 						pkgs[i] : urls[i]
@@ -376,7 +310,6 @@
 			}
 		}
 	}
-
 	return pkgsAndUrls;
 }
 
@@ -408,10 +341,98 @@
 			[pkgs addObject:tweak];
 		}
 	}
-
 	return pkgs;
 }
 
+-(NSArray<NSURL *> *)getDebURLSForList:(NSString *)target{
+	NSMutableArray *debURLS = [NSMutableArray new];
+
+	dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+		// get pkgs available from installed repos
+		NSArray *availablePkgs = [self getAvailablePackages];
+		if(![availablePkgs count]){
+			dispatch_semaphore_signal(sema); // exit
+			NSString *msg = @"Failed to generate list of available packages! \n\nPlease try again.";
+			[_generalManager displayErrorWithMessage:msg];
+			return;
+		}
+
+		// get packages from (backup) list
+		NSArray *listPkgs = [self getPackagesForList:target];
+		if(![listPkgs count]){
+			dispatch_semaphore_signal(sema); // exit
+			NSString *msg = @"Failed to find valid packages in the target list! \n\nPlease try again.";
+			[_generalManager displayErrorWithMessage:msg];
+			return;
+		}
+
+		// get deb download urls for list packages
+		for(NSString *pkg in listPkgs){
+			NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"ANY SELF.@allKeys ==[cd] %@", pkg];
+			NSArray *results = [availablePkgs filteredArrayUsingPredicate:thePredicate];
+			if(![results count]){
+				NSLog(@"[IAmLazyLog] %@ has no download candidate!", pkg);
+				continue;
+			}
+			[debURLS addObject:[[[results lastObject] allValues] firstObject]];
+		}
+		if(![debURLS count]){
+			dispatch_semaphore_signal(sema); // exit
+			NSString *msg = @"Failed to determine deb urls for desired packages! \n\nPlease try again.";
+			[_generalManager displayErrorWithMessage:msg];
+			return;
+		}
+
+		dispatch_semaphore_signal(sema);
+	});
+	while(dispatch_semaphore_wait(sema, DISPATCH_TIME_NOW)){
+		[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0]];
+	}
+
+	return debURLS;
+}
+
+-(void)downloadDebsFromURLS:(NSArray<NSURL *> *)urls{
+	// create tmpDir
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	if(![fileManager fileExistsAtPath:tmpDir]){
+		NSError *writeError = nil;
+		[fileManager createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&writeError];
+		if(writeError){
+			NSString *msg = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", tmpDir, writeError];
+			[_generalManager displayErrorWithMessage:msg];
+			return;
+		}
+	}
+
+	// prep for download tasks
+	// TODO: there's probably a better way to do this
+	__block BOOL downloadsComplete = NO;
+	[[NSNotificationCenter defaultCenter] addObserverForName:@"downloadsComplete" object:nil queue:nil usingBlock:^(NSNotification *notif) {
+		downloadsComplete = YES;
+	}];
+
+	// used below to determine when to post ^ notif
+	_expectedDownloads = [urls count];
+
+	// download debs from urls
+	NSURLSessionConfiguration *config = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:@"me.lightmann.iamlazy"];
+	NSURLSession *session = [NSURLSession sessionWithConfiguration:config delegate:self delegateQueue:nil];
+	for(NSURL *url in urls){
+		NSURLRequest *request = [NSURLRequest requestWithURL:url];
+		NSURLSessionTask *task = [session downloadTaskWithRequest:request];
+		[task resume];
+	}
+
+	// wait for 'done' notif
+	while(!downloadsComplete){
+		[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0]];
+	}
+
+}
+
+// URLSessionTaskDelegate
 -(void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error{
 	if(error){
 		_expectedDownloads--;
@@ -419,6 +440,7 @@
 	}
 }
 
+// NSURLSessionDownloadDelegate
 -(void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didFinishDownloadingToURL:(NSURL *)location{
 	NSString *fileName = [[[downloadTask originalRequest] URL] lastPathComponent];
 	NSInteger underscore = [fileName rangeOfString:@"_"].location;
@@ -441,6 +463,12 @@
 		if(writeError){
 			NSLog(@"[IAmLazyLog] Failed to write %@ data to file. Error: %@", location, writeError);
 			return;
+		}
+
+		NSError *deleteError = nil;
+		[[NSFileManager defaultManager] removeItemAtURL:location error:&deleteError];
+		if(deleteError){
+			NSLog(@"[IAmLazyLog] Failed to delete %@. Error: %@", location, deleteError);
 		}
 	}
 

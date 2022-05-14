@@ -273,10 +273,11 @@
 }
 
 -(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type{
+	UIApplication *app = [UIApplication sharedApplication];
 	[self presentViewController:[[IALProgressViewController alloc] initWithPurpose:1 ofType:type withFilter:nil] animated:YES completion:nil];
-	[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
+	[app setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
 	[_manager restoreFromBackup:backupName ofType:type];
-	[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer
+	[app setIdleTimerDisabled:NO]; // reenable idle timer
 	if(![_manager encounteredError]){
 		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
 			[self dismissViewControllerAnimated:YES completion:^{
@@ -311,14 +312,14 @@
 								}];
 
 	UIAlertAction *uicache = [UIAlertAction
-							actionWithTitle:@"UICache & Respring"
-							style:UIAlertActionStyleDefault
-							handler:^(UIAlertAction *action){
-								NSTask *task = [[NSTask alloc] init];
-								[task setLaunchPath:@"/usr/bin/uicache"];
-								[task setArguments:@[@"-a", @"-r"]];
-								[task launch];
-							}];
+								actionWithTitle:@"UICache & Respring"
+								style:UIAlertActionStyleDefault
+								handler:^(UIAlertAction *action){
+									NSTask *task = [[NSTask alloc] init];
+									[task setLaunchPath:@"/usr/bin/uicache"];
+									[task setArguments:@[@"-a", @"-r"]];
+									[task launch];
+								}];
 
 	UIAlertAction *none = [UIAlertAction
 							actionWithTitle:@"None"

@@ -20,6 +20,7 @@
 
 		UIImage *githubMark = [UIImage imageNamed:@"Assets/GitHub-Mark-64px"];
 		githubMark = [UIImage imageWithCGImage:[githubMark CGImage] scale:([[UIScreen mainScreen] scale] * 1.45) orientation:[githubMark imageOrientation]];
+
 		_srcItem = [[UIBarButtonItem alloc] initWithImage:githubMark style:UIBarButtonItemStylePlain target:self action:@selector(openSrc)];
 		[controller.navigationItem setLeftBarButtonItem:_srcItem];
 

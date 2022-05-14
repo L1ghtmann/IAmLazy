@@ -35,11 +35,10 @@
 	[self.tableView setScrollEnabled:NO];
 
 	// setup bottom tab bar
-	UITabBar *bottomBar = [[UITabBar alloc] initWithFrame:CGRectMake(0, kHeight - self.navigationController.navigationBar.frame.size.height - 5, kWidth, self.navigationController.navigationBar.frame.size.height)];
+	CGRect navBarFrame = self.navigationController.navigationBar.frame;
+	UITabBar *bottomBar = [[UITabBar alloc] initWithFrame:CGRectMake(0, kHeight - navBarFrame.size.height - 5, kWidth, navBarFrame.size.height)];
 	[[[[UIApplication sharedApplication] windows] firstObject] addSubview:bottomBar];
 	[bottomBar setDelegate:self];
-
-	NSMutableArray *tabBarItems = [[NSMutableArray alloc] init];
 
 	UITabBarItem *create = [[UITabBarItem alloc] initWithTitle:@"Create" image:[UIImage systemImageNamed:@"plus.app"] tag:0];
 	UITabBarItem *backups = [[UITabBarItem alloc] initWithTitle:@"Backups" image:[UIImage systemImageNamed:@"folder.fill"] tag:1];
@@ -50,27 +49,23 @@
 	[backups setTitlePositionAdjustment:offset];
 	[restore setTitlePositionAdjustment:offset];
 
-	[tabBarItems addObject:create];
-	[tabBarItems addObject:backups];
-	[tabBarItems addObject:restore];
-
+	NSArray *tabBarItems = @[create, backups, restore];
 	[bottomBar setItems:tabBarItems];
 	[bottomBar setSelectedItem:[tabBarItems objectAtIndex:0]];
 }
 
 -(void)tabBar:(UITabBar *)tabBar didSelectItem:(UITabBarItem *)item{
-	NSInteger selectedTag = tabBar.selectedItem.tag;
-
 	IALAppDelegate *delegate = (IALAppDelegate *)[[UIApplication sharedApplication] delegate];
-
-	if(selectedTag == 0){
-		[delegate.tabBarController setSelectedViewController:delegate.rootViewController];
-	}
-	else if(selectedTag == 1){
-		[delegate.tabBarController setSelectedViewController:delegate.backupsViewController];
-	}
-	else{
-		[delegate.tabBarController setSelectedViewController:delegate.restoreViewController];
+	switch([tabBar.selectedItem tag]){
+		case 0:
+			[delegate.tabBarController setSelectedViewController:delegate.rootViewController];
+			break;
+		case 1:
+			[delegate.tabBarController setSelectedViewController:delegate.backupsViewController];
+			break;
+		default:
+			[delegate.tabBarController setSelectedViewController:delegate.restoreViewController];
+			break;
 	}
 }
 
@@ -189,10 +184,11 @@
 }
 
 -(void)makeBackupOfType:(NSInteger)type withFilter:(BOOL)filter{
+	UIApplication *app = [UIApplication sharedApplication];
 	[self presentViewController:[[IALProgressViewController alloc] initWithPurpose:0 ofType:type withFilter:filter] animated:YES completion:nil];
-	[[UIApplication sharedApplication] setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
+	[app setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
 	[_manager makeBackupOfType:type withFilter:filter];
-	[[UIApplication sharedApplication] setIdleTimerDisabled:NO]; // reenable idle timer
+	[app setIdleTimerDisabled:NO]; // reenable idle timer
 	if(![_manager encounteredError]){
 		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
 			[self dismissViewControllerAnimated:YES completion:^{
@@ -214,8 +210,8 @@
 								actionWithTitle:@"Export"
 								style:UIAlertActionStyleDefault
 								handler:^(UIAlertAction *action){
-									NSString *localPath = [NSString stringWithFormat:@"file://%@%@", backupDir, [[_manager getBackups] firstObject]];
-									NSURL *fileURL = [NSURL URLWithString:localPath]; // to actually export the file, needs to be an NSURL
+									// Note: to export a local file, need to use an NSURL
+									NSURL *fileURL = [NSURL fileURLWithPath:[backupDir stringByAppendingPathComponent:[[_manager getBackups] firstObject]]];
 
 									UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
 									[activityViewController setModalTransitionStyle:UIModalTransitionStyleCoverVertical];
