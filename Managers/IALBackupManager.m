@@ -182,7 +182,7 @@
 	NSMutableArray *allPackages = [NSMutableArray new];
 	for(NSString *line in packages){
 		// filter out IAmLazy since it'll be installed by the user anyway
-		if([line length] && ![line containsString:@"me.lightmann.iamlazy"]){
+		if([line length] && ![line hasPrefix:@"me.lightmann.iamlazy"]){
 			// split the package name from its priority and then add the package name to the allPackages array
 			NSArray *bits = [line componentsSeparatedByCharactersInSet:whiteSpace];
 			if([bits count]) [allPackages addObject:[bits firstObject]];
@@ -223,9 +223,10 @@
 		// count should be one for pkgLists
 		for(NSString *list in pkgLists){
 			NSError *readError2 = nil;
-			NSString *content = [NSString stringWithContentsOfFile:[aptListsDir stringByAppendingPathComponent:list] encoding:NSUTF8StringEncoding error:&readError2];
+			NSString *listPath = [aptListsDir stringByAppendingPathComponent:list];
+			NSString *content = [NSString stringWithContentsOfFile:listPath encoding:NSUTF8StringEncoding error:&readError2];
 			if(readError2){
-				NSLog(@"[IAmLazyLog] Failed to get contents of %@%@! Error: %@", aptListsDir, list, readError2);
+				NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", listPath, readError2);
 				continue;
 			}
 
@@ -271,6 +272,7 @@
 			else [controlFile appendString:[@"\n" stringByAppendingString:line]];
 		}
 		else{
+			// when we hit an empty line it's a new control
 			[controls addObject:[controlFile copy]];
 			if(i != [lines count]) [controlFile setString:@""];
 			else controlFile = nil;
@@ -286,7 +288,7 @@
 	NSString *dir = @"NSFileTypeDirectory";
 	NSString *symLink = @"NSFileTypeSymbolicLink";
 	for(NSString *package in packages){
-		BOOL valid = [[package stringByTrimmingCharactersInSet:set] isEqualToString:@""];
+		BOOL valid = ![[package stringByTrimmingCharactersInSet:set] length];
 		if(valid){
 			// get installed files
 			NSError *readError = nil;
@@ -481,14 +483,10 @@
 
 -(void)makeTarballWithFilter:(BOOL)filter{
 	// get latest backup name and append the gzip tar extension
-	NSString *latest = [_generalManager getLatestBackup];
 	NSString *backupName;
-	if(!filter){
-		backupName = [latest stringByAppendingString:@"u.tar.gz"];
-	}
-	else{
-		backupName = [latest stringByAppendingPathExtension:@"tar.gz"];
-	}
+	NSString *latest = [_generalManager getLatestBackup];
+	if(!filter) backupName = [latest stringByAppendingString:@"u.tar.gz"];
+	else backupName = [latest stringByAppendingPathExtension:@"tar.gz"];
 	NSString *backupPath = [backupDir stringByAppendingPathComponent:backupName];
 
 	// make tarball (and avoid stalling the main thread)

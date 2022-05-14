@@ -66,7 +66,7 @@
 		[notifCenter postNotificationName:@"updateProgress" object:@"1"];
 
 		BOOL compatible = YES;
-		if([backupName containsString:@"u.tar.gz"]){
+		if([backupName hasSuffix:@"u.tar.gz"]){
 			compatible = [self verifyBootstrapForBackup:target];
 		}
 
@@ -78,7 +78,7 @@
 	}
 	else{
 		BOOL compatible = YES;
-		if([backupName containsString:@"u.txt"]){
+		if([backupName hasSuffix:@"u.txt"]){
 			compatible = [self verifyBootstrapForBackup:target];
 		}
 
@@ -120,7 +120,7 @@
 	}
 
 	BOOL check = YES;
-	if(![[targetBackup pathExtension] isEqualToString:@"txt"]){ // deb backup
+	if([[targetBackup pathExtension] isEqualToString:@"deb"]){
 		check = [fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap]];
 	}
 	else{ // list backup
@@ -143,7 +143,7 @@
 	}
 
 	if(!check){
-		NSString *msg = [NSString stringWithFormat:@"The backup you're trying to restore from was made for jailbreaks running the %@ bootstrap. \n\nYour current jailbreak is using %@!", altBootstrap, bootstrap];
+		NSString *msg = [NSString stringWithFormat:@"The backup you're trying to restore from was made for jailbreaks using the %@ bootstrap. \n\nYour current jailbreak is using %@!", altBootstrap, bootstrap];
 		[_generalManager displayErrorWithMessage:msg];
 	}
 
@@ -231,7 +231,7 @@
 			if(![srcListContents count]) continue;
 
 			for(NSString *line in srcListContents){
-				if([line length] && [line containsString:@"deb"]){
+				if([line length] && [line hasPrefix:@"deb"]){
 					NSArray *bits = [line componentsSeparatedByString:@" "];
 					if([bits count] >= 2){
 						// first obj is "deb" and second is the repo url
@@ -331,7 +331,7 @@
 	NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
 	[set addCharactersInString:@"+-."];
 	for(NSString *tweak in tweaks){
-		BOOL valid = [[tweak stringByTrimmingCharactersInSet:set] isEqualToString:@""];
+		BOOL valid = ![[tweak stringByTrimmingCharactersInSet:set] length];
 		if(valid){
 			// ignore unfiltered list backup's bootstrap identifier
 			if([tweak isEqualToString:@"elucubratus"] || [tweak isEqualToString:@"procursus"]){
@@ -352,7 +352,7 @@
 		// get pkgs available from installed repos
 		NSArray *availablePkgs = [self getAvailablePackages];
 		if(![availablePkgs count]){
-			dispatch_semaphore_signal(sema); // exit
+			dispatch_semaphore_signal(sema); // exit wait block
 			NSString *msg = @"Failed to generate list of available packages! \n\nPlease try again.";
 			[_generalManager displayErrorWithMessage:msg];
 			return;
@@ -361,7 +361,7 @@
 		// get packages from (backup) list
 		NSArray *listPkgs = [self getPackagesForList:target];
 		if(![listPkgs count]){
-			dispatch_semaphore_signal(sema); // exit
+			dispatch_semaphore_signal(sema); // exit wait block
 			NSString *msg = @"Failed to find valid packages in the target list! \n\nPlease try again.";
 			[_generalManager displayErrorWithMessage:msg];
 			return;
@@ -369,16 +369,24 @@
 
 		// get deb download urls for list packages
 		for(NSString *pkg in listPkgs){
-			NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"ANY SELF.@allKeys ==[cd] %@", pkg];
+			NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"ANY SELF.@allKeys==[cd] %@", pkg];
 			NSArray *results = [availablePkgs filteredArrayUsingPredicate:thePredicate];
 			if(![results count]){
 				NSLog(@"[IAmLazyLog] %@ has no download candidate!", pkg);
 				continue;
 			}
-			[debURLS addObject:[[[results lastObject] allValues] firstObject]];
+
+			NSArray *pkgValues = [[results lastObject] allValues];
+			if(![pkgValues count]){
+				NSLog(@"[IAmLazyLog] %@'s dict has no values!", pkg);
+				continue;
+			}
+
+			// count should be one
+			[debURLS addObject:[pkgValues firstObject]];
 		}
 		if(![debURLS count]){
-			dispatch_semaphore_signal(sema); // exit
+			dispatch_semaphore_signal(sema); // exit wait block
 			NSString *msg = @"Failed to determine deb urls for desired packages! \n\nPlease try again.";
 			[_generalManager displayErrorWithMessage:msg];
 			return;
@@ -407,7 +415,7 @@
 	}
 
 	// prep for download tasks
-	// TODO: there's probably a better way to do this
+	// TODO: there's probably a better way to do this?
 	__block BOOL downloadsComplete = NO;
 	[[NSNotificationCenter defaultCenter] addObserverForName:@"downloadsComplete" object:nil queue:nil usingBlock:^(NSNotification *notif) {
 		downloadsComplete = YES;
@@ -454,8 +462,9 @@
 		return;
 	}
 
+	// ensure file is a .deb by checking for the diagnostic 7 byte header
 	NSString *header = [[NSString alloc] initWithBytes:[fileData bytes] length:([fileData length], 7) encoding:NSASCIIStringEncoding];
-	if([header isEqualToString:@"!<arch>"]){ // ensure file is a .deb by checking for the diagnostic 7 byte header
+	if([header isEqualToString:@"!<arch>"]){
 		NSError *writeError = nil;
 		// have to strip "illegal" characters from the filename so it passes the checks in AndSoAreYou
 		NSString *cleanFileName = [[fileName substringWithRange:NSMakeRange(0, underscore)] stringByAppendingPathExtension:@"deb"];

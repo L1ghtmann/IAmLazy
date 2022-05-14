@@ -32,6 +32,8 @@
 -(void)loadView{
 	[super loadView];
 
+	[self.tableView setSeparatorInset:UIEdgeInsetsZero];
+
 	// replace info nav bar button with import button
 	UIBarButtonItem *importItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"plus.circle.fill"] style:UIBarButtonItemStylePlain target:self action:@selector(importBackup)];
 	[self.navigationItem setRightBarButtonItem:importItem];

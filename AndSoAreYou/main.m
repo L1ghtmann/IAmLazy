@@ -31,7 +31,7 @@ NSString *getCurrentPackage(){
 	NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
 	[formatter setDateFormat:@"HH:mm:ss.SSS"];
 	for(NSString *file in tmpDirFiles){
-		BOOL valid = [[file stringByTrimmingCharactersInSet:set] isEqualToString:@""];
+		BOOL valid = ![[file stringByTrimmingCharactersInSet:set] length];
 		if(valid){
 			NSString *filePath = [tmpDir stringByAppendingPathComponent:file];
 
@@ -143,7 +143,7 @@ int main(int argc, char *argv[]){
 				continue;
 			}
 
-			// 'reenable' tweaks that've been disabled with iCleaner Pro (i.e., change extension from .disabled back to .dylib)
+			// 'reenable' tweaks that've been disabled with iCleaner Pro
 			NSString *extension = [file pathExtension];
 			if([[[file pathExtension] lowercaseString] isEqualToString:@"disabled"]){
 				extension = @"dylib";
@@ -161,57 +161,52 @@ int main(int argc, char *argv[]){
 		}
 	}
 	else if(strcmp(argv[1], "cpDFiles") == 0){
+		// get DEBIAN files (e.g., pre/post scripts)
+		NSError *readError = nil;
+		NSString *dpkgInfoDir = @"/var/lib/dpkg/info/";
+		NSFileManager *fileManager = [NSFileManager defaultManager];
+		NSArray *dpkgInfo = [fileManager contentsOfDirectoryAtPath:dpkgInfoDir error:&readError];
+		if(readError){
+			NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", dpkgInfoDir, readError];
+			logErrorWithMessage(msg);
+			return 1;
+		}
+		else if(![dpkgInfo count]){
+			NSString *msg = [NSString stringWithFormat:@"%@ is empty!", dpkgInfoDir];
+			logErrorWithMessage(msg);
+			return 1;
+		}
+
 		NSString *tweakName = getCurrentPackage();
-		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
-		[set addCharactersInString:@"+-."];
-		BOOL valid = [[tweakName stringByTrimmingCharactersInSet:set] isEqualToString:@""];
-		if(valid){
-			// get DEBIAN files (e.g., pre/post scripts)
-			NSError *readError = nil;
-			NSString *dpkgInfoDir = @"/var/lib/dpkg/info/";
-			NSFileManager *fileManager = [NSFileManager defaultManager];
-			NSArray *dpkgInfo = [fileManager contentsOfDirectoryAtPath:dpkgInfoDir error:&readError];
-			if(readError){
-				NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", dpkgInfoDir, readError];
-				logErrorWithMessage(msg);
-				return 1;
-			}
-			else if(![dpkgInfo count]){
-				NSString *msg = [NSString stringWithFormat:@"%@ is empty!", dpkgInfoDir];
-				logErrorWithMessage(msg);
-				return 1;
-			}
+		NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH %@", tweakName];
+		NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF CONTAINS '.md5sums'"];
+		NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF CONTAINS '.list'"];
+		NSPredicate *predicate23 = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicate2, predicate3]];
+		NSPredicate *antiPredicate23 = [NSCompoundPredicate notPredicateWithSubpredicate:predicate23]; // dpkg generates these at installation
+		NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate1, antiPredicate23]];
+		NSArray *debainFiles = [dpkgInfo filteredArrayUsingPredicate:thePredicate];
+		if(![debainFiles count]){
+			NSString *msg = [NSString stringWithFormat:@"debianFiles is empty for %@", tweakName];
+			logErrorWithMessage(msg);
+			return 1;
+		}
 
-			NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH %@", tweakName];
-			NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF CONTAINS '.md5sums'"];
-			NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF CONTAINS '.list'"];
-			NSPredicate *predicate23 = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicate2, predicate3]];
-			NSPredicate *antiPredicate23 = [NSCompoundPredicate notPredicateWithSubpredicate:predicate23]; // dpkg generates these at installation
-			NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate1, antiPredicate23]];
-			NSArray *debainFiles = [dpkgInfo filteredArrayUsingPredicate:thePredicate];
-			if(![debainFiles count]){
-				NSString *msg = [NSString stringWithFormat:@"debianFiles is empty for %@", tweakName];
-				logErrorWithMessage(msg);
-				return 1;
+		// copy files
+		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:tweakName];
+		NSString *debian = [tweakDir stringByAppendingString:@"/DEBIAN/"];
+		for(NSString *file in debainFiles){
+			NSString *filePath = [dpkgInfoDir stringByAppendingPathComponent:file];
+			if(![file length] || ![fileManager fileExistsAtPath:filePath] || [file isEqualToString:@".."] || [file isEqualToString:@"."]){
+				continue;
 			}
 
-			// copy files
-			NSString *tweakDir = [tmpDir stringByAppendingPathComponent:tweakName];
-			NSString *debian = [tweakDir stringByAppendingString:@"/DEBIAN/"];
-			for(NSString *file in debainFiles){
-				NSString *filePath = [dpkgInfoDir stringByAppendingPathComponent:file];
-				if(![file length] || ![fileManager fileExistsAtPath:filePath] || [file isEqualToString:@".."] || [file isEqualToString:@"."]){
-					continue;
-				}
-
-				// remove tweakName prefix and copy file
-				NSError *writeError = nil;
-				NSString *strippedName = [file stringByReplacingOccurrencesOfString:[tweakName stringByAppendingString:@"."] withString:@""];
-				[fileManager copyItemAtPath:filePath toPath:[debian stringByAppendingPathComponent:strippedName] error:&writeError];
-				if(writeError){
-					NSString *msg = [NSString stringWithFormat:@"Failed to copy %@! Error: %@", filePath, writeError];
-					logErrorWithMessage(msg);
-				}
+			// remove tweakName prefix and copy file
+			NSError *writeError = nil;
+			NSString *strippedName = [file stringByReplacingOccurrencesOfString:[tweakName stringByAppendingString:@"."] withString:@""];
+			[fileManager copyItemAtPath:filePath toPath:[debian stringByAppendingPathComponent:strippedName] error:&writeError];
+			if(writeError){
+				NSString *msg = [NSString stringWithFormat:@"Failed to copy %@! Error: %@", filePath, writeError];
+				logErrorWithMessage(msg);
 			}
 		}
 	}
@@ -235,7 +230,7 @@ int main(int argc, char *argv[]){
 		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
 		[set addCharactersInString:@"+-."];
 		for(NSString *item in tmpDirContents){
-			BOOL valid = [[item stringByTrimmingCharactersInSet:set] isEqualToString:@""];
+			BOOL valid = ![[item stringByTrimmingCharactersInSet:set] length];
 			if(valid){
 				NSString *path = [tmpDir stringByAppendingPathComponent:item];
 
@@ -250,7 +245,7 @@ int main(int argc, char *argv[]){
 			return 1;
 		}
 
-		// build debs and remove respective dir when done
+		// build debs and remove respective dirs when done
 		NSString *log = [logDir stringByAppendingPathComponent:@"build_log.txt"];
 		NSMutableString *logText = [NSMutableString new];
 		for(NSString *tweak in tweakDirs){
@@ -314,7 +309,7 @@ int main(int argc, char *argv[]){
 		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
 		[set addCharactersInString:@"+-."];
 		for(NSString *item in tmpDirContents){
-			BOOL valid = [[item stringByTrimmingCharactersInSet:set] isEqualToString:@""];
+			BOOL valid = ![[item stringByTrimmingCharactersInSet:set] length];
 			if(valid){
 				NSString *path = [tmpDir stringByAppendingPathComponent:item];
 				if([[item pathExtension] isEqualToString:@"deb"]){

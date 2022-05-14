@@ -17,7 +17,7 @@
 		// icon setup
 		// helpful link for available SFSymbols: https://github.com/cyanzhong/sf-symbols-online
 		// note: SFSymbols' width and height aren't equal, so need to set the content mode accordingly
-		_icon = [[UIImageView alloc] initWithFrame:CGRectZero];
+		_icon = [[UIImageView alloc] init];
 		[self addSubview:_icon];
 
 		[_icon setContentMode:UIViewContentModeScaleAspectFit];
@@ -28,25 +28,25 @@
 		if(function == 1) [_icon setTintColor:[UIColor colorWithRed:1.00000 green:0.94118 blue:0.85098 alpha:1.00000]];
 
 		[_icon setTranslatesAutoresizingMaskIntoConstraints:NO];
-		[_icon.widthAnchor constraintEqualToConstant:75].active = YES;
-		[_icon.heightAnchor constraintEqualToConstant:75].active = YES;
-		[_icon.leftAnchor constraintEqualToAnchor:self.leftAnchor constant:25].active = YES;
-		[_icon.centerYAnchor constraintEqualToAnchor:self.centerYAnchor].active = YES;
+		[[_icon.widthAnchor constraintEqualToConstant:75] setActive:YES];
+		[[_icon.heightAnchor constraintEqualToConstant:75] setActive:YES];
+		[[_icon.leftAnchor constraintEqualToAnchor:self.leftAnchor constant:25] setActive:YES];
+		[[_icon.centerYAnchor constraintEqualToAnchor:self.centerYAnchor] setActive:YES];
 
 
 		// (label) container setup
-		_container = [[UIView alloc] initWithFrame:CGRectZero];
+		_container = [[UIView alloc] init];
 		[self addSubview:_container];
 
 		[_container setTranslatesAutoresizingMaskIntoConstraints:NO];
-		[_container.widthAnchor constraintEqualToConstant:(self.frame.size.width - 75)].active = YES;
-		[_container.heightAnchor constraintEqualToConstant:50].active = YES;
-		[_container.leftAnchor constraintEqualToAnchor:self.leftAnchor constant:105].active = YES;
-		[_container.centerYAnchor constraintEqualToAnchor:self.centerYAnchor].active = YES;
+		[[_container.widthAnchor constraintEqualToConstant:(self.frame.size.width - 75)] setActive:YES];
+		[[_container.heightAnchor constraintEqualToConstant:50] setActive:YES];
+		[[_container.leftAnchor constraintEqualToAnchor:self.leftAnchor constant:105] setActive:YES];
+		[[_container.centerYAnchor constraintEqualToAnchor:self.centerYAnchor] setActive:YES];
 
 
 		// function label setup
-		_functionLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+		_functionLabel = [[UILabel alloc] init];
 		[_container addSubview:_functionLabel];
 
 		[_functionLabel setFont:[UIFont systemFontOfSize:_functionLabel.font.pointSize weight:0.40]];
@@ -54,13 +54,13 @@
 		[_functionLabel setText:descriptor];
 
 		[_functionLabel setTranslatesAutoresizingMaskIntoConstraints:NO];
-		[_functionLabel.widthAnchor constraintEqualToConstant:kWidth].active = YES;
-		[_functionLabel.heightAnchor constraintEqualToConstant:25].active = YES;
-		[_functionLabel.topAnchor constraintEqualToAnchor:_container.topAnchor constant:2].active = YES;
+		[[_functionLabel.widthAnchor constraintEqualToConstant:kWidth] setActive:YES];
+		[[_functionLabel.heightAnchor constraintEqualToConstant:25] setActive:YES];
+		[[_functionLabel.topAnchor constraintEqualToAnchor:_container.topAnchor constant:2] setActive:YES];
 
 
 		// function descriptor label setup
-		_descriptorLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+		_descriptorLabel = [[UILabel alloc] init];
 		[_container addSubview:_descriptorLabel];
 
 		[_descriptorLabel setFont:[UIFont systemFontOfSize:(_descriptorLabel.font.pointSize * 0.75) weight:-0.40]];
@@ -69,9 +69,9 @@
 		[_descriptorLabel setText:[self descriptionForPurpose:purpose andFunction:function]];
 
 		[_descriptorLabel setTranslatesAutoresizingMaskIntoConstraints:NO];
-		[_descriptorLabel.widthAnchor constraintEqualToConstant:kWidth].active = YES;
-		[_descriptorLabel.heightAnchor constraintEqualToConstant:25].active = YES;
-		[_descriptorLabel.topAnchor constraintEqualToAnchor:_container.topAnchor constant:22].active = YES;
+		[[_descriptorLabel.widthAnchor constraintEqualToConstant:kWidth] setActive:YES];
+		[[_descriptorLabel.heightAnchor constraintEqualToConstant:25] setActive:YES];
+		[[_descriptorLabel.topAnchor constraintEqualToAnchor:_container.topAnchor constant:22] setActive:YES];
 	}
 
 	return self;

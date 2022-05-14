@@ -11,6 +11,10 @@
 #define fillColor [UIColor colorWithRed:16.0f/255.0f green:16.0f/255.0f blue:16.0f/255.0f alpha:1.0f]
 #define accentColor [UIColor colorWithRed:247.0f/255.0f green:249.0f/255.0f blue:250.0f/255.0f alpha:1.0f]
 
+#define titleSize 30
+#define backgroundSize 60
+#define startY titleSize + backgroundSize
+
 @implementation IALProgressViewController
 
 -(instancetype)initWithPurpose:(NSInteger)purpose ofType:(NSInteger)type withFilter:(BOOL)filter{
@@ -126,56 +130,84 @@
 
 -(void)makeTitleWithPurpose:(NSInteger)purpose{
 	NSString *purposeString;
-	if(purpose == 0){
-		purposeString = @"backup";
-	}
-	else{
-		purposeString = @"restore";
-	}
+	if(purpose == 0) purposeString = @"backup";
+	else purposeString = @"restore";
 
 	NSString *text = [NSString stringWithFormat:@"%@ Progress", purposeString];
 
-	// TODO: switch to constraints
-	UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(0, 35, kWidth, 30)];
-	[title setFont:[UIFont systemFontOfSize:30 weight:0.60]];
+	UILabel *title = [[UILabel alloc] init];
+	[self.view addSubview:title];
+
+	[title setTranslatesAutoresizingMaskIntoConstraints:NO];
+	[[title.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:titleSize] setActive:YES];
+	[[title.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor] setActive:YES];
+
+	[title setFont:[UIFont systemFontOfSize:titleSize weight:0.60]];
 	[title setTextAlignment:NSTextAlignmentCenter];
 	[title setText:[text uppercaseString]];
 	[title setTextColor:accentColor];
-
-	[self.view addSubview:title];
 }
 
 -(void)makeListWithItems:(int)count{
 	_items = [NSMutableArray new];
 	_itemStatusIcons = [NSMutableArray new];
 
-	// TODO: switch to constraints
 	for(int i = 0; i < count; i++){
-		CGFloat y = 90 + (i * 100);
+		CGFloat y = startY + (i * 100);
 
-		UIView *background = [[UIView alloc] initWithFrame:CGRectMake(10, y, 60, 60)];
+		// white circle
+		UIView *background = [[UIView alloc] init];
+		[self.view addSubview:background];
+
+		[background setTranslatesAutoresizingMaskIntoConstraints:NO];
+		[[background.widthAnchor constraintEqualToConstant:backgroundSize] setActive:YES];
+		[[background.heightAnchor constraintEqualToConstant:backgroundSize] setActive:YES];
+		[[background.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:y] setActive:YES];
+		[[background.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:10] setActive:YES];
+
+		[background.layer setCornerRadius:backgroundSize/2];
 		[background setBackgroundColor:accentColor];
-		[background.layer setCornerRadius:background.frame.size.height/2];
 
-		UIView *fill = [[UIView alloc] initWithFrame:CGRectInset(background.bounds, 1, 1)];
-		[fill setBackgroundColor:fillColor];
-		[fill.layer setCornerRadius:background.frame.size.height/2];
+		// circle fill
+		UIView *fill = [[UIView alloc] init];
 		[background addSubview:fill];
 
-		UIImageView *item = [[UIImageView alloc] initWithFrame:CGRectInset(fill.bounds, 7.5, 7.5)];
+		[fill setTranslatesAutoresizingMaskIntoConstraints:NO];
+		[[fill.widthAnchor constraintEqualToConstant:backgroundSize - 2] setActive:YES];
+		[[fill.heightAnchor constraintEqualToConstant:backgroundSize - 2] setActive:YES];
+		[[fill.centerXAnchor constraintEqualToAnchor:background.centerXAnchor] setActive:YES];
+		[[fill.centerYAnchor constraintEqualToAnchor:background.centerYAnchor] setActive:YES];
+
+		[fill.layer setCornerRadius:backgroundSize/2];
+		[fill setBackgroundColor:fillColor];
+
+		// image
+		UIImageView *item = [[UIImageView alloc] init];
+		[fill addSubview:item];
+		[_items addObject:item];
+
+		[item setTranslatesAutoresizingMaskIntoConstraints:NO];
+		[[item.widthAnchor constraintEqualToConstant:backgroundSize/1.5] setActive:YES];
+		[[item.heightAnchor constraintEqualToConstant:backgroundSize/1.5] setActive:YES];
+		[[item.centerXAnchor constraintEqualToAnchor:fill.centerXAnchor] setActive:YES];
+		[[item.centerYAnchor constraintEqualToAnchor:fill.centerYAnchor] setActive:YES];
+
 		[item setImage:[UIImage systemImageNamed:_itemIcons[i]]];
 		[item setContentMode:UIViewContentModeScaleAspectFit];
 
-		UIView *status = [[UIView alloc] initWithFrame:CGRectMake(45, 45, 10, 10)];
-		[status setBackgroundColor:[UIColor grayColor]];
-		[status.layer setCornerRadius:status.frame.size.height/2];
-
-		[self.view addSubview:background];
-		[fill addSubview:item];
+		// status indicator (colored circle)
+		UIView *status = [[UIView alloc] init];
 		[fill addSubview:status];
-
-		[_items addObject:item];
 		[_itemStatusIcons addObject:status];
+
+		[status setTranslatesAutoresizingMaskIntoConstraints:NO];
+		[[status.widthAnchor constraintEqualToConstant:backgroundSize/6] setActive:YES];
+		[[status.heightAnchor constraintEqualToConstant:backgroundSize/6] setActive:YES];
+		[[status.trailingAnchor constraintEqualToAnchor:fill.trailingAnchor constant:-2] setActive:YES];
+		[[status.topAnchor constraintEqualToAnchor:fill.topAnchor constant:(backgroundSize * 0.72)] setActive:YES];
+
+		[status setBackgroundColor:[UIColor grayColor]];
+		[status.layer setCornerRadius:backgroundSize/12];
 	}
 
 	[self elaborateItemsList];
@@ -185,40 +217,47 @@
 	_itemStatusText = [NSMutableArray new];
 
 	for(int i = 0; i < [_items count]; i++){
-		UIView *item = _items[i];
+		CGFloat y = startY + (i * 100);
 
-		// TODO: switch to constraints
-		CGPoint position = [item convertPoint:item.center toView:self.view];
-		CGFloat x = position.x + 35;
-		if([UIApplication sharedApplication].userInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft){
-			x = -10; // RTL support
-		}
+		// top label
+		UILabel *itemDesc = [[UILabel alloc] init];
+		[self.view addSubview:itemDesc];
 
-		UILabel *itemDesc = [[UILabel alloc] initWithFrame:CGRectMake(x,position.y - 28, kWidth, 20)];
+		[itemDesc setTranslatesAutoresizingMaskIntoConstraints:NO];
+		[[itemDesc.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:(backgroundSize + 20)] setActive:YES];
+		[[itemDesc.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:(y + 10)] setActive:YES];
+
 		[itemDesc setText:_itemDescriptions[i]];
 		[itemDesc setTextColor:accentColor];
 
-		UILabel *itemStatus = [[UILabel alloc] initWithFrame:CGRectMake(x,position.y - 8, kWidth, 20)];
+		// bottom label
+		UILabel *itemStatus = [[UILabel alloc] init];
+		[self.view addSubview:itemStatus];
+		[_itemStatusText addObject:itemStatus];
+
+		[itemStatus setTranslatesAutoresizingMaskIntoConstraints:NO];
+		[[itemStatus.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:(backgroundSize + 20)] setActive:YES];
+		[[itemStatus.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:(y + 30)] setActive:YES];
+
 		[itemStatus setFont:[UIFont systemFontOfSize:14 weight:-0.60]];
 		[itemStatus setText:@"Waiting"];
 		[itemStatus setTextColor:accentColor];
 		[itemStatus setAlpha:0.75];
-
-		[self.view addSubview:itemDesc];
-		[self.view addSubview:itemStatus];
-
-		[_itemStatusText addObject:itemStatus];
 	}
 }
 
 -(void)makeLoadingWheel{
-	// TODO: switch to constraints
-	_loading = [[UIActivityIndicatorView alloc] initWithFrame:CGRectMake((kWidth/2) - 25, ((kHeight * 5)/6) + 12.5, 50, 50)];
+	_loading = [[UIActivityIndicatorView alloc] init];
+	[self.view addSubview:_loading];
+
+	[_loading setTranslatesAutoresizingMaskIntoConstraints:NO];
+	[[_loading.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:-20] setActive:YES];
+	[[_loading.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor] setActive:YES];
+
 	[_loading setActivityIndicatorViewStyle:UIActivityIndicatorViewStyleLarge];
 	[_loading setColor:accentColor];
 	[_loading setHidesWhenStopped:YES];
 	[_loading startAnimating];
-	[self.view addSubview:_loading];
 }
 
 -(void)updateProgress:(NSNotification *)notification{

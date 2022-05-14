@@ -32,7 +32,7 @@
 
 -(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type{
 	if(![self hasConnection]){
-		[self displayErrorWithMessage:@"A network connection is required for restores!\n\nThis is so dependencies can be downloaded if need be."];
+		[self displayErrorWithMessage:@"A network connection is required for restores!\n\nThis is so packages can be downloaded if need be."];
 		return;
 	}
 
@@ -89,7 +89,7 @@
 
 -(void)executeCommandAsRoot:(NSString *)cmd{
 	NSCharacterSet *alphaSet = [NSCharacterSet alphanumericCharacterSet];
-	BOOL valid = [[cmd stringByTrimmingCharactersInSet:alphaSet] isEqualToString:@""];
+	BOOL valid = ![[cmd stringByTrimmingCharactersInSet:alphaSet] length];
 	if(valid){
 		NSTask *task = [[NSTask alloc] init];
 		[task setLaunchPath:@"/usr/libexec/iamlazy/AndSoAreYou"];

@@ -33,11 +33,18 @@
 	[super loadView];
 
 	[self.tableView setScrollEnabled:NO];
+	[self.tableView setSeparatorInset:UIEdgeInsetsZero];
 
 	// setup bottom tab bar
-	CGRect navBarFrame = self.navigationController.navigationBar.frame;
-	UITabBar *bottomBar = [[UITabBar alloc] initWithFrame:CGRectMake(0, kHeight - navBarFrame.size.height - 5, kWidth, navBarFrame.size.height)];
-	[[[[UIApplication sharedApplication] windows] firstObject] addSubview:bottomBar];
+	UIWindow *keyWindow = [[[UIApplication sharedApplication] windows] firstObject];
+	UITabBar *bottomBar = [[UITabBar alloc] init];
+	[keyWindow addSubview:bottomBar];
+
+	[bottomBar setTranslatesAutoresizingMaskIntoConstraints:NO];
+	[[bottomBar.widthAnchor constraintEqualToConstant:kWidth] setActive:YES];
+	[[bottomBar.heightAnchor constraintEqualToConstant:self.navigationController.navigationBar.frame.size.height + 5] setActive:YES];
+	[[bottomBar.bottomAnchor constraintEqualToAnchor:keyWindow.bottomAnchor] setActive:YES];
+
 	[bottomBar setDelegate:self];
 
 	UITabBarItem *create = [[UITabBarItem alloc] initWithTitle:@"Create" image:[UIImage systemImageNamed:@"plus.app"] tag:0];

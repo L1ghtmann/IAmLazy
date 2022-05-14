@@ -30,6 +30,7 @@
 	[super loadView];
 
 	[self.tableView setScrollEnabled:NO];
+	[self.tableView setSeparatorInset:UIEdgeInsetsZero];
 }
 
 -(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
@@ -118,17 +119,17 @@
 #pragma mark Functionality
 
 -(void)restoreLatestBackup:(BOOL)latest ofType:(NSInteger)type{
-	// set extension based on type
-	NSString *extension;
+	// set desiredExtension based on type
+	NSString *desiredExtension;
 	switch(type){
 		case 0:
-			extension = @".tar.gz";
+			desiredExtension = @"tar.gz";
 			break;
 		case 1:
-			extension = @".txt";
+			desiredExtension = @"txt";
 			break;
 		default:
-			extension = @"";
+			desiredExtension = @"";
 			break;
 	}
 
@@ -139,9 +140,9 @@
 		// get latest backup
 		__block NSString *backupName;
 		[backups enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop){
-			NSString *name = (NSString*)obj;
-			if([name containsString:extension]){
-				backupName = name;
+			NSString *fileExtension = [(NSString*)obj pathExtension];
+			if([fileExtension isEqualToString:desiredExtension]){
+				backupName = obj;
 				*stop = YES; // stop enumerating
 				return;
 			}
@@ -174,7 +175,7 @@
 	}
 	else{
 		// get (sorted) backup filenames
-		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH %@", extension];
+		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH %@", desiredExtension];
 		NSArray *backupNames = [backups filteredArrayUsingPredicate:thePredicate];
 
 		// get backup creation dates
@@ -184,7 +185,7 @@
 		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
 		[set addCharactersInString:@"+-."];
 		for(NSString *backup in backupNames){
-			BOOL valid = [[backup stringByTrimmingCharactersInSet:set] isEqualToString:@""];
+			BOOL valid = ![[backup stringByTrimmingCharactersInSet:set] length];
 			if(valid){
 				NSString *dateString;
 				NSError *readError = nil;
@@ -211,7 +212,7 @@
 		// make each available backup its own action
 		for(int i = 0; i < [backupNames count]; i++){
 			NSString *backupName = backupNames[i];
-			BOOL valid = [[backupName stringByTrimmingCharactersInSet:set] isEqualToString:@""];
+			BOOL valid = ![[backupName stringByTrimmingCharactersInSet:set] length];
 			if(valid){
 				NSString *backupDate = backupDates[i];
 				NSString *backup = [NSString stringWithFormat:@"%@ [%@]", backupName, backupDate];
