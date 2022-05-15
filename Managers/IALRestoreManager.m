@@ -120,7 +120,7 @@
 	}
 
 	BOOL check = YES;
-	if([[targetBackup pathExtension] isEqualToString:@"deb"]){
+	if([targetBackup hasSuffix:@".tar.gz"]){
 		check = [fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap]];
 	}
 	else{ // list backup
