@@ -88,7 +88,7 @@
 		[self buildDebs];
 		[notifCenter postNotificationName:@"updateProgress" object:@"2"];
 
-		// for unfiltered backups, create hidden file specifying the bootstrap it was created on
+		// for unfiltered backups, create specify the bootstrap it was created on
 		if(!filter) [self makeBootstrapFile];
 
 		// make archive of packages
@@ -203,7 +203,6 @@
 -(NSArray<NSString *> *)getUserPackages{
 	// get apt lists
 	NSError *readError = nil;
-	NSString *aptListsDir = @"/var/lib/apt/lists/";
 	NSArray *aptLists = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:aptListsDir error:&readError];
 	if(readError){
 		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", aptListsDir, readError);
@@ -252,10 +251,10 @@
 -(NSArray<NSString *> *)getControlFiles{
 	// get control files for all installed packages
 	NSError *readError = nil;
-	NSString *path = @"/var/lib/dpkg/status";
-	NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&readError];
+	NSString *dpkgStatusDir = @"/var/lib/dpkg/status";
+	NSString *contents = [NSString stringWithContentsOfFile:dpkgStatusDir encoding:NSUTF8StringEncoding error:&readError];
 	if(readError){
-		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", path, readError);
+		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", dpkgStatusDir, readError);
 		return [NSArray new];
 	}
 
@@ -292,7 +291,7 @@
 		if(valid){
 			// get installed files
 			NSError *readError = nil;
-			NSString *path = [NSString stringWithFormat:@"/var/lib/dpkg/info/%@.list", package];
+			NSString *path = [[dpkgInfoDir stringByAppendingPathComponent:package] stringByAppendingPathExtension:@"list"];
 			NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&readError];
 			if(readError){
 				NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", path, readError);
@@ -418,7 +417,7 @@
 	NSArray *theOne = [_controlFiles filteredArrayUsingPredicate:thePredicate];
 	if(![theOne count]) return;
 
-	NSString *relevantControl = [theOne firstObject]; // count should be 1
+	NSString *relevantControl = [theOne firstObject];
 	NSString *noStatusLine = [relevantControl stringByReplacingOccurrencesOfString:@"Status: install ok installed\n" withString:@""];
 	NSString *info = [noStatusLine stringByAppendingString:@"\n"]; // ensure final newline (deb will fail to build if missing)
 

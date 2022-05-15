@@ -185,25 +185,19 @@
 		NSMutableArray *backupDates = [NSMutableArray new];
 		NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
 		[formatter setDateFormat:@"MMM dd, yyyy"];
-		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
-		[set addCharactersInString:@"+-."];
 		for(NSString *backup in backupNames){
-			BOOL valid = ![[backup stringByTrimmingCharactersInSet:set] length];
-			if(valid){
-				NSString *dateString;
-				NSError *readError = nil;
-				NSString *path = [backupDir stringByAppendingPathComponent:backup];
-				NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:&readError];
-				if(readError){
-					NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", path, readError);
-					dateString = @"Error";
-				}
-				else{
-					dateString = [formatter stringFromDate:[fileAttributes fileCreationDate]];
-				}
-
-				[backupDates addObject:dateString];
+			NSString *dateString;
+			NSError *readError = nil;
+			NSString *path = [backupDir stringByAppendingPathComponent:backup];
+			NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:&readError];
+			if(readError){
+				NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", path, readError);
+				dateString = @"Error";
 			}
+			else{
+				dateString = [formatter stringFromDate:[fileAttributes fileCreationDate]];
+			}
+			[backupDates addObject:dateString];
 		}
 
 		// post list of available backups
@@ -215,43 +209,40 @@
 		// make each available backup its own action
 		for(int i = 0; i < [backupNames count]; i++){
 			NSString *backupName = backupNames[i];
-			BOOL valid = ![[backupName stringByTrimmingCharactersInSet:set] length];
-			if(valid){
-				NSString *backupDate = backupDates[i];
-				NSString *backup = [NSString stringWithFormat:@"%@ [%@]", backupName, backupDate];
+			NSString *backupDate = backupDates[i];
+			NSString *backup = [NSString stringWithFormat:@"%@ [%@]", backupName, backupDate];
 
-				// get confirmation before proceeding
-				UIAlertAction *action = [UIAlertAction
-											actionWithTitle:backup
-											style:UIAlertActionStyleDefault
-											handler:^(UIAlertAction *action){
-												UIAlertController *subalert = [UIAlertController
-																				alertControllerWithTitle:@"IAmLazy"
-																				message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName]
-																				preferredStyle:UIAlertControllerStyleAlert];
+			// get confirmation before proceeding
+			UIAlertAction *action = [UIAlertAction
+										actionWithTitle:backup
+										style:UIAlertActionStyleDefault
+										handler:^(UIAlertAction *action){
+											UIAlertController *subalert = [UIAlertController
+																			alertControllerWithTitle:@"IAmLazy"
+																			message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName]
+																			preferredStyle:UIAlertControllerStyleAlert];
 
-												UIAlertAction *yes = [UIAlertAction
-																		actionWithTitle:@"Yes"
-																		style:UIAlertActionStyleDefault
-																		handler:^(UIAlertAction *action){
-																			[self restoreFromBackup:backupName ofType:type];
-																		}];
+											UIAlertAction *yes = [UIAlertAction
+																	actionWithTitle:@"Yes"
+																	style:UIAlertActionStyleDefault
+																	handler:^(UIAlertAction *action){
+																		[self restoreFromBackup:backupName ofType:type];
+																	}];
 
-												UIAlertAction *no = [UIAlertAction
-																		actionWithTitle:@"No"
-																		style:UIAlertActionStyleDefault
-																		handler:^(UIAlertAction *action){
-																			[self dismissViewControllerAnimated:YES completion:nil];
-																		}];
+											UIAlertAction *no = [UIAlertAction
+																	actionWithTitle:@"No"
+																	style:UIAlertActionStyleDefault
+																	handler:^(UIAlertAction *action){
+																		[self dismissViewControllerAnimated:YES completion:nil];
+																	}];
 
-												[subalert addAction:yes];
-												[subalert addAction:no];
+											[subalert addAction:yes];
+											[subalert addAction:no];
 
-												[self presentViewController:subalert animated:YES completion:nil];
-											}];
+											[self presentViewController:subalert animated:YES completion:nil];
+										}];
 
-				[alert addAction:action];
-			}
+			[alert addAction:action];
 		}
 
 		UIAlertAction *cancel = [UIAlertAction

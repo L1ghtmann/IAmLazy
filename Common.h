@@ -6,6 +6,9 @@
 #define backupDir @"/var/mobile/Documents/me.lightmann.iamlazy/"
 #define logDir @"/var/mobile/Documents/me.lightmann.iamlazy/logs/"
 
+#define dpkgInfoDir @"/var/lib/dpkg/info/"
+#define aptListsDir @"/var/lib/apt/lists/"
+
 #define kWidth [UIScreen mainScreen].bounds.size.width
 #define kHeight [UIScreen mainScreen].bounds.size.height
 

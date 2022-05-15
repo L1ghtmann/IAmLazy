@@ -43,7 +43,6 @@
 
 -(void)loadView{
 	[super loadView];
-
 	[self.view setBackgroundColor:fillColor];
 }
 
@@ -177,7 +176,7 @@
 		[fill.layer setCornerRadius:backgroundSize/2];
 		[fill setBackgroundColor:fillColor];
 
-		// image
+		// icon
 		UIImageView *item = [[UIImageView alloc] init];
 		[fill addSubview:item];
 		[_items addObject:item];
@@ -259,7 +258,7 @@
 -(void)updateProgress:(NSNotification *)notification{
 	CGFloat item = [(NSString *)notification.object floatValue];
 	int itemInt = ceil(item);
-	BOOL isInteger = itemInt == item;
+	BOOL isInteger = item == itemInt;
 
 	// Note: colorWithRed:green:blue:alpha: seems to use sRGB, not Adobe RGB (https://stackoverflow.com/a/40052756)
 	// A helpful link -- https://www.easyrgb.com/en/convert.php#inputFORM

@@ -146,7 +146,7 @@ void extract_archive(const char *filename){
 	flags |= ARCHIVE_EXTRACT_ACL;
 	flags |= ARCHIVE_EXTRACT_FFLAGS;
 
-	// extract in tmp/
+	// extract location
 	chdir("/tmp/");
 
 	// go to work

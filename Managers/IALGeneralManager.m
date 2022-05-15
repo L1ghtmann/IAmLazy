@@ -71,19 +71,18 @@
 	NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '.tar.gz'"];
 	NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '.txt'"];
 	NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'IAmLazy-'"];
-	NSPredicate *predicate12 = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicate1, predicate2]];  // combine with "or"
-	NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate12, predicate3]];  // combine with "and"
+	NSPredicate *predicate12 = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicate1, predicate2]];
+	NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate12, predicate3]];
 	NSArray *backups = [backupDirContents filteredArrayUsingPredicate:thePredicate];
 	if(![backups count]){
 		[self displayErrorWithMessage:[NSString stringWithFormat:@"%@ contains no backups!", backupDir]];
 		return [NSArray new];
 	}
 
-	// sort backups (https://stackoverflow.com/a/43096808)
-	NSSortDescriptor *nameDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self" ascending:YES comparator:^NSComparisonResult(id obj1, id obj2){
-		return - [(NSString *)obj1 compare:(NSString *)obj2 options:NSNumericSearch]; // note: "-" == NSOrderedDescending
+	NSSortDescriptor *fileNameCompare = [NSSortDescriptor sortDescriptorWithKey:nil ascending:NO comparator:^NSComparisonResult(id obj1, id obj2){
+		return [(NSString *)obj1 compare:(NSString *)obj2 options:NSNumericSearch];
 	}];
-	NSArray *sortedBackups = [backups sortedArrayUsingDescriptors:@[nameDescriptor]];
+	NSArray *sortedBackups = [backups sortedArrayUsingDescriptors:@[fileNameCompare]];
 	return sortedBackups;
 }
 
@@ -116,6 +115,7 @@
 
 	[alert addAction:okay];
 
+	// dismiss progress view and display error alert
 	[_rootVC dismissViewControllerAnimated:YES completion:^{
 		[_rootVC presentViewController:alert animated:YES completion:nil];
 	}];

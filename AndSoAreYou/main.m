@@ -8,17 +8,13 @@
 #import "../Common.h"
 #import <sys/stat.h>
 
-void logErrorWithMessage(NSString *msg){
-	NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
-}
-
 NSString *getCurrentPackage(){
 	NSError *readError = nil;
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	NSArray *tmpDirFiles = [fileManager contentsOfDirectoryAtPath:tmpDir error:&readError];
 	if(readError){
 		NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", tmpDir, readError];
-		logErrorWithMessage(msg);
+		NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 		return @"";
 	}
 	else if(![tmpDirFiles count]){
@@ -41,7 +37,7 @@ NSString *getCurrentPackage(){
 				NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:filePath error:&readError2];
 				if(readError2){
 					NSString *msg = [NSString stringWithFormat:@"Failed to get attributes of %@! Error: %@", filePath, readError2];
-					logErrorWithMessage(msg);
+					NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 					continue;
 				}
 
@@ -53,8 +49,8 @@ NSString *getCurrentPackage(){
 	}
 
 	NSArray *dates = [dirsAndCreationDates allKeys];
-	NSSortDescriptor *descriptor = [NSSortDescriptor sortDescriptorWithKey:nil ascending:NO selector:@selector(compare:)];
-	NSArray *sortedDates = [dates sortedArrayUsingDescriptors:@[descriptor]];
+	NSSortDescriptor *compare = [NSSortDescriptor sortDescriptorWithKey:nil ascending:NO selector:@selector(compare:)];
+	NSArray *sortedDates = [dates sortedArrayUsingDescriptors:@[compare]];
 	NSString *latestDir = [dirsAndCreationDates objectForKey:[sortedDates firstObject]];
 	return latestDir;
 }
@@ -103,7 +99,7 @@ int main(int argc, char *argv[]){
 		[[NSFileManager defaultManager] removeItemAtPath:tmpDir error:&deleteError];
 		if(deleteError){
 			NSString *msg = [NSString stringWithFormat:@"Failed to delete %@! Error: %@", tmpDir, deleteError];
-			logErrorWithMessage(msg);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 			return 1;
 		}
 	}
@@ -113,7 +109,7 @@ int main(int argc, char *argv[]){
 		NSString *toCopy = [NSString stringWithContentsOfFile:filesToCopy encoding:NSUTF8StringEncoding error:&readError];
 		if(readError){
 			NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", filesToCopy, readError];
-			logErrorWithMessage(msg);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 			return 1;
 		}
 
@@ -139,13 +135,13 @@ int main(int argc, char *argv[]){
 			[fileManager createDirectoryAtPath:newPath withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
 				NSString *msg = [NSString stringWithFormat:@"Failed to create %@! Error: %@", newPath, writeError];
-				logErrorWithMessage(msg);
+				NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 				continue;
 			}
 
 			// 'reenable' tweaks that've been disabled with iCleaner Pro
 			NSString *extension = [file pathExtension];
-			if([[[file pathExtension] lowercaseString] isEqualToString:@"disabled"]){
+			if([[extension lowercaseString] isEqualToString:@"disabled"]){
 				extension = @"dylib";
 			}
 			NSString *newFile = [[[file lastPathComponent] stringByDeletingPathExtension] stringByAppendingPathExtension:extension];
@@ -156,24 +152,23 @@ int main(int argc, char *argv[]){
 			[fileManager copyItemAtPath:file toPath:newFilePath error:&writeError2];
 			if(writeError2){
 				NSString *msg = [NSString stringWithFormat:@"Failed to copy %@! Error: %@", file, writeError2];
-				logErrorWithMessage(msg);
+				NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 			}
 		}
 	}
 	else if(strcmp(argv[1], "cpDFiles") == 0){
-		// get DEBIAN files (e.g., pre/post scripts)
+		// get DEBIAN files (e.g., maintainer scripts)
 		NSError *readError = nil;
-		NSString *dpkgInfoDir = @"/var/lib/dpkg/info/";
 		NSFileManager *fileManager = [NSFileManager defaultManager];
 		NSArray *dpkgInfo = [fileManager contentsOfDirectoryAtPath:dpkgInfoDir error:&readError];
 		if(readError){
 			NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", dpkgInfoDir, readError];
-			logErrorWithMessage(msg);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 			return 1;
 		}
 		else if(![dpkgInfo count]){
 			NSString *msg = [NSString stringWithFormat:@"%@ is empty!", dpkgInfoDir];
-			logErrorWithMessage(msg);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 			return 1;
 		}
 
@@ -186,8 +181,8 @@ int main(int argc, char *argv[]){
 		NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate1, antiPredicate23]];
 		NSArray *debainFiles = [dpkgInfo filteredArrayUsingPredicate:thePredicate];
 		if(![debainFiles count]){
-			NSString *msg = [NSString stringWithFormat:@"debianFiles is empty for %@", tweakName];
-			logErrorWithMessage(msg);
+			NSString *msg = [NSString stringWithFormat:@"%@ has no DEBIAN files.", tweakName];
+			NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 			return 1;
 		}
 
@@ -206,7 +201,7 @@ int main(int argc, char *argv[]){
 			[fileManager copyItemAtPath:filePath toPath:[debian stringByAppendingPathComponent:strippedName] error:&writeError];
 			if(writeError){
 				NSString *msg = [NSString stringWithFormat:@"Failed to copy %@! Error: %@", filePath, writeError];
-				logErrorWithMessage(msg);
+				NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 			}
 		}
 	}
@@ -217,12 +212,12 @@ int main(int argc, char *argv[]){
 		NSArray *tmpDirContents = [fileManager contentsOfDirectoryAtPath:tmpDir error:&readError];
 		if(readError){
 			NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", tmpDir, readError];
-			logErrorWithMessage(msg);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 			return 1;
 		}
 		else if(![tmpDirContents count]){
 			NSString *msg = [NSString stringWithFormat:@"%@ is empty!", tmpDir];
-			logErrorWithMessage(msg);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 			return 1;
 		}
 
@@ -241,7 +236,7 @@ int main(int argc, char *argv[]){
 			}
 		}
 		if(![tweakDirs count]){
-			logErrorWithMessage(@"tweakDirs is empty!");
+			NSLog(@"[IAmLazyLog] AndSoAreYou: tweakDirs is empty!");
 			return 1;
 		}
 
@@ -278,7 +273,7 @@ int main(int argc, char *argv[]){
 			[fileManager removeItemAtPath:tweak error:&deleteError];
 			if(deleteError){
 				NSString *msg = [NSString stringWithFormat:@"Failed to delete %@! Error: %@", tweak, deleteError];
-				logErrorWithMessage(msg);
+				NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 			}
 		}
 
@@ -286,7 +281,7 @@ int main(int argc, char *argv[]){
 		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
 		if(writeError){
 			NSString *msg = [NSString stringWithFormat:@"Failed to write to %@! Error: %@", log, writeError];
-			logErrorWithMessage(msg);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 		}
 	}
 	else if(strcmp(argv[1], "installDebs") == 0){
@@ -296,12 +291,12 @@ int main(int argc, char *argv[]){
 		NSArray *tmpDirContents = [fileManager contentsOfDirectoryAtPath:tmpDir error:&readError];
 		if(readError){
 			NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", tmpDir, readError];
-			logErrorWithMessage(msg);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 			return 1;
 		}
 		else if(![tmpDirContents count]){
 			NSString *msg = [NSString stringWithFormat:@"%@ is empty!", tmpDir];
-			logErrorWithMessage(msg);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 			return 1;
 		}
 
@@ -319,7 +314,7 @@ int main(int argc, char *argv[]){
 		}
 		if(![debs count]){
 			NSString *msg = [NSString stringWithFormat:@"%@ has no debs!", tmpDir];
-			logErrorWithMessage(msg);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 			return 1;
 		}
 
@@ -352,7 +347,7 @@ int main(int argc, char *argv[]){
 		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
 		if(writeError){
 			NSString *msg = [NSString stringWithFormat:@"Failed to write to %@! Error: %@", log, writeError];
-			logErrorWithMessage(msg);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 		}
 
 		// resolve any lingering things (e.g., conflicts, partial installs due to dependencies, etc)
@@ -387,7 +382,7 @@ int main(int argc, char *argv[]){
 		[log2Text writeToFile:log2 atomically:YES encoding:NSUTF8StringEncoding error:&writeError2];
 		if(writeError2){
 			NSString *msg = [NSString stringWithFormat:@"Failed to write to %@! Error: %@", log2, writeError2];
-			logErrorWithMessage(msg);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: %@", msg);
 		}
 	}
 	else if(strcmp(argv[1], "rebootUserspace") == 0){

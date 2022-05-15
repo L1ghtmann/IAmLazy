@@ -152,10 +152,10 @@
 
 -(NSDictionary<NSString *, NSString *> *)getAptListLocations{
 	NSDictionary *aptListLocations = @{
-		@"cydia" : @"/var/lib/apt/lists/",
+		@"cydia" : aptListsDir,
 		@"zebra" : @"/var/mobile/Library/Application Support/xyz.willy.Zebra/lists/"
 		/*
-		@"sileo" : @"/var/lib/apt/lists/",
+		@"sileo" : aptListsDir",
 		@"sileo2" : @"/var/lib/apt/sileolists/", // superfluous
 		@"installer" : @"/var/mobile/Library/Application Support/Installer/SourcesFiles/" // these are XZ-compressed?!
 		*/
@@ -243,7 +243,7 @@
 		}
 	}
 
-	// assign available packages to their respective download url
+	// assign available packages to their respective download urls
 	NSMutableArray *pkgsAndUrls = [NSMutableArray new];
 	for(NSString *path in aptListPaths){
 		if([fileManager fileExistsAtPath:path]){
@@ -337,7 +337,6 @@
 			if([tweak isEqualToString:@"elucubratus"] || [tweak isEqualToString:@"procursus"]){
 				continue;
 			}
-
 			[pkgs addObject:tweak];
 		}
 	}
@@ -358,17 +357,17 @@
 			return;
 		}
 
-		// get packages from (backup) list
-		NSArray *listPkgs = [self getPackagesForList:target];
-		if(![listPkgs count]){
+		// get desired packages (from backup list)
+		NSArray *desiredPkgs = [self getPackagesForList:target];
+		if(![desiredPkgs count]){
 			dispatch_semaphore_signal(sema); // exit wait block
 			NSString *msg = @"Failed to find valid packages in the target list! \n\nPlease try again.";
 			[_generalManager displayErrorWithMessage:msg];
 			return;
 		}
 
-		// get deb download urls for list packages
-		for(NSString *pkg in listPkgs){
+		// get download urls for desired packages
+		for(NSString *pkg in desiredPkgs){
 			NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"ANY SELF.@allKeys==[cd] %@", pkg];
 			NSArray *results = [availablePkgs filteredArrayUsingPredicate:thePredicate];
 			if(![results count]){
@@ -382,9 +381,10 @@
 				continue;
 			}
 
-			// count should be one
+			// pkgValues count should be exactly one
 			[debURLS addObject:[pkgValues firstObject]];
 		}
+
 		if(![debURLS count]){
 			dispatch_semaphore_signal(sema); // exit wait block
 			NSString *msg = @"Failed to determine deb urls for desired packages! \n\nPlease try again.";
@@ -475,6 +475,7 @@
 		}
 
 		NSError *deleteError = nil;
+		// pretty sure the delegate requests deletion of the file, but just to be sure
 		[[NSFileManager defaultManager] removeItemAtURL:location error:&deleteError];
 		if(deleteError){
 			NSLog(@"[IAmLazyLog] Failed to delete %@. Error: %@", location, deleteError);
