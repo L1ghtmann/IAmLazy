@@ -25,7 +25,6 @@
 	_tabBarController = [UITabBarController new];
 	[_tabBarController setViewControllers:@[_rootViewController, _backupsViewController, _restoreViewController]];
 	[_window setRootViewController:_tabBarController];
-
 	[_window makeKeyAndVisible];
 
 	// check for rootless

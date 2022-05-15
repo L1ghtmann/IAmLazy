@@ -3,6 +3,6 @@
 @class IALGeneralManager;
 
 @interface IALBackupsViewController : UITableViewController <UIDocumentPickerDelegate>
-@property (nonatomic, retain) IALGeneralManager *generalManager;
+@property (nonatomic, retain) IALGeneralManager *manager;
 @property (nonatomic, retain) NSMutableArray *backups;
 @end

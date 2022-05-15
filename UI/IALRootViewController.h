@@ -2,6 +2,6 @@
 
 @class IALGeneralManager;
 
-@interface IALRootViewController : UITableViewController <UITabBarDelegate>
+@interface IALRootViewController : UITableViewController
 @property (nonatomic, retain) IALGeneralManager *manager;
 @end

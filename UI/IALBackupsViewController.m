@@ -22,8 +22,12 @@
 	self = [super initWithStyle:UITableViewStyleGrouped];
 
 	if(self){
-		_generalManager = [IALGeneralManager sharedManager];
-		[self getBackups];
+		_manager = [IALGeneralManager sharedManager];
+
+		// set tabbar item
+		UITabBarItem *backups = [[UITabBarItem alloc] initWithTitle:@"Backups" image:[UIImage systemImageNamed:@"folder.fill"] tag:1];
+		[backups setTitlePositionAdjustment:UIOffsetMake(0.0, -2.0)];
+		[self setTabBarItem:backups];
 	}
 
 	return self;
@@ -32,7 +36,8 @@
 -(void)loadView{
 	[super loadView];
 
-	[self.tableView setSeparatorInset:UIEdgeInsetsZero];
+	// get data to present
+	[self getBackups];
 
 	// replace info nav bar button with import button
 	UIBarButtonItem *importItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"plus.circle.fill"] style:UIBarButtonItemStylePlain target:self action:@selector(importBackup)];
@@ -119,13 +124,13 @@
 			[fileManager removeItemAtPath:filePath error:&deleteError];
 			if(deleteError){
 				NSString *msg = [NSString stringWithFormat:@"An error occured and %@ was not deleted!\n\nError: %@", backupName, deleteError];
-				[_generalManager displayErrorWithMessage:msg];
+				[_manager displayErrorWithMessage:msg];
 				return;
 			}
 		}
 		else{
 			NSString *msg = [NSString stringWithFormat:@"%@ cannot be deleted?!", filePath];
-			[_generalManager displayErrorWithMessage:msg];
+			[_manager displayErrorWithMessage:msg];
 			return;
 		}
 
@@ -146,7 +151,7 @@
 }
 
 -(void)getBackups{
-	_backups = [[_generalManager getBackups] mutableCopy];
+	_backups = [[_manager getBackups] mutableCopy];
 }
 
 #pragma mark Functionality
@@ -175,7 +180,7 @@
 	[[NSFileManager defaultManager] copyItemAtURL:url toURL:backupDirURL error:&writeError];
 	if(!writeError){
 		NSString *msg = [NSString stringWithFormat:@"An error occured and %@ could not be imported! \n\nError: %@", [url absoluteString], writeError];
-		[_generalManager displayErrorWithMessage:msg];
+		[_manager displayErrorWithMessage:msg];
 	}
 
 	[self refreshTable];

@@ -10,7 +10,6 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import "IALProgressViewController.h"
 #import "IALRootViewController.h"
-#import "../IALAppDelegate.h"
 #import "IALTableViewCell.h"
 #import "../Common.h"
 
@@ -24,6 +23,11 @@
 	if(self){
 		_manager = [IALGeneralManager sharedManager];
 		[_manager setRootVC:self];
+
+		// set tabbar item
+		UITabBarItem *create = [[UITabBarItem alloc] initWithTitle:@"Create" image:[UIImage systemImageNamed:@"plus.app"] tag:0];
+		[create setTitlePositionAdjustment:UIOffsetMake(0.0, -2.0)];
+		[self setTabBarItem:create];
 	}
 
 	return self;
@@ -31,49 +35,7 @@
 
 -(void)loadView{
 	[super loadView];
-
 	[self.tableView setScrollEnabled:NO];
-	[self.tableView setSeparatorInset:UIEdgeInsetsZero];
-
-	// setup bottom tab bar
-	UIWindow *keyWindow = [[[UIApplication sharedApplication] windows] firstObject];
-	UITabBar *bottomBar = [[UITabBar alloc] init];
-	[keyWindow addSubview:bottomBar];
-
-	[bottomBar setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[bottomBar.widthAnchor constraintEqualToConstant:kWidth] setActive:YES];
-	[[bottomBar.heightAnchor constraintEqualToConstant:self.navigationController.navigationBar.frame.size.height + 5] setActive:YES];
-	[[bottomBar.bottomAnchor constraintEqualToAnchor:keyWindow.bottomAnchor] setActive:YES];
-
-	[bottomBar setDelegate:self];
-
-	UITabBarItem *create = [[UITabBarItem alloc] initWithTitle:@"Create" image:[UIImage systemImageNamed:@"plus.app"] tag:0];
-	UITabBarItem *backups = [[UITabBarItem alloc] initWithTitle:@"Backups" image:[UIImage systemImageNamed:@"folder.fill"] tag:1];
-	UITabBarItem *restore = [[UITabBarItem alloc] initWithTitle:@"Restore" image:[UIImage systemImageNamed:@"arrow.counterclockwise.circle"] tag:2];
-
-	UIOffset offset = UIOffsetMake(0.0, -2.0);
-	[create setTitlePositionAdjustment:offset];
-	[backups setTitlePositionAdjustment:offset];
-	[restore setTitlePositionAdjustment:offset];
-
-	NSArray *tabBarItems = @[create, backups, restore];
-	[bottomBar setItems:tabBarItems];
-	[bottomBar setSelectedItem:[tabBarItems objectAtIndex:0]];
-}
-
--(void)tabBar:(UITabBar *)tabBar didSelectItem:(UITabBarItem *)item{
-	IALAppDelegate *delegate = (IALAppDelegate *)[[UIApplication sharedApplication] delegate];
-	switch([tabBar.selectedItem tag]){
-		case 0:
-			[delegate.tabBarController setSelectedViewController:delegate.rootViewController];
-			break;
-		case 1:
-			[delegate.tabBarController setSelectedViewController:delegate.backupsViewController];
-			break;
-		default:
-			[delegate.tabBarController setSelectedViewController:delegate.restoreViewController];
-			break;
-	}
 }
 
 -(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{

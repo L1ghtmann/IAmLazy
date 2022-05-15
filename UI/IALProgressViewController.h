@@ -1,7 +1,6 @@
 #import <UIKit/UIKit.h>
 
 @interface IALProgressViewController : UIViewController
-@property (nonatomic) int itemCount;
 @property (nonatomic) NSMutableArray *items;
 @property (nonatomic) NSMutableArray *itemIcons;
 @property (nonatomic) NSMutableArray *itemDescriptions;

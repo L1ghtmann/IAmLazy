@@ -25,18 +25,14 @@
 			purpose: 0 = backup | 1 = restore
 			type: 0 = deb | 1 = list
 		*/
-		if(purpose == 0 && type == 0){
-			_itemCount = 4;
-		}
-		else{
-			_itemCount = 3;
-		}
+		int itemCount = 3;
+		if(purpose == 0 && type == 0) itemCount = 4;
 
 		_itemIcons = [self iconsForPurpose:purpose ofType:type];
 		_itemDescriptions = [self itemDescriptionsForPurpose:purpose ofType:type withFilter:filter];
 
 		[self makeTitleWithPurpose:purpose];
-		[self makeListWithItems:_itemCount];
+		[self makeListWithItems:itemCount];
 		[self makeLoadingWheel];
 
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateProgress:) name:@"updateProgress" object:nil];
@@ -64,12 +60,12 @@
 		if(type == 0){
 			[icons addObject:@"rectangle.on.rectangle.angled"];
 			[icons addObject:@"rectangle.3.offgrid"];
+			[icons addObject:@"folder.badge.plus"];
 		}
 		else{
 			[icons addObject:@"increase.indent"];
 			[icons addObject:@"pencil"];
 		}
-		[icons addObject:@"folder.badge.plus"];
 	}
 	else{
 		[icons addObject:@"text.badge.checkmark"];

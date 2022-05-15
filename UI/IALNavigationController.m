@@ -6,6 +6,7 @@
 //
 
 #import "IALNavigationController.h"
+#import "../IALAppDelegate.h"
 
 @implementation IALNavigationController
 
@@ -51,6 +52,10 @@
 	NSURL *url = [NSURL URLWithString:@"https://github.com/L1ghtmann/IAmLazy"];
 	[_webView loadRequest:[NSURLRequest requestWithURL:url]];
 	[self.visibleViewController.view addSubview:_webView];
+
+	// hide tabbar
+	IALAppDelegate *delegate = (IALAppDelegate*)[[UIApplication sharedApplication] delegate];
+	[delegate.tabBarController.tabBar setAlpha:0];
 }
 
 -(void)closeWebView{
@@ -61,15 +66,21 @@
 			}
 	 		completion:^(BOOL finished){
 				[_webView removeFromSuperview];
+				_webViewConfiguration = nil;
+				_webView = nil;
 			}];
-	_webViewConfiguration = nil;
-	_webView = nil;
 
 	// reset left nav bar buttons (set to just the src button)
 	[self.visibleViewController.navigationItem setLeftBarButtonItems:@[_srcItem]];
 
 	// unhide right nav bar button
 	[self.visibleViewController.navigationItem.rightBarButtonItem setTintColor:nil];
+
+	// unhide tabbar
+	IALAppDelegate *delegate = (IALAppDelegate*)[[UIApplication sharedApplication] delegate];
+	[UIView animateWithDuration:0.2 animations:^{
+		[delegate.tabBarController.tabBar setAlpha:1];
+	}];
 }
 
 -(void)popInfo{

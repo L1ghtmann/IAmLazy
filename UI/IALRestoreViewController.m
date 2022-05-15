@@ -21,6 +21,11 @@
 
 	if(self){
 		_manager = [IALGeneralManager sharedManager];
+
+		// set tabbar item
+		UITabBarItem *restore = [[UITabBarItem alloc] initWithTitle:@"Restore" image:[UIImage systemImageNamed:@"arrow.counterclockwise.circle"] tag:2];
+		[restore setTitlePositionAdjustment:UIOffsetMake(0.0, -2.0)];
+		[self setTabBarItem:restore];
 	}
 
 	return self;
@@ -28,9 +33,7 @@
 
 -(void)loadView{
 	[super loadView];
-
 	[self.tableView setScrollEnabled:NO];
-	[self.tableView setSeparatorInset:UIEdgeInsetsZero];
 }
 
 -(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
@@ -119,17 +122,17 @@
 #pragma mark Functionality
 
 -(void)restoreLatestBackup:(BOOL)latest ofType:(NSInteger)type{
-	// set desiredExtension based on type
-	NSString *desiredExtension;
+	// set extension based on type
+	NSString *extension;
 	switch(type){
 		case 0:
-			desiredExtension = @"tar.gz";
+			extension = @"tar.gz";
 			break;
 		case 1:
-			desiredExtension = @"txt";
+			extension = @"txt";
 			break;
 		default:
-			desiredExtension = @"";
+			extension = @"";
 			break;
 	}
 
@@ -140,9 +143,9 @@
 		// get latest backup
 		__block NSString *backupName;
 		[backups enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop){
-			NSString *fileExtension = [(NSString*)obj pathExtension];
-			if([fileExtension isEqualToString:desiredExtension]){
-				backupName = obj;
+			NSString *file = (NSString*)obj;
+			if([file hasSuffix:extension]){
+				backupName = file;
 				*stop = YES; // stop enumerating
 				return;
 			}
@@ -175,7 +178,7 @@
 	}
 	else{
 		// get (sorted) backup filenames
-		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH %@", desiredExtension];
+		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH %@", extension];
 		NSArray *backupNames = [backups filteredArrayUsingPredicate:thePredicate];
 
 		// get backup creation dates
