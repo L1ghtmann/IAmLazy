@@ -104,16 +104,19 @@
 
 -(BOOL)verifyBootstrapForBackup:(NSString *)targetBackup{
 	NSString *bootstrap = @"elucubratus";
+	NSString *oldBootstrap = @"bingner_elucubratus"; // pre v2
 	NSString *altBootstrap = @"procursus";
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if([fileManager fileExistsAtPath:@"/.procursus_strapped"]){
 		bootstrap = @"procursus";
+		oldBootstrap = @"";
 		altBootstrap = @"elucubratus";
 	}
 
 	BOOL check = YES;
 	if([targetBackup hasSuffix:@".tar.gz"]){
 		check = [fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap]];
+		if([oldBootstrap length]) check = [fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@.made_on_%@", tmpDir, oldBootstrap]];
 	}
 	else{ // list backup
 		NSError *readError = nil;
@@ -132,6 +135,7 @@
 		}
 
 		check = [[bits firstObject] isEqualToString:bootstrap];
+		if([oldBootstrap length]) check = [[bits firstObject] isEqualToString:oldBootstrap];
 	}
 
 	if(!check){
@@ -326,7 +330,7 @@
 		BOOL valid = ![[tweak stringByTrimmingCharactersInSet:set] length];
 		if(valid){
 			// ignore unfiltered list backup's bootstrap identifier
-			if([tweak isEqualToString:@"elucubratus"] || [tweak isEqualToString:@"procursus"]){
+			if([tweak isEqualToString:@"elucubratus"] || [tweak isEqualToString:@"bingner_elucubratus"] || [tweak isEqualToString:@"procursus"]){
 				continue;
 			}
 			[pkgs addObject:tweak];
@@ -366,9 +370,9 @@
 			NSArray *results = [availablePkgs filteredArrayUsingPredicate:thePredicate];
 			if(![results count]){
 				NSString *msg = [NSString stringWithFormat:@"%@ has no download candidate!", pkg];
-				NSLog(@"[IAmLazyLog] %@", msg);
 				if(![logText length]) [logText appendString:msg];
 				else [logText appendString:[@"\n" stringByAppendingString:msg]];
+				NSLog(@"[IAmLazyLog] %@", msg);
 				continue;
 			}
 

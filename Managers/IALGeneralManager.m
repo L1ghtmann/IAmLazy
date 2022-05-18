@@ -79,16 +79,31 @@
 	[self executeCommandAsRoot:@"cleanTmp"];
 }
 
--(NSString *)getLatestBackup{
-	// get number from latest backup
+-(NSString *)craftNewBackupName{
 	int latestBackup;
-	NSScanner *scanner = [[NSScanner alloc] initWithString:[[self getBackups] firstObject]];
-	[scanner setCharactersToBeSkipped:[[NSCharacterSet decimalDigitCharacterSet] invertedSet]];
-	[scanner scanInt:&latestBackup];
+	NSString *latest = [[self getBackups] firstObject];
+	if([latest hasPrefix:@"IAL-"]){
+		// get number from latest backup
+		NSString *latestBackupNumber = [latest substringFromIndex:([latest rangeOfString:@"_"].location + 1)];
+		latestBackup = [latestBackupNumber intValue];
+	}
+	else if([latest hasPrefix:@"IAmLazy-"]){ // preV2
+		// get number from latest backup
+		NSScanner *scanner = [[NSScanner alloc] initWithString:latest];
+		[scanner setCharactersToBeSkipped:[[NSCharacterSet decimalDigitCharacterSet] invertedSet]];
+		[scanner scanInt:&latestBackup];
+	}
+	else{
+		latestBackup = 0;
+	}
 
-	// craft new backup name
-	NSString *backupName = [NSString stringWithFormat:@"IAmLazy-%d", latestBackup+1];
-	return backupName;
+	// grab date in desired format
+	NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
+	[formatter setDateFormat:@"yyyyMMd"];
+
+	// craft backup name
+	NSString *newBackupName = [NSString stringWithFormat:@"IAL-%@_%d", [formatter stringFromDate:[NSDate date]], (latestBackup + 1)];
+	return newBackupName;
 }
 
 -(NSArray<NSString *> *)getBackups{
@@ -101,18 +116,24 @@
 
 	NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '.tar.gz'"];
 	NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '.txt'"];
-	NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'IAmLazy-'"];
+	NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'IAL-'"];
+	NSPredicate *predicate4 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'IAmLazy-'"]; // pre v2
 	NSPredicate *predicate12 = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicate1, predicate2]];
-	NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate12, predicate3]];
-	NSArray *backups = [backupDirContents filteredArrayUsingPredicate:thePredicate];
-	if(![backups count]){
+	NSPredicate *thePredicate3 = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate12, predicate3]];
+	NSPredicate *thePredicate4 = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate12, predicate4]];
+	NSArray *newBackups = [backupDirContents filteredArrayUsingPredicate:thePredicate3];
+	NSArray *legacyBackups = [backupDirContents filteredArrayUsingPredicate:thePredicate4];
+	if(![newBackups count] && ![legacyBackups count]){
 		return [NSArray new];
 	}
 
 	NSSortDescriptor *fileNameCompare = [NSSortDescriptor sortDescriptorWithKey:nil ascending:NO comparator:^NSComparisonResult(id obj1, id obj2){
 		return [(NSString *)obj1 compare:(NSString *)obj2 options:NSNumericSearch];
 	}];
-	NSArray *sortedBackups = [backups sortedArrayUsingDescriptors:@[fileNameCompare]];
+	NSArray *newSortedBackups = [newBackups sortedArrayUsingDescriptors:@[fileNameCompare]];
+	NSArray *legacySortedBackups = [legacyBackups sortedArrayUsingDescriptors:@[fileNameCompare]];
+
+	NSArray *sortedBackups = [newSortedBackups arrayByAddingObjectsFromArray:legacySortedBackups];
 	return sortedBackups;
 }
 

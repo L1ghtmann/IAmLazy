@@ -177,28 +177,9 @@
 		[self presentViewController:alert animated:YES completion:nil];
 	}
 	else{
-		// get (sorted) backup filenames
+		// get desired backups
 		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH %@", extension];
-		NSArray *backupNames = [backups filteredArrayUsingPredicate:thePredicate];
-
-		// get backup creation dates
-		NSMutableArray *backupDates = [NSMutableArray new];
-		NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
-		[formatter setDateFormat:@"MMM dd, yyyy"];
-		for(NSString *backup in backupNames){
-			NSString *dateString;
-			NSError *readError = nil;
-			NSString *path = [backupDir stringByAppendingPathComponent:backup];
-			NSDictionary *fileAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:&readError];
-			if(readError){
-				NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", path, readError);
-				dateString = @"Error";
-			}
-			else{
-				dateString = [formatter stringFromDate:[fileAttributes fileCreationDate]];
-			}
-			[backupDates addObject:dateString];
-		}
+		NSArray *desiredBackups = [backups filteredArrayUsingPredicate:thePredicate];
 
 		// post list of available backups
 		UIAlertController *alert = [UIAlertController
@@ -207,11 +188,7 @@
 									preferredStyle:UIAlertControllerStyleAlert];
 
 		// make each available backup its own action
-		for(int i = 0; i < [backupNames count]; i++){
-			NSString *backupName = backupNames[i];
-			NSString *backupDate = backupDates[i];
-			NSString *backup = [NSString stringWithFormat:@"%@ [%@]", backupName, backupDate];
-
+		for(NSString *backup in desiredBackups){
 			// get confirmation before proceeding
 			UIAlertAction *action = [UIAlertAction
 										actionWithTitle:backup
@@ -219,14 +196,14 @@
 										handler:^(UIAlertAction *action){
 											UIAlertController *subalert = [UIAlertController
 																			alertControllerWithTitle:@"IAmLazy"
-																			message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName]
+																			message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backup]
 																			preferredStyle:UIAlertControllerStyleAlert];
 
 											UIAlertAction *yes = [UIAlertAction
 																	actionWithTitle:@"Yes"
 																	style:UIAlertActionStyleDefault
 																	handler:^(UIAlertAction *action){
-																		[self restoreFromBackup:backupName ofType:type];
+																		[self restoreFromBackup:backup ofType:type];
 																	}];
 
 											UIAlertAction *no = [UIAlertAction

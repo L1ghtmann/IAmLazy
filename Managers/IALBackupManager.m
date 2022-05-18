@@ -94,11 +94,11 @@
 		[notifCenter postNotificationName:@"updateProgress" object:@"1"];
 		[notifCenter postNotificationName:@"updateProgress" object:@"1.7"];
 
-		// get latest backup name and append the text file extension
+		// craft new backup name and append the text file extension
 		NSString *listName;
-		NSString *latest = [_generalManager getLatestBackup];
-		if(!filter) listName = [latest stringByAppendingString:@"u.txt"];
-		else listName = [latest stringByAppendingPathExtension:@"txt"];
+		NSString *new = [_generalManager craftNewBackupName];
+		if(!filter) listName = [new stringByAppendingString:@"u.txt"];
+		else listName = [new stringByAppendingPathExtension:@"txt"];
 
 		// write to file
 		NSString *filePath = [backupDir stringByAppendingPathComponent:listName];
@@ -455,11 +455,11 @@
 }
 
 -(void)makeTarballWithFilter:(BOOL)filter{
-	// get latest backup name and append the gzip tar extension
+	// craft new backup name and append the gzip tar extension
 	NSString *backupName;
-	NSString *latest = [_generalManager getLatestBackup];
-	if(!filter) backupName = [latest stringByAppendingString:@"u.tar.gz"];
-	else backupName = [latest stringByAppendingPathExtension:@"tar.gz"];
+	NSString *new = [_generalManager craftNewBackupName];
+	if(!filter) backupName = [new stringByAppendingString:@"u.tar.gz"];
+	else backupName = [new stringByAppendingPathExtension:@"tar.gz"];
 	NSString *backupPath = [backupDir stringByAppendingPathComponent:backupName];
 
 	// make tarball (and avoid stalling the main thread)
