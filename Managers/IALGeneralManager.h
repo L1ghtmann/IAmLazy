@@ -11,6 +11,7 @@
 +(instancetype)sharedManager;
 -(void)makeBackupOfType:(NSInteger)type withFilter:(BOOL)filter;
 -(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type;
+-(void)ensureBackupDirExists;
 -(void)cleanupTmp;
 -(NSString *)getLatestBackup;
 -(NSArray<NSString *> *)getBackups;

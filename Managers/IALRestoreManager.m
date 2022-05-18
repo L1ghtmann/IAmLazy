@@ -49,16 +49,8 @@
 		[_generalManager cleanupTmp];
 	}
 
-	// make log dir if it doesn't exist already
-	if(![fileManager fileExistsAtPath:logDir]){
-		NSError *writeError = nil;
-		[fileManager createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
-		if(writeError){
-			NSString *msg = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError];
-			[_generalManager displayErrorWithMessage:msg];
-			return;
-		}
-	}
+	// ensure logdir exists
+	[_generalManager ensureBackupDirExists];
 
 	if(type == 0){
 		[notifCenter postNotificationName:@"updateProgress" object:@"0.7"];

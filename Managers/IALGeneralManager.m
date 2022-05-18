@@ -22,6 +22,16 @@
 	return sharedManager;
 }
 
+-(instancetype)init{
+	self = [super init];
+
+	if(self){
+		[self ensureBackupDirExists];
+	}
+
+	return self;
+}
+
 #pragma mark Functionality
 
 -(void)makeBackupOfType:(NSInteger)type withFilter:(BOOL)filter{
@@ -42,6 +52,27 @@
 }
 
 #pragma mark General
+
+-(void)ensureBackupDirExists{
+	// check if Documents/ has root ownership (it shouldn't)
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	if([fileManager isWritableFileAtPath:@"/var/mobile/Documents/"] == 0){
+		NSString *msg = @"/var/mobile/Documents is not writeable. \n\nPlease ensure that the directory's owner is mobile and not root.";
+		[self displayErrorWithMessage:msg];
+		return;
+	}
+
+	// make backup and log dirs if they don't exist already
+	if(![fileManager fileExistsAtPath:logDir]){
+		NSError *writeError = nil;
+		[fileManager createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
+		if(writeError){
+			NSString *msg = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError];
+			[self displayErrorWithMessage:msg];
+			return;
+		}
+	}
+}
 
 -(void)cleanupTmp{
 	// has to be done as root since some files have root ownership
@@ -75,7 +106,6 @@
 	NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate12, predicate3]];
 	NSArray *backups = [backupDirContents filteredArrayUsingPredicate:thePredicate];
 	if(![backups count]){
-		[self displayErrorWithMessage:[NSString stringWithFormat:@"%@ contains no backups!", backupDir]];
 		return [NSArray new];
 	}
 

@@ -19,15 +19,11 @@
 	// make note of start time
 	_startTime = [NSDate date];
 
-	// check if Documents/ has root ownership (it shouldn't)
-	NSFileManager *fileManager = [NSFileManager defaultManager];
-	if([fileManager isWritableFileAtPath:@"/var/mobile/Documents/"] == 0){
-		NSString *msg = @"/var/mobile/Documents is not writeable. \n\nPlease ensure that the directory's owner is mobile and not root.";
-		[_generalManager displayErrorWithMessage:msg];
-		return;
-	}
+	// ensure backupdir exists
+	[_generalManager ensureBackupDirExists];
 
 	// check for old tmp files
+	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if([fileManager fileExistsAtPath:tmpDir]){
 		[_generalManager cleanupTmp];
 	}
@@ -72,17 +68,6 @@
 
 		[notifCenter postNotificationName:@"updateProgress" object:@"1"];
 
-		// make backup and log dirs if they don't exist already
-		if(![fileManager fileExistsAtPath:logDir]){
-			NSError *writeError = nil;
-			[fileManager createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
-			if(writeError){
-				NSString *msg = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError];
-				[_generalManager displayErrorWithMessage:msg];
-				return;
-			}
-		}
-
 		// build debs from bits
 		[notifCenter postNotificationName:@"updateProgress" object:@"1.7"];
 		[self buildDebs];
@@ -114,17 +99,6 @@
 		NSString *latest = [_generalManager getLatestBackup];
 		if(!filter) listName = [latest stringByAppendingString:@"u.txt"];
 		else listName = [latest stringByAppendingPathExtension:@"txt"];
-
-		// make backup and log dirs if they don't exist already
-		if(![fileManager fileExistsAtPath:logDir]){
-			NSError *writeError = nil;
-			[fileManager createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
-			if(writeError){
-				NSString *msg = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError];
-				[_generalManager displayErrorWithMessage:msg];
-				return;
-			}
-		}
 
 		// write to file
 		NSString *filePath = [backupDir stringByAppendingPathComponent:listName];
