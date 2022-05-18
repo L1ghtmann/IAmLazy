@@ -260,7 +260,7 @@
 				NSString *contents = [NSString stringWithContentsOfFile:file encoding:NSMacOSRomanStringEncoding error:&readError2];
 				if(readError2){
 					NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", file, readError2);
-					return [NSArray new];
+					continue;
 				}
 
 				NSArray *lines = [contents componentsSeparatedByString:@"\n"];
@@ -359,11 +359,16 @@
 		}
 
 		// get download urls for desired packages
+		NSString *log = [logDir stringByAppendingPathComponent:@"download_log.txt"];
+		NSMutableString *logText = [NSMutableString new];
 		for(NSString *pkg in desiredPkgs){
 			NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"ANY SELF.@allKeys==[cd] %@", pkg];
 			NSArray *results = [availablePkgs filteredArrayUsingPredicate:thePredicate];
 			if(![results count]){
-				NSLog(@"[IAmLazyLog] %@ has no download candidate!", pkg);
+				NSString *msg = [NSString stringWithFormat:@"%@ has no download candidate!", pkg];
+				NSLog(@"[IAmLazyLog] %@", msg);
+				if(![logText length]) [logText appendString:msg];
+				else [logText appendString:[@"\n" stringByAppendingString:msg]];
 				continue;
 			}
 
@@ -375,6 +380,17 @@
 
 			// pkgValues count should be exactly one
 			[debURLS addObject:[pkgValues firstObject]];
+		}
+
+		if([logText length]){
+			NSError *writeError = nil;
+			[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
+			if(writeError){
+				NSLog(@"[IAmLazyLog Failed to write to %@! Error: %@", log, writeError);
+			}
+		}
+		else{
+			logText = nil;
 		}
 
 		if(![debURLS count]){
