@@ -109,14 +109,14 @@
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if([fileManager fileExistsAtPath:@"/.procursus_strapped"]){
 		bootstrap = @"procursus";
-		oldBootstrap = @"";
+		oldBootstrap = @"procursus";
 		altBootstrap = @"elucubratus";
 	}
 
 	BOOL check = YES;
 	if([targetBackup hasSuffix:@".tar.gz"]){
 		check = [fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap]];
-		if([oldBootstrap length]) check = [fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@.made_on_%@", tmpDir, oldBootstrap]];
+		if(!check) check = [fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@.made_on_%@", tmpDir, oldBootstrap]];
 	}
 	else{ // list backup
 		NSError *readError = nil;
@@ -135,7 +135,7 @@
 		}
 
 		check = [[bits firstObject] isEqualToString:bootstrap];
-		if([oldBootstrap length]) check = [[bits firstObject] isEqualToString:oldBootstrap];
+		if(!check) check = [[bits lastObject] isEqualToString:[NSString stringWithFormat:@"## made on %@ ##", oldBootstrap]];
 	}
 
 	if(!check){

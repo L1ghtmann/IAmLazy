@@ -178,7 +178,7 @@
 
 	NSError *writeError = nil;
 	[[NSFileManager defaultManager] copyItemAtURL:url toURL:backupDirURL error:&writeError];
-	if(!writeError){
+	if(writeError){
 		NSString *msg = [NSString stringWithFormat:@"An error occured and %@ could not be imported! \n\nError: %@", [url absoluteString], writeError];
 		[_manager displayErrorWithMessage:msg];
 	}
