@@ -172,7 +172,7 @@
 -(void)popPostBackup{
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy"
-								message:[NSString stringWithFormat:@"Tweak backup completed successfully in %@ seconds! \n\nYour backup can be found in\n %@", [_manager.backupManager getDuration], backupDir]
+								message:[NSString stringWithFormat:@"Tweak backup completed successfully in %@ seconds!\n\nYour backup can be found in\n%@", [_manager.backupManager getDuration], backupDir]
 								preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *export = [UIAlertAction

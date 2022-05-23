@@ -22,15 +22,13 @@
 	// check for backup dir
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if(![fileManager fileExistsAtPath:backupDir]){
-		NSString *msg = @"The backup dir does not exist!";
-		[_generalManager displayErrorWithMessage:msg];
+		[_generalManager displayErrorWithMessage:@"The backup dir does not exist!"];
 		return;
 	}
 
 	// check for backups
 	if(![[_generalManager getBackups] count]){
-		NSString *msg = @"No backups were found!";
-		[_generalManager displayErrorWithMessage:msg];
+		[_generalManager displayErrorWithMessage:@"No backups were found!"];
 		return;
 	}
 
@@ -139,7 +137,7 @@
 	}
 
 	if(!check){
-		NSString *msg = [NSString stringWithFormat:@"The backup you're trying to restore from was made for jailbreaks using the %@ bootstrap. \n\nYour current jailbreak is using %@!", altBootstrap, bootstrap];
+		NSString *msg = [NSString stringWithFormat:@"The backup you're trying to restore from was made for jailbreaks using the %@ bootstrap.\n\nYour current jailbreak is using %@!", altBootstrap, bootstrap];
 		[_generalManager displayErrorWithMessage:msg];
 	}
 
@@ -319,7 +317,7 @@
 
 	NSArray	*tweaks = [tweakList componentsSeparatedByString:@"\n"];
 	if(![tweaks count]){
-		NSLog(@"[IAmLazyLog] %@ is blank!", target);
+		NSLog(@"[IAmLazyLog] %@ is empty!", target);
 		return [NSArray new];
 	}
 
@@ -348,8 +346,7 @@
 		NSArray *availablePkgs = [self getAvailablePackages];
 		if(![availablePkgs count]){
 			dispatch_semaphore_signal(sema); // exit wait block
-			NSString *msg = @"Failed to generate list of available packages! \n\nPlease try again.";
-			[_generalManager displayErrorWithMessage:msg];
+			[_generalManager displayErrorWithMessage:@"Failed to generate list of available packages!\n\nPlease try again."];
 			return;
 		}
 
@@ -357,8 +354,7 @@
 		NSArray *desiredPkgs = [self getPackagesForList:target];
 		if(![desiredPkgs count]){
 			dispatch_semaphore_signal(sema); // exit wait block
-			NSString *msg = @"Failed to find valid packages in the target list! \n\nPlease try again.";
-			[_generalManager displayErrorWithMessage:msg];
+			[_generalManager displayErrorWithMessage:@"Failed to find valid packages in the target list!\n\nPlease try again."];
 			return;
 		}
 
@@ -399,7 +395,7 @@
 
 		if(![debURLS count]){
 			dispatch_semaphore_signal(sema); // exit wait block
-			NSString *msg = @"Failed to determine deb urls for desired packages! \n\nPlease try again.";
+			NSString *msg = [NSString stringWithFormat:@"Failed to determine deb urls for desired packages!\n\nPlease check %@download_log.txt.", logDir];
 			[_generalManager displayErrorWithMessage:msg];
 			return;
 		}
@@ -420,7 +416,7 @@
 		NSError *writeError = nil;
 		[fileManager createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 		if(writeError){
-			NSString *msg = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", tmpDir, writeError];
+			NSString *msg = [NSString stringWithFormat:@"Failed to create %@.\n\nError: %@", tmpDir, writeError];
 			[_generalManager displayErrorWithMessage:msg];
 			return;
 		}

@@ -36,8 +36,7 @@
 	if(!filter) packages = [self getAllPackages];
 	else packages = [self getUserPackages];
 	if(![packages count]){
-		NSString *msg = @"Failed to generate list of packages! \n\nPlease try again.";
-		[_generalManager displayErrorWithMessage:msg];
+		[_generalManager displayErrorWithMessage:@"Failed to generate list of packages!\n\nPlease try again."];
 		return;
 	}
 
@@ -49,7 +48,7 @@
 			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
-				NSString *msg = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", tmpDir, writeError];
+				NSString *msg = [NSString stringWithFormat:@"Failed to create %@.\n\nError: %@", tmpDir, writeError];
 				[_generalManager displayErrorWithMessage:msg];
 				return;
 			}
@@ -60,8 +59,7 @@
 		// gather bits for packages
 		_controlFiles = [self getControlFiles];
 		if(![_controlFiles count]){
-			NSString *msg = @"Failed to generate controls for installed packages! \n\nPlease try again.";
-			[_generalManager displayErrorWithMessage:msg];
+			[_generalManager displayErrorWithMessage:@"Failed to generate controls for installed packages!\n\nPlease try again."];
 			return;
 		}
 		[self gatherFilesForPackages:packages];
@@ -327,14 +325,14 @@
 			// put the files we want to copy into lists for easier writing
 			NSString *gFilePaths = [[genericFiles valueForKey:@"description"] componentsJoinedByString:@"\n"];
 			if(![gFilePaths length]){
-				NSLog(@"[IAmLazyLog] gFilePaths list is blank for %@!", package);
+				NSLog(@"[IAmLazyLog] %@ has no generic files!", package);
 			}
 
 			// this is nice because it overwrites the file's content, unlike the write method from NSFileManager
 			NSError *writeError = nil;
 			[gFilePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
 			if(writeError){
-				NSLog(@"[IAmLazyLog] Failed to write gFilePaths to %@ for %@! Error: %@", filesToCopy, package, writeError);
+				NSLog(@"[IAmLazyLog] Failed to write generic files to %@ for %@! Error: %@", filesToCopy, package, writeError);
 				continue;
 			}
 
@@ -437,7 +435,7 @@
 
 	NSArray *debs = [tmp filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"SELF ENDSWITH '.deb'"]];
 	if(![debs count]){
-		NSString *msg = [NSString stringWithFormat:@"Failed to build debs! Please check %@build_log.txt.", logDir];
+		NSString *msg = [NSString stringWithFormat:@"Failed to build debs!\n\nPlease check %@build_log.txt.", logDir];
 		[_generalManager displayErrorWithMessage:msg];
 		return;
 	}
@@ -472,7 +470,7 @@
 	});
 	while(dispatch_semaphore_wait(sema, DISPATCH_TIME_NOW)){ // stackoverflow magic (https://stackoverflow.com/a/4326754)
 		[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0]];
-    }
+	}
 
 	// confirm the gzip archive now exists
 	[self verifyFileAtPath:backupPath];

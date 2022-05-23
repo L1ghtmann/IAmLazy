@@ -1,3 +1,10 @@
+//
+//	postinst.m
+//	IAmLazy
+//
+//	Created by Lightmann during COVID-19
+//
+
 #import <sys/stat.h>
 #import <unistd.h>
 

@@ -57,8 +57,7 @@
 	// check if Documents/ has root ownership (it shouldn't)
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if([fileManager isWritableFileAtPath:@"/var/mobile/Documents/"] == 0){
-		NSString *msg = @"/var/mobile/Documents is not writeable. \n\nPlease ensure that the directory's owner is mobile and not root.";
-		[self displayErrorWithMessage:msg];
+		[self displayErrorWithMessage:@"/var/mobile/Documents is not writeable.\n\nPlease ensure that the directory's owner is mobile and not root."];
 		return;
 	}
 
@@ -67,7 +66,7 @@
 		NSError *writeError = nil;
 		[fileManager createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 		if(writeError){
-			NSString *msg = [NSString stringWithFormat:@"Failed to create %@. \n\nError: %@", logDir, writeError];
+			NSString *msg = [NSString stringWithFormat:@"Failed to create %@.\n\nError: %@", logDir, writeError];
 			[self displayErrorWithMessage:msg];
 			return;
 		}
@@ -101,9 +100,7 @@
 	NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
 	[formatter setDateFormat:@"yyyyMMd"];
 
-	// craft backup name
-	NSString *newBackupName = [NSString stringWithFormat:@"IAL-%@_%d", [formatter stringFromDate:[NSDate date]], (latestBackup + 1)];
-	return newBackupName;
+	return [NSString stringWithFormat:@"IAL-%@_%d", [formatter stringFromDate:[NSDate date]], (latestBackup + 1)];
 }
 
 -(NSArray<NSString *> *)getBackups{
@@ -133,8 +130,7 @@
 	NSArray *newSortedBackups = [newBackups sortedArrayUsingDescriptors:@[fileNameCompare]];
 	NSArray *legacySortedBackups = [legacyBackups sortedArrayUsingDescriptors:@[fileNameCompare]];
 
-	NSArray *sortedBackups = [newSortedBackups arrayByAddingObjectsFromArray:legacySortedBackups];
-	return sortedBackups;
+	return [newSortedBackups arrayByAddingObjectsFromArray:legacySortedBackups];
 }
 
 -(void)executeCommandAsRoot:(NSString *)cmd{

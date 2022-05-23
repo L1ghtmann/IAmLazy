@@ -2,7 +2,7 @@ include $(THEOS)/makefiles/common.mk
 
 TOOL_NAME = postinst
 
-postinst_FILES = main.m
+postinst_FILES = postinst.m
 postinst_CFLAGS = -fobjc-arc
 postinst_CODESIGN_FLAGS = -Sentitlements.plist
 postinst_INSTALL_PATH = /DEBIAN
