@@ -99,6 +99,13 @@ int main(int argc, char *argv[]){
 			return 1;
 		}
 	}
+	else if(strcmp(argv[1], "updateAPT") == 0){
+		NSTask *task = [[NSTask alloc] init];
+		[task setLaunchPath:@"/usr/bin/apt-get"];
+		[task setArguments:@[@"update"]];
+		[task launch];
+		[task waitUntilExit];
+	}
 	else if(strcmp(argv[1], "cpGFiles") == 0){
 		// recreate directory structure and copy files
 		NSError *readError = nil;

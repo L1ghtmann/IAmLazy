@@ -237,6 +237,12 @@
 		}
 	}
 
+	// avoid stalling main thread (i.e., preventing progress UI from updating)
+	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+		// ensure bootstrap repos' package files are up-to-date
+		[_generalManager executeCommandAsRoot:@"updateAPT"];
+	});
+
 	// assign available packages to their respective download urls
 	NSMutableArray *pkgsAndUrls = [NSMutableArray new];
 	for(NSString *path in aptListPaths){
