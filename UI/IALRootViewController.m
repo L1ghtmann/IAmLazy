@@ -72,28 +72,23 @@
 	static NSString *identifier = @"cell";
 	IALTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
 
-	NSInteger type; // 0 = deb | 1 = list
-	NSInteger function; // 0 = filtered | 1 = unfiltered
+	NSInteger type = indexPath.section; // 0 = deb | 1 = list
+	NSInteger function = indexPath.row; // 0 = filtered | 1 = unfiltered
 	NSString *functionDescriptor;
 
 	// eval section
 	if(indexPath.section == 0){
-		type = 0;
 		functionDescriptor = @"Backup";
 	}
 	else{
-		type = 1;
 		functionDescriptor = @"List";
 	}
 
 	// eval row
 	if(indexPath.row == 0){
-		function = 0;
 		functionDescriptor = [NSString stringWithFormat:@"Standard %@", functionDescriptor];
-
 	}
 	else{
-		function = 1;
 		functionDescriptor = [NSString stringWithFormat:@"Unfiltered %@", functionDescriptor];
 	}
 
@@ -111,15 +106,9 @@
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
 	AudioServicesPlaySystemSound(1520); // haptic feedback
 
-	BOOL filter = NO;
-	if(indexPath.row == 0) filter = YES;
+	BOOL filter = !indexPath.row;
 
-	if(indexPath.section == 0){
-		[self selectedBackupOfType:0 withFilter:filter];
-	}
-	else{
-		[self selectedBackupOfType:1 withFilter:filter];
-	}
+	[self selectedBackupOfType:indexPath.section withFilter:filter];
 
 	[tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
@@ -171,7 +160,7 @@
 
 -(void)popPostBackup{
 	UIAlertController *alert = [UIAlertController
-								alertControllerWithTitle:@"IAmLazy"
+								alertControllerWithTitle:@"IAmLazy Notice:"
 								message:[NSString stringWithFormat:@"Tweak backup completed successfully in %@ seconds!\n\nYour backup can be found in\n%@", [_manager.backupManager getDuration], backupDir]
 								preferredStyle:UIAlertControllerStyleAlert];
 

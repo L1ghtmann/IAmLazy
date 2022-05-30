@@ -25,14 +25,12 @@
 			purpose: 0 = backup | 1 = restore
 			type: 0 = deb | 1 = list
 		*/
-		int itemCount = 3;
-		if(purpose == 0 && type == 0) itemCount = 4;
 
 		_itemIcons = [self iconsForPurpose:purpose ofType:type];
 		_itemDescriptions = [self itemDescriptionsForPurpose:purpose ofType:type withFilter:filter];
 
 		[self makeTitleWithPurpose:purpose];
-		[self makeListWithItems:itemCount];
+		[self makeItemList];
 		[self makeLoadingWheel];
 
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateProgress:) name:@"updateProgress" object:nil];
@@ -69,7 +67,8 @@
 	else{
 		[icons addObject:@"text.badge.checkmark"];
 		if(type == 0) [icons addObject:@"wrench"];
-		else [icons addObject:@"icloud.and.arrow.down"];
+		[icons addObject:@"goforward"];
+		if(type != 0) [icons addObject:@"icloud.and.arrow.down"];
 		[icons addObject:@"wand.and.stars"];
 	}
 
@@ -111,12 +110,9 @@
 	}
 	else{
 		[itemDescs addObject:@"Completing pre-restore checks"];
-		if(type == 0){
-			[itemDescs addObject:@"Unpacking backup"];
-		}
-		else{
-			[itemDescs addObject:@"Downloading debs"];
-		}
+		if(type == 0) [itemDescs addObject:@"Unpacking backup"];
+		[itemDescs addObject:@"Refreshing APT sources"];
+		if(type != 0) [itemDescs addObject:@"Downloading debs"];
 		[itemDescs addObject:@"Installing debs"];
 	}
 
@@ -125,8 +121,17 @@
 
 -(void)makeTitleWithPurpose:(NSInteger)purpose{
 	NSString *purposeString;
-	if(purpose == 0) purposeString = @"backup";
-	else purposeString = @"restore";
+	switch(purpose){
+		case 0:
+			purposeString = @"backup";
+			break;
+		case 1:
+			purposeString = @"restore";
+			break;
+		default:
+			purposeString = @"";
+			break;
+	}
 
 	NSString *text = [NSString stringWithFormat:@"%@ Progress", purposeString];
 
@@ -143,11 +148,11 @@
 	[title setTextColor:accentColor];
 }
 
--(void)makeListWithItems:(int)count{
+-(void)makeItemList{
 	_items = [NSMutableArray new];
 	_itemStatusIcons = [NSMutableArray new];
 
-	for(int i = 0; i < count; i++){
+	for(int i = 0; i < [_itemIcons count]; i++){
 		CGFloat y = startY + (i * 100);
 
 		// white circle
@@ -205,10 +210,10 @@
 		[status.layer setCornerRadius:backgroundSize/12];
 	}
 
-	[self elaborateItemsList];
+	[self elaborateItemList];
 }
 
--(void)elaborateItemsList{
+-(void)elaborateItemList{
 	_itemStatusText = [NSMutableArray new];
 
 	for(int i = 0; i < [_items count]; i++){
@@ -276,7 +281,7 @@
 		}];
 	}
 
-	if(item + 1 == [_items count]){
+	if((item + 1) == [_items count]){
 		[_loading stopAnimating];
 	}
 }

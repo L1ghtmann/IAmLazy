@@ -13,6 +13,7 @@
 -(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type;
 -(void)ensureBackupDirExists;
 -(void)cleanupTmp;
+-(void)updateAPT;
 -(NSString *)craftNewBackupName;
 -(NSArray<NSString *> *)getBackups;
 -(void)executeCommandAsRoot:(NSString *)cmd;

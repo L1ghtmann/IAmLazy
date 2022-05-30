@@ -29,7 +29,7 @@
 	}
 
 	NSNotificationCenter *notifCenter = [NSNotificationCenter defaultCenter];
-	[notifCenter postNotificationName:@"updateProgress" object:@"null"];
+	[notifCenter postNotificationName:@"updateProgress" object:@"-0.5"];
 
 	// get packages
 	NSArray *packages;
@@ -54,7 +54,7 @@
 			}
 		}
 
-		[notifCenter postNotificationName:@"updateProgress" object:@"0.7"];
+		[notifCenter postNotificationName:@"updateProgress" object:@"0.5"];
 
 		// gather bits for packages
 		_controlFiles = [self getControlFiles];
@@ -67,20 +67,20 @@
 		[notifCenter postNotificationName:@"updateProgress" object:@"1"];
 
 		// build debs from bits
-		[notifCenter postNotificationName:@"updateProgress" object:@"1.7"];
+		[notifCenter postNotificationName:@"updateProgress" object:@"1.5"];
 		[self buildDebs];
 		[notifCenter postNotificationName:@"updateProgress" object:@"2"];
 
-		// for unfiltered backups, create specify the bootstrap it was created on
+		// specify the bootstrap it was created on
 		if(!filter) [self makeBootstrapFile];
 
 		// make archive of packages
-		[notifCenter postNotificationName:@"updateProgress" object:@"2.7"];
+		[notifCenter postNotificationName:@"updateProgress" object:@"2.5"];
 		[self makeTarballWithFilter:filter];
 		[notifCenter postNotificationName:@"updateProgress" object:@"3"];
 	}
 	else{
-		[notifCenter postNotificationName:@"updateProgress" object:@"0.7"];
+		[notifCenter postNotificationName:@"updateProgress" object:@"0.5"];
 
 		// put all packages in a list for easier writing
 		NSString *fileContent = [[packages valueForKey:@"description"] componentsJoinedByString:@"\n"];
@@ -90,7 +90,7 @@
 		}
 
 		[notifCenter postNotificationName:@"updateProgress" object:@"1"];
-		[notifCenter postNotificationName:@"updateProgress" object:@"1.7"];
+		[notifCenter postNotificationName:@"updateProgress" object:@"1.5"];
 
 		// craft new backup name and append the text file extension
 		NSString *listName;
@@ -102,7 +102,7 @@
 		NSString *filePath = [backupDir stringByAppendingPathComponent:listName];
 		[fileManager createFileAtPath:filePath contents:[fileContent dataUsingEncoding:NSUTF8StringEncoding] attributes:nil];
 
-		// note bootstrap the list was made on
+		// specify bootstrap the list was made on
 		if(!filter){
 			NSString *bootstrap = @"elucubratus";
 			if([fileManager fileExistsAtPath:@"/.procursus_strapped"]){
@@ -143,7 +143,7 @@
 	[task waitUntilExit];
 
 	NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-	NSArray *lines = [output componentsSeparatedByString:@"\n"];
+	NSArray *lines = [output componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
 	if(![lines count]) return [NSArray new];
 
 	// filter out packages with the 'requried' priorty
@@ -155,7 +155,7 @@
 	for(NSString *line in packages){
 		// filter out IAmLazy since it'll be installed by the user anyway
 		if([line length] && ![line hasPrefix:@"me.lightmann.iamlazy"]){
-			// split the package name from its priority and then add the package name to the allPackages array
+			// split the package name from its priority and then add to array
 			NSArray *bits = [line componentsSeparatedByCharactersInSet:whiteSpace];
 			if([bits count]) [allPackages addObject:[bits firstObject]];
 		}
@@ -181,19 +181,16 @@
 		return [NSArray new];
 	}
 
-	// avoid stalling main thread (i.e., preventing progress UI from updating)
-	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-		// ensure bootstrap repos' package files are up-to-date
-		[_generalManager executeCommandAsRoot:@"updateAPT"];
-	});
+	// ensure bootstrap repos' package files are up-to-date
+	[_generalManager updateAPT];
 
 	// get packages to ignore
 	NSMutableArray *packagesToIgnore = [NSMutableArray new];
-	NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '_Packages'"];
+	NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '_Packages'"];
 	NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'Package:'"];
 	for(NSString *repo in [self getReposToFilter]){
-		NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH %@", repo];
-		NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate1,predicate2]];
+		NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH %@", repo];
+		NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate1, predicate2]];
 		NSArray *pkgLists = [aptLists filteredArrayUsingPredicate:thePredicate];
 		if(![pkgLists count]) continue;
 
@@ -207,7 +204,7 @@
 				continue;
 			}
 
-			NSArray *lines = [content componentsSeparatedByString:@"\n"];
+			NSArray *lines = [content componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
 			if(![lines count]) continue;
 
 			NSArray *packages = [lines filteredArrayUsingPredicate:predicate3];
@@ -229,17 +226,17 @@
 -(NSArray<NSString *> *)getControlFiles{
 	// get control files for all installed packages
 	NSError *readError = nil;
-	NSString *dpkgStatusDir = @"/var/lib/dpkg/status";
+	NSString *dpkgStatusDir = [[dpkgInfoDir stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"status"];
 	NSString *contents = [NSString stringWithContentsOfFile:dpkgStatusDir encoding:NSUTF8StringEncoding error:&readError];
 	if(readError){
 		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", dpkgStatusDir, readError);
 		return [NSArray new];
 	}
 
-	NSArray *lines = [contents componentsSeparatedByString:@"\n"];
+	NSArray *lines = [contents componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
 	if(![lines count]) return [NSArray new];
 
-	// divvy up massive control string into individual strings
+	// divvy up massive control collection into individual control files
 	NSMutableArray *controls = [NSMutableArray new];
 	NSMutableString *controlFile = [NSMutableString new];
 	for(int i = 0; i < [lines count]; i++){
@@ -276,7 +273,7 @@
 				continue;
 			}
 
-			NSArray *lines = [contents componentsSeparatedByString:@"\n"];
+			NSArray *lines = [contents componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
 			if(![lines count]) continue;
 
 			// get generic files and directories and sort into respective arrays
@@ -401,7 +398,7 @@
 
 	// make DEBIAN dir
 	NSFileManager *fileManager = [NSFileManager defaultManager];
-	NSString *debian = [tweakDir stringByAppendingString:@"/DEBIAN/"];
+	NSString *debian = [tweakDir stringByAppendingPathComponent:@"DEBIAN/"];
 	if(![fileManager fileExistsAtPath:debian]){
 		NSError *writeError = nil;
 		[fileManager createDirectoryAtPath:debian withIntermediateDirectories:YES attributes:nil error:&writeError];
@@ -467,7 +464,7 @@
 	NSString *backupPath = [backupDir stringByAppendingPathComponent:backupName];
 
 	// make tarball (and avoid stalling the main thread)
-	dispatch_semaphore_t sema = dispatch_semaphore_create(0); // wait for async block
+	dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 		write_archive([backupPath UTF8String]);
 

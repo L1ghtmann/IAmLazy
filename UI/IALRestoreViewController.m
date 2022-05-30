@@ -70,27 +70,23 @@
 	static NSString *identifier = @"cell";
 	IALTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
 
-	NSInteger type; // 0 = deb | 1 = list
-	NSInteger function; // 0 = latest | 1 = specific
+	NSInteger type = indexPath.section; // 0 = deb | 1 = list
+	NSInteger function = indexPath.row; // 0 = latest | 1 = specific
 	NSString *functionDescriptor;
 
 	// eval sections
 	if(indexPath.section == 0){
-		type = 0;
 		functionDescriptor = @"Backup";
 	}
 	else{
-		type = 1;
 		functionDescriptor = @"List";
 	}
 
 	// eval rows
 	if(indexPath.row == 0){
-		function = 0;
 		functionDescriptor = [NSString stringWithFormat:@"From Latest %@", functionDescriptor];
 	}
 	else{
-		function = 1;
 		functionDescriptor = [NSString stringWithFormat:@"From Specific %@", functionDescriptor];
 	}
 
@@ -108,13 +104,9 @@
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
 	AudioServicesPlaySystemSound(1520); // haptic feedback
 
-	NSInteger type = 0;
-	if(indexPath.section != 0) type = 1;
+	BOOL latest = !indexPath.row;
 
-	BOOL latest = YES;
-	if(indexPath.row != 0) latest = NO;
-
-	[self restoreLatestBackup:latest ofType:type];
+	[self restoreLatestBackup:latest ofType:indexPath.section];
 
 	[tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
@@ -139,17 +131,13 @@
 	NSArray *backups = [_manager getBackups];
 	if(![backups count]) return;
 
+	// get desired backups
+	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH %@", extension];
+	NSArray *desiredBackups = [backups filteredArrayUsingPredicate:thePredicate];
+
 	if(latest){
 		// get latest backup
-		__block NSString *backupName;
-		[backups enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop){
-			NSString *file = (NSString*)obj;
-			if([file hasSuffix:extension]){
-				backupName = file;
-				*stop = YES; // stop enumerating
-				return;
-			}
-		}];
+		NSString *backupName = [desiredBackups firstObject];
 
 		// get confirmation before proceeding
 		UIAlertController *alert = [UIAlertController
@@ -177,10 +165,6 @@
 		[self presentViewController:alert animated:YES completion:nil];
 	}
 	else{
-		// get desired backups
-		NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH %@", extension];
-		NSArray *desiredBackups = [backups filteredArrayUsingPredicate:thePredicate];
-
 		// post list of available backups
 		UIAlertController *alert = [UIAlertController
 									alertControllerWithTitle:@"IAmLazy"

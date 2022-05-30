@@ -27,6 +27,7 @@
 
 	if(self){
 		[self ensureBackupDirExists];
+		[self ensureUsableDpkgLock];
 	}
 
 	return self;
@@ -42,7 +43,7 @@
 
 -(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type{
 	if(![self hasConnection]){
-		[self displayErrorWithMessage:@"A network connection is required for restores!\n\nThis is so packages can be downloaded if need be."];
+		[self displayErrorWithMessage:@"Your device does not appear to be connected to the internet.\n\nA network connection is required for restores so packages can be downloaded if need be."];
 		return;
 	}
 
@@ -56,7 +57,7 @@
 -(void)ensureBackupDirExists{
 	// check if Documents/ has root ownership (it shouldn't)
 	NSFileManager *fileManager = [NSFileManager defaultManager];
-	if([fileManager isWritableFileAtPath:@"/var/mobile/Documents/"] == 0){
+	if(![fileManager isWritableFileAtPath:@"/var/mobile/Documents/"]){
 		[self displayErrorWithMessage:@"/var/mobile/Documents is not writeable.\n\nPlease ensure that the directory's owner is mobile and not root."];
 		return;
 	}
@@ -73,13 +74,52 @@
 	}
 }
 
+-(void)ensureUsableDpkgLock{
+	// check for dpkg's tmp install file and, if it exists and has contents (padding), dpkg was interupted
+	// this means that the lock-frontend is most likely locked and dpkg will be unusable until it is freed
+	NSError *readError = nil;
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	NSString *updatesDir = [[dpkgInfoDir stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"updates/"];
+	NSArray *contents = [fileManager contentsOfDirectoryAtPath:updatesDir error:&readError];
+	if(readError){
+		NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@.\n\nError: %@", updatesDir, readError];
+		[self displayErrorWithMessage:msg];
+		return;
+	}
+
+	if(![contents count]){
+		return;
+	}
+
+	NSString *tmpFile = [updatesDir stringByAppendingPathComponent:@"tmp.i"];
+	if([fileManager fileExistsAtPath:tmpFile]){
+		NSError *readError2 = nil;
+		NSString *contentsString = [NSString stringWithContentsOfFile:tmpFile encoding:NSUTF8StringEncoding error:&readError2];
+		if(readError2){
+			NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@.\n\nError: %@", tmpFile, readError2];
+			[self displayErrorWithMessage:msg];
+			return;
+		}
+
+		if([[contentsString componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]] count] > 0){
+			NSLog(@"[IAmLazyLog] dpkg appears to have been interrupted. Fixing now...");
+
+			[self executeCommandAsRoot:@"unlockDpkg"];
+		}
+	}
+}
+
 -(void)cleanupTmp{
 	// has to be done as root since some files have root ownership
 	[self executeCommandAsRoot:@"cleanTmp"];
 }
 
+-(void)updateAPT{
+	[self executeCommandAsRoot:@"updateAPT"];
+}
+
 -(NSString *)craftNewBackupName{
-	int latestBackup;
+	int latestBackup = 0;
 	NSString *latest = [[self getBackups] firstObject];
 	if([latest hasPrefix:@"IAL-"]){
 		// get number from latest backup
@@ -91,9 +131,6 @@
 		NSScanner *scanner = [[NSScanner alloc] initWithString:latest];
 		[scanner setCharactersToBeSkipped:[[NSCharacterSet decimalDigitCharacterSet] invertedSet]];
 		[scanner scanInt:&latestBackup];
-	}
-	else{
-		latestBackup = 0;
 	}
 
 	// grab date in desired format
@@ -130,6 +167,7 @@
 	NSArray *newSortedBackups = [newBackups sortedArrayUsingDescriptors:@[fileNameCompare]];
 	NSArray *legacySortedBackups = [legacyBackups sortedArrayUsingDescriptors:@[fileNameCompare]];
 
+	// prioritize newer backups
 	return [newSortedBackups arrayByAddingObjectsFromArray:legacySortedBackups];
 }
 

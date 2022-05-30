@@ -50,36 +50,43 @@
 	// ensure logdir exists
 	[_generalManager ensureBackupDirExists];
 
+	BOOL compatible = YES;
 	if(type == 0){
-		[notifCenter postNotificationName:@"updateProgress" object:@"0.7"];
+		[notifCenter postNotificationName:@"updateProgress" object:@"0.5"];
 		[self extractArchive:target];
 		[notifCenter postNotificationName:@"updateProgress" object:@"1"];
 
-		BOOL compatible = YES;
 		if([backupName hasSuffix:@"u.tar.gz"]){
 			compatible = [self verifyBootstrapForBackup:target];
 		}
 
 		if(compatible){
-			[notifCenter postNotificationName:@"updateProgress" object:@"1.7"];
-			[self installDebs];
+			[notifCenter postNotificationName:@"updateProgress" object:@"1.5"];
+			[self updateAPT];
 			[notifCenter postNotificationName:@"updateProgress" object:@"2"];
+
+			[notifCenter postNotificationName:@"updateProgress" object:@"2.5"];
+			[self installDebs];
+			[notifCenter postNotificationName:@"updateProgress" object:@"3"];
 		}
 	}
 	else{
-		BOOL compatible = YES;
 		if([backupName hasSuffix:@"u.txt"]){
 			compatible = [self verifyBootstrapForBackup:target];
 		}
 
 		if(compatible){
-			[notifCenter postNotificationName:@"updateProgress" object:@"0.7"];
-			[self downloadDebsFromURLS:[self getDebURLSForList:target]];
+			[notifCenter postNotificationName:@"updateProgress" object:@"0.5"];
+			[self updateAPT];
 			[notifCenter postNotificationName:@"updateProgress" object:@"1"];
 
-			[notifCenter postNotificationName:@"updateProgress" object:@"1.7"];
-			[self installDebs];
+			[notifCenter postNotificationName:@"updateProgress" object:@"1.5"];
+			[self downloadDebsFromURLS:[self getDebURLSForList:target]];
 			[notifCenter postNotificationName:@"updateProgress" object:@"2"];
+
+			[notifCenter postNotificationName:@"updateProgress" object:@"2.5"];
+			[self installDebs];
+			[notifCenter postNotificationName:@"updateProgress" object:@"3"];
 		}
 	}
 
@@ -88,7 +95,7 @@
 
 -(void)extractArchive:(NSString *)backupPath{
 	// extract tarball contents (and avoid stalling the main thread)
-	dispatch_semaphore_t sema = dispatch_semaphore_create(0); // wait for async block
+	dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 		extract_archive([backupPath UTF8String]);
 
@@ -125,7 +132,7 @@
 			return NO;
 		}
 
-		NSArray *bits = [content componentsSeparatedByString:@"\n"];
+		NSArray *bits = [content componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
 		if(![bits count]){
 			NSString *msg = [NSString stringWithFormat:@"%@ appears to be blank?", targetBackup];
 			[_generalManager displayErrorWithMessage:msg];
@@ -142,6 +149,11 @@
 	}
 
 	return check;
+}
+
+-(void)updateAPT{
+	// ensure bootstrap repos' package files are up-to-date
+	[_generalManager updateAPT];
 }
 
 -(NSDictionary<NSString *, NSString *> *)getAptListLocations{
@@ -196,7 +208,7 @@
 	}
 	*/
 	if(![pkgManagers count]){
-		NSLog(@"[IAmLazyLog] There appear to be no supported package managers installed.");
+		NSLog(@"[IAmLazyLog] No supported package managers appear to be installed.");
 		return [NSArray new];
 	}
 
@@ -221,27 +233,21 @@
 				continue;
 			}
 
-			NSArray *srcListContents = [contents componentsSeparatedByString:@"\n"];
+			NSArray *srcListContents = [contents componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
 			if(![srcListContents count]) continue;
 
 			for(NSString *line in srcListContents){
 				if([line length] && [line hasPrefix:@"deb"]){
 					NSArray *bits = [line componentsSeparatedByString:@" "];
 					if([bits count] >= 2){
-						// first obj is "deb" and second is the repo url
-						// this array *will* contain duplicate repo urls
+						// 1st obj is "deb", 2nd is the repo url, 3rd may or may not exist
+						// Note: this array *will* contain duplicate repo urls
 						[repoURLS addObject:bits[1]];
 					}
 				}
 			}
 		}
 	}
-
-	// avoid stalling main thread (i.e., preventing progress UI from updating)
-	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-		// ensure bootstrap repos' package files are up-to-date
-		[_generalManager executeCommandAsRoot:@"updateAPT"];
-	});
 
 	// assign available packages to their respective download urls
 	NSMutableArray *pkgsAndUrls = [NSMutableArray new];
@@ -254,11 +260,11 @@
 				continue;
 			}
 
-			// grab repos' *Packages files
+			// grab repos' Packages files
 			NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH 'Packages'"];
 			NSArray *packageFiles = [listDirContents filteredArrayUsingPredicate:thePredicate];
 			if(![packageFiles count]){
-				NSLog(@"[IAmLazyLog] %@ contains no *Package files!", path);
+				NSLog(@"[IAmLazyLog] %@ contains no Package files!", path);
 				continue;
 			}
 
@@ -271,14 +277,13 @@
 					continue;
 				}
 
-				NSArray *lines = [contents componentsSeparatedByString:@"\n"];
+				NSArray *lines = [contents componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
 				if(![lines count]) continue;
 
-				// grab package names and make download urls
+				// grab package names and craft download urls
 				NSMutableArray *pkgs = [NSMutableArray new];
 				NSMutableArray *urls = [NSMutableArray new];
-				for(int i = 0; i < [lines count]; i++){
-					NSString *line = lines[i];
+				for(NSString *line in lines){
 					if([line length]){
 						if([line hasPrefix:@"Package:"]){
 							[pkgs addObject:[line stringByReplacingOccurrencesOfString:@"Package: " withString:@""]];
@@ -302,10 +307,7 @@
 
 				// assign key (package) value (url) pairs
 				for(int i = 0; i < [urls count]; i++){
-					NSDictionary *dict = @{
-						pkgs[i] : urls[i]
-					};
-					[pkgsAndUrls addObject:dict];
+					[pkgsAndUrls addObject:@{pkgs[i] : urls[i]}];
 				}
 			}
 		}
@@ -321,7 +323,7 @@
 		return [NSArray new];
 	}
 
-	NSArray	*tweaks = [tweakList componentsSeparatedByString:@"\n"];
+	NSArray	*tweaks = [tweakList componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
 	if(![tweaks count]){
 		NSLog(@"[IAmLazyLog] %@ is empty!", target);
 		return [NSArray new];
@@ -352,15 +354,15 @@
 		NSArray *availablePkgs = [self getAvailablePackages];
 		if(![availablePkgs count]){
 			dispatch_semaphore_signal(sema); // exit wait block
-			[_generalManager displayErrorWithMessage:@"Failed to generate list of available packages!\n\nPlease try again."];
+			[_generalManager displayErrorWithMessage:@"Failed to generate list of available packages!"];
 			return;
 		}
 
 		// get desired packages (from backup list)
 		NSArray *desiredPkgs = [self getPackagesForList:target];
 		if(![desiredPkgs count]){
-			dispatch_semaphore_signal(sema); // exit wait block
-			[_generalManager displayErrorWithMessage:@"Failed to find valid packages in the target list!\n\nPlease try again."];
+			dispatch_semaphore_signal(sema);
+			[_generalManager displayErrorWithMessage:@"Failed to find valid packages in the target list!"];
 			return;
 		}
 
@@ -400,7 +402,7 @@
 		}
 
 		if(![debURLS count]){
-			dispatch_semaphore_signal(sema); // exit wait block
+			dispatch_semaphore_signal(sema);
 			NSString *msg = [NSString stringWithFormat:@"Failed to determine deb urls for desired packages!\n\nPlease check %@download_log.txt.", logDir];
 			[_generalManager displayErrorWithMessage:msg];
 			return;
@@ -476,7 +478,7 @@
 		return;
 	}
 
-	// ensure file is a .deb by checking for the diagnostic 7 byte header
+	// ensure file is a .deb by checking for the distinctive 7 byte header
 	NSString *header = [[NSString alloc] initWithBytes:[fileData bytes] length:([fileData length], 7) encoding:NSASCIIStringEncoding];
 	if([header isEqualToString:@"!<arch>"]){
 		NSError *writeError = nil;

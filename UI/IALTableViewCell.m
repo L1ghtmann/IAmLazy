@@ -15,7 +15,7 @@
 
 	if(self){
 		// icon setup
-		// helpful link for available SFSymbols: https://github.com/cyanzhong/sf-symbols-online
+		// helpful link for SFSymbols: https://github.com/cyanzhong/sf-symbols-online
 		// Note: SFSymbols' width and height aren't equal, so need to set the content mode accordingly
 		_icon = [[UIImageView alloc] init];
 		[self addSubview:_icon];

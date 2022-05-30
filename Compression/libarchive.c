@@ -20,7 +20,7 @@ int get_file_count(){
 	struct dirent *entry;
 	DIR *directory = opendir("/tmp/me.lightmann.iamlazy/");
 	if(!directory) return 0;
-	while((entry = readdir(directory)) != NULL){
+	while((entry = readdir(directory))){
 		// if entry is a regular file
 		if(entry->d_type == DT_REG){
 			file_count++;
@@ -39,38 +39,40 @@ void write_archive(const char *outname){
 	int len;
 	int fd;
 
-	// get file count for tmpDir
 	int file_count = get_file_count();
+	if(file_count == 0){
+		return;
+	}
 
-	if(file_count == 0 || file_count > (SIZE_MAX - 1)) return;
-
-	// create string array for filepaths
-	const char *filearr[file_count + 1];
+	const char *filearr[file_count];
 	const char **arrptr = filearr;
 
 	struct dirent *ent;
 	DIR *directory = opendir("/tmp/me.lightmann.iamlazy/");
 	if(!directory) return;
 	int count = 0;
-	while((ent = readdir(directory)) != NULL){
-		// prevent a buffer overflow
-		if(count > file_count) break;
+	size_t IAL = strlen("me.lightmann.iamlazy/");
+	while((ent = readdir(directory))){
+		if(count > file_count){
+			break;
+		}
 
 		// if entry is a regular file
 		if(ent->d_type == DT_REG){
-			size_t IAL = strlen("me.lightmann.iamlazy/");
 			size_t FILE = strlen(ent->d_name);
 
-			if(FILE > (PATH_MAX - (IAL + 1))){
+			if((SIZE_MAX - (IAL + 1)) < FILE){
 				continue;
 			}
 
-			char *str = malloc(IAL + FILE + 1);
-			strcpy(str, "me.lightmann.iamlazy/");
-			strcat(str, ent->d_name);
+			char *filepath = malloc(IAL + FILE + 1);
+			if(!filepath){
+				continue;
+			}
+			strcpy(filepath, "me.lightmann.iamlazy/");
+			strcat(filepath, ent->d_name);
 
-			// assign the filepath
-			filearr[count] = str;
+			filearr[count] = filepath;
 			count++;
 		}
 	}
@@ -80,15 +82,15 @@ void write_archive(const char *outname){
 	// including it in archive
 	chdir("/tmp/");
 
-	// go to work
 	a = archive_write_new();
 	archive_write_add_filter_gzip(a); // gzip
 	archive_write_set_format_pax_restricted(a);
 	archive_write_open_filename(a, outname);
 	for(int i = 0; i < file_count; i++){
 		const char *file = arrptr[i];
-
-		if(!file) continue;
+		if(*file == 0){
+			continue;
+		}
 
 		stat(file, &st);
 		entry = archive_entry_new();
@@ -149,7 +151,6 @@ void extract_archive(const char *filename){
 	// extract location
 	chdir("/tmp/");
 
-	// go to work
 	a = archive_read_new();
 	archive_read_support_format_all(a);
 	archive_read_support_filter_all(a);

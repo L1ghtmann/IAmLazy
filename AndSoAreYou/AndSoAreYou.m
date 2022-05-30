@@ -71,7 +71,7 @@ int main(int argc, char *argv[]){
 	pid_t pid = getppid();
 
 	// get absolute path of the command running at 'pid'
-	char buffer[PATH_MAX]; // limits.h
+	char buffer[PATH_MAX];
 	int ret = proc_pidpath(pid, buffer, sizeof(buffer));
 
 	// get attributes of parent process' command
@@ -90,7 +90,22 @@ int main(int argc, char *argv[]){
 	setuid(0);
 	setuid(0);
 
-	if(strcmp(argv[1], "cleanTmp") == 0){
+	if(strcmp(argv[1], "unlockDpkg") == 0){
+		// kill dpkg to free the lock and then
+		// configure any unconfigured packages
+		NSTask *task = [[NSTask alloc] init];
+		[task setLaunchPath:@"/usr/bin/killall"];
+		[task setArguments:@[@"dpkg"]];
+		[task launch];
+		[task waitUntilExit];
+
+		NSTask *task2 = [[NSTask alloc] init];
+		[task2 setLaunchPath:@"/usr/bin/dpkg"];
+		[task2 setArguments:@[@"--configure", @"-a"]];
+		[task2 launch];
+		[task2 waitUntilExit];
+	}
+	else if(strcmp(argv[1], "cleanTmp") == 0){
 		// delete temporary directory
 		NSError *deleteError = nil;
 		[[NSFileManager defaultManager] removeItemAtPath:tmpDir error:&deleteError];
@@ -115,11 +130,12 @@ int main(int argc, char *argv[]){
 			return 1;
 		}
 
-		NSArray *files = [toCopy componentsSeparatedByString:@"\n"];
-		if(![files count]) return 1;
+		NSArray *files = [toCopy componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
+		if(![files count]){
+			return 1;
+		}
 
-		NSString *tweakName = getCurrentPackage();
-		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:tweakName];
+		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:getCurrentPackage()];
 		NSFileManager *fileManager = [NSFileManager defaultManager];
 		for(NSString *file in files){
 			if(![file length] || ![fileManager fileExistsAtPath:file] || [[file lastPathComponent] isEqualToString:@".."] || [[file lastPathComponent] isEqualToString:@"."]){
@@ -127,13 +143,9 @@ int main(int argc, char *argv[]){
 			}
 
 			// recreate parent directory structure
+			NSError *writeError = nil;
 			NSString *dirStructure = [file stringByDeletingLastPathComponent]; // grab parent directory structure
 			NSString *newPath = [tweakDir stringByAppendingPathComponent:dirStructure];
-			if(![[newPath substringFromIndex:[newPath length] - 1] isEqualToString:@"/"]){
-				newPath = [newPath stringByAppendingString:@"/"]; // add missing trailing slash
-			}
-
-			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:newPath withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
 				NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to create %@! Error: %@", newPath, writeError);
@@ -184,16 +196,15 @@ int main(int argc, char *argv[]){
 		}
 
 		// copy files
-		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:tweakName];
-		NSString *debian = [tweakDir stringByAppendingString:@"/DEBIAN/"];
+		NSString *debian = [[tmpDir stringByAppendingPathComponent:tweakName] stringByAppendingPathComponent:@"DEBIAN/"];
 		for(NSString *file in debainFiles){
 			NSString *filePath = [dpkgInfoDir stringByAppendingPathComponent:file];
 			if(![file length] || ![fileManager fileExistsAtPath:filePath] || [file isEqualToString:@".."] || [file isEqualToString:@"."]){
 				continue;
 			}
 
-			// remove tweakName prefix and copy file
 			NSError *writeError = nil;
+			// remove tweakName prefix and copy file
 			NSString *strippedName = [file stringByReplacingOccurrencesOfString:[tweakName stringByAppendingString:@"."] withString:@""];
 			[fileManager copyItemAtPath:filePath toPath:[debian stringByAppendingPathComponent:strippedName] error:&writeError];
 			if(writeError){
@@ -264,6 +275,7 @@ int main(int argc, char *argv[]){
 			[logText appendString:output];
 
 			NSError *deleteError = nil;
+			// delete dir with files now that deb has been built
 			[fileManager removeItemAtPath:tweak error:&deleteError];
 			if(deleteError){
 				NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to delete %@! Error: %@", tweak, deleteError);
@@ -311,6 +323,18 @@ int main(int argc, char *argv[]){
 		NSString *log = [logDir stringByAppendingPathComponent:@"restore_log.txt"];
 		NSMutableString *logText = [NSMutableString new];
 		for(NSString *deb in debs){
+			// there's an issue on u0 where the IAL
+			// app may be killed (w/o a crash log)
+			// this leaves the AndSoAreYou child process
+			// running, but we don't want that so we check
+			// to see if the IAL process is alive and, if
+			// not, finish the current package and return
+			BOOL alive = !kill(pid, 0);
+			if(!alive){
+				NSLog(@"[IAmLazyLog] AndSoAreYou: IAL process was killed; returning.");
+				return 1;
+			}
+
 			NSTask *task = [[NSTask alloc] init];
 			[task setLaunchPath:@"/usr/bin/dpkg"];
 			[task setArguments:@[@"-i", deb]];
@@ -324,8 +348,6 @@ int main(int argc, char *argv[]){
 			NSData *data = [handle readDataToEndOfFile];
 			[handle closeFile];
 
-			// have to call after ^ to ensure that the output pipe doesn't fill
-			// if it does, the process will hang and block waitUntilExit from returning
 			[task waitUntilExit];
 
 			NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
@@ -359,14 +381,12 @@ int main(int argc, char *argv[]){
 		NSData *data2 = [handle2 readDataToEndOfFile];
 		[handle2 closeFile];
 
-		// have to call after ^ to ensure that the output pipe doesn't fill
-		// if it does, the process will hang and block waitUntilExit from returning
 		[task2 waitUntilExit];
 
 		NSString *output2 = [[NSString alloc] initWithData:data2 encoding:NSUTF8StringEncoding];
 		[log2Text appendString:output2];
 
-		// ensure everything is configured
+		// ensure everything that can be configured is
 		NSTask *task3 = [[NSTask alloc] init];
 		[task3 setLaunchPath:@"/usr/bin/dpkg"];
 		[task3 setArguments:@[@"--configure", @"-a"]];
