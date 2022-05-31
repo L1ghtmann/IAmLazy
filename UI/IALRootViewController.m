@@ -6,10 +6,11 @@
 //
 
 #import "../Managers/IALGeneralManager.h"
-#import "../Managers/IALBackupManager.h"
 #import <AudioToolbox/AudioToolbox.h>
 #import "IALProgressViewController.h"
+#import "IALBackupsViewController.h"
 #import "IALRootViewController.h"
+#import "../IALAppDelegate.h"
 #import "IALTableViewCell.h"
 #import "../Common.h"
 
@@ -118,7 +119,7 @@
 -(void)selectedBackupOfType:(NSInteger)type withFilter:(BOOL)filter{
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy"
-								message:@"Please confirm that you have adequate free storage before proceeding"
+								message:@"Please confirm that you have adequate free storage before proceeding:"
 								preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *confirm = [UIAlertAction
@@ -142,12 +143,21 @@
 }
 
 -(void)makeBackupOfType:(NSInteger)type withFilter:(BOOL)filter{
-	UIApplication *app = [UIApplication sharedApplication];
 	[self presentViewController:[[IALProgressViewController alloc] initWithPurpose:0 ofType:type withFilter:filter] animated:YES completion:nil];
+
+	UIApplication *app = [UIApplication sharedApplication];
 	[app setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
+	_startTime = [NSDate date];
+
 	[_manager makeBackupOfType:type withFilter:filter];
+
+	_endTime = [NSDate date];
 	[app setIdleTimerDisabled:NO]; // reenable idle timer
+
 	if(![_manager encounteredError]){
+		IALAppDelegate *delegate = (IALAppDelegate*)[[UIApplication sharedApplication] delegate];
+		[(IALBackupsViewController *)delegate.backupsNavigationController.topViewController refreshTable];
+
 		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
 			[self dismissViewControllerAnimated:YES completion:^{
 				[self popPostBackup];
@@ -156,12 +166,19 @@
 	}
 }
 
+-(NSString *)getDuration{
+	NSTimeInterval duration = [_endTime timeIntervalSinceDate:_startTime];
+	return [NSString stringWithFormat:@"%.02f", duration];
+}
+
 #pragma mark Popups
 
 -(void)popPostBackup{
+	AudioServicesPlaySystemSound(4095); // vibration
+
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy Notice:"
-								message:[NSString stringWithFormat:@"Tweak backup completed successfully in %@ seconds!\n\nYour backup can be found in\n%@", [_manager.backupManager getDuration], backupDir]
+								message:[NSString stringWithFormat:@"Tweak backup completed successfully in %@ seconds!\n\nYour backup can be found in\n%@", [self getDuration], backupDir]
 								preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *export = [UIAlertAction

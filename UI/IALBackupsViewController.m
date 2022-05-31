@@ -11,8 +11,7 @@
 #import "IALBackupsViewController.h"
 #import "../Common.h"
 
-// https://stackoverflow.com/a/5337804
-#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v) ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v) ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending) // https://stackoverflow.com/a/5337804
 
 @implementation IALBackupsViewController
 
@@ -142,6 +141,8 @@
 	}
 }
 
+#pragma mark Functionality
+
 -(void)refreshTable{
 	if(self.tableView.refreshControl.refreshing){
 		[self.tableView.refreshControl endRefreshing];
@@ -153,8 +154,6 @@
 -(void)getBackups{
 	_backups = [[_manager getBackups] mutableCopy];
 }
-
-#pragma mark Functionality
 
 -(void)importBackup{
 	UIDocumentPickerViewController *importer;

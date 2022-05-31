@@ -17,13 +17,13 @@
 	_window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
 
 	// controllers for each page
-	_rootViewController = [[IALNavigationController alloc] initWithRootViewController:[[IALRootViewController alloc] init]];
-	_backupsViewController = [[IALNavigationController alloc] initWithRootViewController:[[IALBackupsViewController alloc] init]];
-	_restoreViewController = [[IALNavigationController alloc] initWithRootViewController:[[IALRestoreViewController alloc] init]];
+	_rootNavigationController = [[IALNavigationController alloc] initWithRootViewController:[[IALRootViewController alloc] init]];
+	_backupsNavigationController = [[IALNavigationController alloc] initWithRootViewController:[[IALBackupsViewController alloc] init]];
+	_restoreNavigationController = [[IALNavigationController alloc] initWithRootViewController:[[IALRestoreViewController alloc] init]];
 
 	// the 'root' controller that controls which controller ^ is presented
 	_tabBarController = [UITabBarController new];
-	[_tabBarController setViewControllers:@[_rootViewController, _backupsViewController, _restoreViewController]];
+	[_tabBarController setViewControllers:@[_rootNavigationController, _backupsNavigationController, _restoreNavigationController]];
 	[_window setRootViewController:_tabBarController];
 	[_window makeKeyAndVisible];
 

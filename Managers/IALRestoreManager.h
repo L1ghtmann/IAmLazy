@@ -2,9 +2,10 @@
 
 @class IALGeneralManager;
 
-@interface IALRestoreManager : NSObject <NSURLSessionTaskDelegate, NSURLSessionDownloadDelegate>
+@interface IALRestoreManager : NSObject <NSURLSessionTaskDelegate, NSURLSessionDownloadDelegate>  {
+    int _expectedDownloads;
+    int _actualDownloads;
+}
 @property (nonatomic, retain) IALGeneralManager *generalManager;
-@property (nonatomic) int expectedDownloads;
-@property (nonatomic) int actualDownloads;
 -(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type;
 @end

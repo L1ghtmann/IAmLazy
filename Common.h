@@ -1,4 +1,5 @@
 #import <UIKit/UIApplication.h>
+#import <UIKit/UIScreen.h>
 #import <NSTask.h>
 
 #define tmpDir @"/tmp/me.lightmann.iamlazy/"

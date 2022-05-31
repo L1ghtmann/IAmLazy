@@ -2,6 +2,9 @@
 
 @class IALGeneralManager;
 
-@interface IALRootViewController : UITableViewController
-@property (nonatomic, retain) IALGeneralManager *manager;
+@interface IALRootViewController : UITableViewController {
+    IALGeneralManager *_manager;
+    NSDate *_startTime;
+    NSDate *_endTime;
+}
 @end

@@ -2,6 +2,7 @@
 
 @class IALGeneralManager;
 
-@interface IALRestoreViewController : UITableViewController
-@property (nonatomic, retain) IALGeneralManager *manager;
+@interface IALRestoreViewController : UITableViewController {
+    IALGeneralManager *_manager;
+}
 @end

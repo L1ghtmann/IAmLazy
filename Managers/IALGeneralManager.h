@@ -1,11 +1,11 @@
 #import <UIKit/UIKit.h>
 
-@class IALRestoreManager;
-@class IALBackupManager;
+@class IALRestoreManager, IALBackupManager;
 
-@interface IALGeneralManager : NSObject
-@property (nonatomic, retain) IALRestoreManager *restoreManager;
-@property (nonatomic, retain) IALBackupManager *backupManager;
+@interface IALGeneralManager : NSObject {
+    IALRestoreManager *_restoreManager;
+    IALBackupManager *_backupManager;
+}
 @property (nonatomic, retain) UIViewController *rootVC;
 @property (nonatomic) BOOL encounteredError;
 +(instancetype)sharedManager;
@@ -14,7 +14,6 @@
 -(void)ensureBackupDirExists;
 -(void)cleanupTmp;
 -(void)updateAPT;
--(NSString *)craftNewBackupName;
 -(NSArray<NSString *> *)getBackups;
 -(void)executeCommandAsRoot:(NSString *)cmd;
 -(void)displayErrorWithMessage:(NSString *)msg;

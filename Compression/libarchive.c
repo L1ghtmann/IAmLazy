@@ -5,14 +5,14 @@
 //	Created by Lightmann during COVID-19
 //
 
+#include <archive_entry.h>
+#include <sys/fcntl.h>
+#include <archive.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
 #include <limits.h>
 #include <os/log.h>
-#include <archive.h>
-#include <sys/fcntl.h>
-#include <archive_entry.h>
 
 int get_file_count(){
 	int file_count = 0;

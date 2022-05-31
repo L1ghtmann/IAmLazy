@@ -16,9 +16,6 @@
 	// reset errors
 	[_generalManager setEncounteredError:NO];
 
-	// make note of start time
-	_startTime = [NSDate date];
-
 	// ensure backupdir exists
 	[_generalManager ensureBackupDirExists];
 
@@ -94,7 +91,7 @@
 
 		// craft new backup name and append the text file extension
 		NSString *listName;
-		NSString *new = [_generalManager craftNewBackupName];
+		NSString *new = [self craftNewBackupName];
 		if(!filter) listName = [new stringByAppendingString:@"u.txt"];
 		else listName = [new stringByAppendingPathExtension:@"txt"];
 
@@ -118,9 +115,6 @@
 
 		[self verifyFileAtPath:filePath];
 	}
-
-	// make note of end time
-	_endTime = [NSDate date];
 }
 
 -(NSArray<NSString *> *)getAllPackages{
@@ -458,7 +452,7 @@
 -(void)makeTarballWithFilter:(BOOL)filter{
 	// craft new backup name and append the gzip tar extension
 	NSString *backupName;
-	NSString *new = [_generalManager craftNewBackupName];
+	NSString *new = [self craftNewBackupName];
 	if(!filter) backupName = [new stringByAppendingString:@"u.tar.gz"];
 	else backupName = [new stringByAppendingPathExtension:@"tar.gz"];
 	NSString *backupPath = [backupDir stringByAppendingPathComponent:backupName];
@@ -481,17 +475,34 @@
 	[_generalManager cleanupTmp];
 }
 
+-(NSString *)craftNewBackupName{
+	int latestBackup = 0;
+	NSString *latest = [[_generalManager getBackups] firstObject];
+	if([latest hasPrefix:@"IAL-"]){
+		// get number from latest backup
+		NSString *latestBackupNumber = [latest substringFromIndex:([latest rangeOfString:@"_"].location + 1)];
+		latestBackup = [latestBackupNumber intValue];
+	}
+	else if([latest hasPrefix:@"IAmLazy-"]){ // preV2
+		// get number from latest backup
+		NSScanner *scanner = [[NSScanner alloc] initWithString:latest];
+		[scanner setCharactersToBeSkipped:[[NSCharacterSet decimalDigitCharacterSet] invertedSet]];
+		[scanner scanInt:&latestBackup];
+	}
+
+	// grab date in desired format
+	NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
+	[formatter setDateFormat:@"yyyyMMd"];
+
+	return [NSString stringWithFormat:@"IAL-%@_%d", [formatter stringFromDate:[NSDate date]], (latestBackup + 1)];
+}
+
 -(void)verifyFileAtPath:(NSString *)filePath{
 	if(![[NSFileManager defaultManager] fileExistsAtPath:filePath]){
 		NSString *msg = [NSString stringWithFormat:@"%@ DNE!", filePath];
 		[_generalManager displayErrorWithMessage:msg];
 		return;
 	}
-}
-
--(NSString *)getDuration{
-	NSTimeInterval duration = [_endTime timeIntervalSinceDate:_startTime];
-	return [NSString stringWithFormat:@"%.02f", duration];
 }
 
 @end

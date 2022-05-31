@@ -229,11 +229,15 @@
 }
 
 -(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type{
-	UIApplication *app = [UIApplication sharedApplication];
 	[self presentViewController:[[IALProgressViewController alloc] initWithPurpose:1 ofType:type withFilter:nil] animated:YES completion:nil];
+
+	UIApplication *app = [UIApplication sharedApplication];
 	[app setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
+
 	[_manager restoreFromBackup:backupName ofType:type];
+
 	[app setIdleTimerDisabled:NO]; // reenable idle timer
+
 	if(![_manager encounteredError]){
 		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
 			[self dismissViewControllerAnimated:YES completion:^{
@@ -246,6 +250,8 @@
 #pragma mark Popups
 
 -(void)popPostRestore{
+	AudioServicesPlaySystemSound(4095); // vibration
+
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy"
 								message:@"Choose a post-restore command:"

@@ -13,6 +13,8 @@
 
 @implementation IALGeneralManager
 
+#pragma mark Setup
+
 +(instancetype)sharedManager{
 	static dispatch_once_t p = 0;
 	__strong static IALGeneralManager *sharedManager = nil;
@@ -51,8 +53,6 @@
 	[_restoreManager setGeneralManager:self];
 	[_restoreManager restoreFromBackup:backupName ofType:type];
 }
-
-#pragma mark General
 
 -(void)ensureBackupDirExists{
 	// check if Documents/ has root ownership (it shouldn't)
@@ -118,28 +118,6 @@
 	[self executeCommandAsRoot:@"updateAPT"];
 }
 
--(NSString *)craftNewBackupName{
-	int latestBackup = 0;
-	NSString *latest = [[self getBackups] firstObject];
-	if([latest hasPrefix:@"IAL-"]){
-		// get number from latest backup
-		NSString *latestBackupNumber = [latest substringFromIndex:([latest rangeOfString:@"_"].location + 1)];
-		latestBackup = [latestBackupNumber intValue];
-	}
-	else if([latest hasPrefix:@"IAmLazy-"]){ // preV2
-		// get number from latest backup
-		NSScanner *scanner = [[NSScanner alloc] initWithString:latest];
-		[scanner setCharactersToBeSkipped:[[NSCharacterSet decimalDigitCharacterSet] invertedSet]];
-		[scanner scanInt:&latestBackup];
-	}
-
-	// grab date in desired format
-	NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
-	[formatter setDateFormat:@"yyyyMMd"];
-
-	return [NSString stringWithFormat:@"IAL-%@_%d", [formatter stringFromDate:[NSDate date]], (latestBackup + 1)];
-}
-
 -(NSArray<NSString *> *)getBackups{
 	NSError *readError = nil;
 	NSArray *backupDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:backupDir error:&readError];
@@ -183,6 +161,17 @@
 	}
 }
 
+-(BOOL)hasConnection{
+	Reachability *reachability = [Reachability reachabilityForInternetConnection];
+	BOOL reachable = YES;
+	if([reachability currentReachabilityStatus] == NotReachable){
+		reachable = NO;
+	}
+	return reachable;
+}
+
+#pragma mark Popups
+
 -(void)displayErrorWithMessage:(NSString *)msg{
 	_encounteredError = YES;
 
@@ -206,15 +195,6 @@
 	}];
 
 	NSLog(@"[IAmLazyLog] %@", [msg stringByReplacingOccurrencesOfString:@"\n" withString:@""]);
-}
-
--(BOOL)hasConnection{
-	Reachability *reachability = [Reachability reachabilityForInternetConnection];
-	BOOL reachable = YES;
-	if([reachability currentReachabilityStatus] == NotReachable){
-		reachable = NO;
-	}
-	return reachable;
 }
 
 @end
