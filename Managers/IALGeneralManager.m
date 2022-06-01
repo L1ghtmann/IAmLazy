@@ -139,11 +139,18 @@
 		return [NSArray new];
 	}
 
-	NSSortDescriptor *fileNameCompare = [NSSortDescriptor sortDescriptorWithKey:nil ascending:NO comparator:^NSComparisonResult(id obj1, id obj2){
-		return [(NSString *)obj1 compare:(NSString *)obj2 options:NSNumericSearch];
+	NSSortDescriptor *backupVerCompare = [NSSortDescriptor sortDescriptorWithKey:nil ascending:NO comparator:^NSComparisonResult(NSString *str1, NSString *str2){
+		NSCharacterSet *nonNumeric = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
+
+		NSMutableArray *str1Numbers = [[str1 componentsSeparatedByCharactersInSet:nonNumeric] mutableCopy];
+		NSMutableArray *str2Numbers = [[str2 componentsSeparatedByCharactersInSet:nonNumeric] mutableCopy];
+		[str1Numbers removeObject:@""];
+		[str2Numbers removeObject:@""];
+
+		return [[str1Numbers lastObject] compare:[str2Numbers lastObject] options:NSNumericSearch];
 	}];
-	NSArray *newSortedBackups = [newBackups sortedArrayUsingDescriptors:@[fileNameCompare]];
-	NSArray *legacySortedBackups = [legacyBackups sortedArrayUsingDescriptors:@[fileNameCompare]];
+	NSArray *newSortedBackups = [newBackups sortedArrayUsingDescriptors:@[backupVerCompare]];
+	NSArray *legacySortedBackups = [legacyBackups sortedArrayUsingDescriptors:@[backupVerCompare]];
 
 	// prioritize newer backups
 	return [newSortedBackups arrayByAddingObjectsFromArray:legacySortedBackups];

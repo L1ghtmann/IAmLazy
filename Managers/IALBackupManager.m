@@ -477,17 +477,13 @@
 
 -(NSString *)craftNewBackupName{
 	int latestBackup = 0;
-	NSString *latest = [[_generalManager getBackups] firstObject];
-	if([latest hasPrefix:@"IAL-"]){
-		// get number from latest backup
-		NSString *latestBackupNumber = [latest substringFromIndex:([latest rangeOfString:@"_"].location + 1)];
-		latestBackup = [latestBackupNumber intValue];
-	}
-	else if([latest hasPrefix:@"IAmLazy-"]){ // preV2
-		// get number from latest backup
-		NSScanner *scanner = [[NSScanner alloc] initWithString:latest];
-		[scanner setCharactersToBeSkipped:[[NSCharacterSet decimalDigitCharacterSet] invertedSet]];
-		[scanner scanInt:&latestBackup];
+	NSArray *backups = [_generalManager getBackups];
+	if([backups count]){
+		NSString *latest = [backups firstObject];
+		NSCharacterSet *nonNumeric = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
+		NSMutableArray *numbers = [[latest componentsSeparatedByCharactersInSet:nonNumeric] mutableCopy];
+		[numbers removeObject:@""]; // array contains numbers and an empty string(s); we only want the numbers
+		latestBackup = [[numbers lastObject] intValue]; // supports both legacy and current backup naming schemes
 	}
 
 	// grab date in desired format

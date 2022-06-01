@@ -14,8 +14,6 @@
 @implementation IALAppDelegate
 
 -(BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions{
-	_window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-
 	// controllers for each page
 	_rootNavigationController = [[IALNavigationController alloc] initWithRootViewController:[[IALRootViewController alloc] init]];
 	_backupsNavigationController = [[IALNavigationController alloc] initWithRootViewController:[[IALBackupsViewController alloc] init]];
@@ -24,6 +22,9 @@
 	// the 'root' controller that controls which controller ^ is presented
 	_tabBarController = [UITabBarController new];
 	[_tabBarController setViewControllers:@[_rootNavigationController, _backupsNavigationController, _restoreNavigationController]];
+
+	// key/root window
+	_window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
 	[_window setRootViewController:_tabBarController];
 	[_window makeKeyAndVisible];
 
