@@ -10,7 +10,7 @@
 
 @implementation IALTableViewCell
 
--(instancetype)initWithIdentifier:(NSString *)identifier purpose:(NSInteger)purpose type:(NSInteger)type function:(NSInteger)function functionDescriptor:(NSString *)descriptor{
+-(instancetype)initWithIdentifier:(NSString *)identifier purpose:(NSInteger)purpose type:(NSInteger)type function:(NSInteger)function{
 	self = [super initWithStyle:UITableViewCellStyleDefault reuseIdentifier:identifier];
 
 	if(self){
@@ -52,9 +52,23 @@
 		[[_functionLabel.heightAnchor constraintEqualToConstant:25] setActive:YES];
 		[[_functionLabel.topAnchor constraintEqualToAnchor:_container.topAnchor constant:2] setActive:YES];
 
+		// determine function text
+		NSString *functionDescriptor;
+		if(type == 0) functionDescriptor = @"Backup";
+		else functionDescriptor = @"List";
+
+		if(purpose == 0){ // backup
+			if(function == 0) functionDescriptor = [NSString stringWithFormat:@"Standard %@", functionDescriptor];
+			else functionDescriptor = [NSString stringWithFormat:@"Unfiltered %@", functionDescriptor];
+		}
+		else{ // restore
+			if(function == 0) functionDescriptor = [NSString stringWithFormat:@"From Latest %@", functionDescriptor];
+			else functionDescriptor = [NSString stringWithFormat:@"From Specific %@", functionDescriptor];
+		}
+
 		[_functionLabel setFont:[UIFont systemFontOfSize:_functionLabel.font.pointSize weight:0.40]];
 		[_functionLabel setUserInteractionEnabled:NO];
-		[_functionLabel setText:descriptor];
+		[_functionLabel setText:functionDescriptor];
 
 		// function descriptor label setup
 		_descriptorLabel = [[UILabel alloc] init];
@@ -83,27 +97,27 @@
 	/*
 		purpose: 0 = backup | 1 = restore
 		type: 0 = deb | 1 = list
-		function: 0 = standard|latest | unfiltered|specific
+		function: 0 = standard|latest | 1 = unfiltered|specific
 	*/
 
 	// backup cell
 	if(purpose == 0){
-		if(type == 0){ // deb
+		if(type == 0){
 			if(function == 0) image = [UIImage systemImageNamed:@"plus.app"];
 			else image = [UIImage systemImageNamed:@"exclamationmark.square"];
 		}
-		else{ // list
+		else{
 			if(function == 0) image = [UIImage systemImageNamed:@"line.horizontal.3.decrease.circle"];
 			else image = [UIImage systemImageNamed:@"exclamationmark.circle"];
 		}
 	}
 	// restore cell
 	else{
-		if(type == 0){ // deb
+		if(type == 0){
 			if(function == 0) image = [UIImage systemImageNamed:@"arrow.counterclockwise.circle"];
 			else image = [UIImage systemImageNamed:@"questionmark.circle"];
 		}
-		else{ // list
+		else{
 			if(function == 0) image = [UIImage systemImageNamed:@"pencil.and.outline"];
 			else image = [UIImage systemImageNamed:@"pencil.tip.crop.circle"];
 		}
@@ -117,7 +131,7 @@
 
 	/*
 		purpose: 0 = backup | 1 = restore
-		function: 0 = standard|latest | unfiltered|specific
+		function: 0 = standard|latest | 1 = unfiltered|specific
 	*/
 
 	if(purpose == 0){

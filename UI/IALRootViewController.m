@@ -75,26 +75,9 @@
 
 	NSInteger type = indexPath.section; // 0 = deb | 1 = list
 	NSInteger function = indexPath.row; // 0 = filtered | 1 = unfiltered
-	NSString *functionDescriptor;
-
-	// eval section
-	if(indexPath.section == 0){
-		functionDescriptor = @"Backup";
-	}
-	else{
-		functionDescriptor = @"List";
-	}
-
-	// eval row
-	if(indexPath.row == 0){
-		functionDescriptor = [NSString stringWithFormat:@"Standard %@", functionDescriptor];
-	}
-	else{
-		functionDescriptor = [NSString stringWithFormat:@"Unfiltered %@", functionDescriptor];
-	}
 
 	if(!cell){
-		cell = [[IALTableViewCell alloc] initWithIdentifier:identifier purpose:0 type:type function:function functionDescriptor:functionDescriptor];
+		cell = [[IALTableViewCell alloc] initWithIdentifier:identifier purpose:0 type:type function:function];
 	}
 
 	return cell;
@@ -117,9 +100,14 @@
 #pragma mark Functionality
 
 -(void)selectedBackupOfType:(NSInteger)type withFilter:(BOOL)filter{
+	NSString *msg = @"Please confirm that you have adequate free storage before proceeding:";
+	if(type != 0){
+		msg = @"Please confirm that you'd like to proceed with the backup:";
+	}
+
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy"
-								message:@"Please confirm that you have adequate free storage before proceeding:"
+								message:msg
 								preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *confirm = [UIAlertAction

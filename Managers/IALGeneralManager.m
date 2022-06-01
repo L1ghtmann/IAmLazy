@@ -38,16 +38,23 @@
 #pragma mark Functionality
 
 -(void)makeBackupOfType:(NSInteger)type withFilter:(BOOL)filter{
+	// reset errors
+	[self setEncounteredError:NO];
+
 	if(!_backupManager) _backupManager = [[IALBackupManager alloc] init];
 	[_backupManager setGeneralManager:self];
 	[_backupManager makeBackupOfType:type withFilter:filter];
 }
 
 -(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type{
+	// check for internet connection
 	if(![self hasConnection]){
 		[self displayErrorWithMessage:@"Your device does not appear to be connected to the internet.\n\nA network connection is required for restores so packages can be downloaded if need be."];
 		return;
 	}
+
+	// reset errors
+	[self setEncounteredError:NO];
 
 	if(!_restoreManager) _restoreManager = [[IALRestoreManager alloc] init];
 	[_restoreManager setGeneralManager:self];
@@ -140,10 +147,10 @@
 	}
 
 	NSSortDescriptor *backupVerCompare = [NSSortDescriptor sortDescriptorWithKey:nil ascending:NO comparator:^NSComparisonResult(NSString *str1, NSString *str2){
-		NSCharacterSet *nonNumeric = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
+		NSCharacterSet *nonNumericChars = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
 
-		NSMutableArray *str1Numbers = [[str1 componentsSeparatedByCharactersInSet:nonNumeric] mutableCopy];
-		NSMutableArray *str2Numbers = [[str2 componentsSeparatedByCharactersInSet:nonNumeric] mutableCopy];
+		NSMutableArray *str1Numbers = [[str1 componentsSeparatedByCharactersInSet:nonNumericChars] mutableCopy];
+		NSMutableArray *str2Numbers = [[str2 componentsSeparatedByCharactersInSet:nonNumericChars] mutableCopy];
 		[str1Numbers removeObject:@""];
 		[str2Numbers removeObject:@""];
 
@@ -157,8 +164,8 @@
 }
 
 -(void)executeCommandAsRoot:(NSString *)cmd{
-	NSCharacterSet *alphaSet = [NSCharacterSet alphanumericCharacterSet];
-	BOOL valid = ![[cmd stringByTrimmingCharactersInSet:alphaSet] length];
+	NSCharacterSet *alphaChars = [NSCharacterSet alphanumericCharacterSet];
+	BOOL valid = ![[cmd stringByTrimmingCharactersInSet:alphaChars] length];
 	if(valid){
 		NSTask *task = [[NSTask alloc] init];
 		[task setLaunchPath:@"/usr/libexec/iamlazy/AndSoAreYou"];
@@ -201,7 +208,7 @@
 		[_rootVC presentViewController:alert animated:YES completion:nil];
 	}];
 
-	NSLog(@"[IAmLazyLog] %@", [msg stringByReplacingOccurrencesOfString:@"\n" withString:@""]);
+	NSLog(@"[IAmLazyLog] %@", [msg stringByReplacingOccurrencesOfString:@"\n" withString:@" "]);
 }
 
 @end

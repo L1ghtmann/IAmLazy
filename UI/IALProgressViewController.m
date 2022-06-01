@@ -61,6 +61,7 @@
 		}
 		else{
 			[icons addObject:@"increase.indent"];
+			[icons addObject:@"keyboard"];
 			[icons addObject:@"pencil"];
 		}
 	}
@@ -84,27 +85,23 @@
 	*/
 
 	if(purpose == 0){
+		if(filter){
+			[itemDescs addObject:@"Generating list of user packages"];
+			if(type == 0) [itemDescs addObject:@"Gathering files for user packages"];
+			else [itemDescs addObject:@"Formatting list of user packages"];
+		}
+		else {
+			[itemDescs addObject:@"Generating list of installed packages"];
+			if(type == 0) [itemDescs addObject:@"Gathering files for installed packages"];
+			else [itemDescs addObject:@"Formatting list of installed packages"];
+		}
+
 		if(type == 0){
-			if(filter){
-				[itemDescs addObject:@"Generating list of user packages"];
-				[itemDescs addObject:@"Gathering files for user packages"];
-			}
-			else {
-				[itemDescs addObject:@"Generating list of installed packages"];
-				[itemDescs addObject:@"Gathering files for installed packages"];
-			}
 			[itemDescs addObject:@"Building debs from gathered files"];
 			[itemDescs addObject:@"Creating backup from debs"];
 		}
 		else{
-			if(filter){
-				[itemDescs addObject:@"Generating list of user packages"];
-				[itemDescs addObject:@"Formatting list of user packages"];
-			}
-			else{
-				[itemDescs addObject:@"Generating list of installed packages"];
-				[itemDescs addObject:@"Formatting list of installed packages"];
-			}
+			[itemDescs addObject:@"Toppling the Galactic Government"];
 			[itemDescs addObject:@"Writing list to file"];
 		}
 	}
@@ -133,7 +130,7 @@
 			break;
 	}
 
-	NSString *text = [NSString stringWithFormat:@"%@ Progress", purposeString];
+	NSString *text = [NSString stringWithFormat:@"%@ progress", purposeString];
 
 	UILabel *title = [[UILabel alloc] init];
 	[self.view addSubview:title];
@@ -262,11 +259,11 @@
 
 -(void)updateProgress:(NSNotification *)notification{
 	CGFloat item = [(NSString *)notification.object floatValue];
-	int itemInt = ceil(item);
+	NSUInteger itemInt = ceil(item);
 	BOOL isInteger = item == itemInt;
 
 	// Note: colorWithRed:green:blue:alpha: seems to use sRGB, not Adobe RGB (https://stackoverflow.com/a/40052756)
-	// A helpful link -- https://www.easyrgb.com/en/convert.php#inputFORM
+	// a helpful link -- https://www.easyrgb.com/en/convert.php#inputFORM
 
 	if(isInteger){
 		[UIView animateWithDuration:0.5 animations:^{

@@ -19,7 +19,10 @@ int get_file_count(){
 
 	struct dirent *entry;
 	DIR *directory = opendir("/tmp/me.lightmann.iamlazy/");
-	if(!directory) return 0;
+	if(!directory){
+		return 0;
+	}
+
 	while((entry = readdir(directory))){
 		// if entry is a regular file
 		if(entry->d_type == DT_REG){
@@ -49,7 +52,10 @@ void write_archive(const char *outname){
 
 	struct dirent *ent;
 	DIR *directory = opendir("/tmp/me.lightmann.iamlazy/");
-	if(!directory) return;
+	if(!directory){
+		return;
+	}
+
 	int count = 0;
 	size_t IAL = strlen("me.lightmann.iamlazy/");
 	while((ent = readdir(directory))){
@@ -127,6 +133,7 @@ int copy_data(struct archive *ar, struct archive *aw){
 		if(r < ARCHIVE_OK){
 			return r;
 		}
+
 		r = archive_write_data_block(aw, buff, size, offset);
 		if(r < ARCHIVE_OK){
 			os_log_error(OS_LOG_DEFAULT, "[IAmLazyLog] libarchive: copy_data: %s", archive_error_string(aw));
@@ -160,6 +167,7 @@ void extract_archive(const char *filename){
 	if((r = archive_read_open_filename(a, filename, 10240))){
 		return;
 	}
+
 	for(;;){
 		r = archive_read_next_header(a, &entry);
 		if(r == ARCHIVE_EOF){
@@ -171,6 +179,7 @@ void extract_archive(const char *filename){
 		if(r < ARCHIVE_WARN){
 			return;
 		}
+
 		r = archive_write_header(ext, entry);
 		if(r < ARCHIVE_OK){
 			os_log_error(OS_LOG_DEFAULT, "[IAmLazyLog] libarchive: extract_archive: %s", archive_error_string(ext));
@@ -184,6 +193,7 @@ void extract_archive(const char *filename){
 				return;
 			}
 		}
+
 		r = archive_write_finish_entry(ext);
 		if(r < ARCHIVE_OK){
 			os_log_error(OS_LOG_DEFAULT, "[IAmLazyLog] libarchive: extract_archive: %s", archive_error_string(ext));

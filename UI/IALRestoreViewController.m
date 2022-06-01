@@ -72,26 +72,9 @@
 
 	NSInteger type = indexPath.section; // 0 = deb | 1 = list
 	NSInteger function = indexPath.row; // 0 = latest | 1 = specific
-	NSString *functionDescriptor;
-
-	// eval sections
-	if(indexPath.section == 0){
-		functionDescriptor = @"Backup";
-	}
-	else{
-		functionDescriptor = @"List";
-	}
-
-	// eval rows
-	if(indexPath.row == 0){
-		functionDescriptor = [NSString stringWithFormat:@"From Latest %@", functionDescriptor];
-	}
-	else{
-		functionDescriptor = [NSString stringWithFormat:@"From Specific %@", functionDescriptor];
-	}
 
 	if(!cell){
-		cell = [[IALTableViewCell alloc] initWithIdentifier:identifier purpose:1 type:type function:function functionDescriptor:functionDescriptor];
+		cell = [[IALTableViewCell alloc] initWithIdentifier:identifier purpose:1 type:type function:function];
 	}
 
 	return cell;
@@ -129,7 +112,9 @@
 	}
 
 	NSArray *backups = [_manager getBackups];
-	if(![backups count]) return;
+	if(![backups count]){
+		return;
+	}
 
 	// get desired backups
 	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH %@", extension];
@@ -257,13 +242,6 @@
 								message:@"Choose a post-restore command:"
 								preferredStyle:UIAlertControllerStyleAlert];
 
-	UIAlertAction *uReboot = [UIAlertAction
-								actionWithTitle:@"Userspace Reboot"
-								style:UIAlertActionStyleDefault
-								handler:^(UIAlertAction *action){
-									[_manager executeCommandAsRoot:@"rebootUserspace"];
-								}];
-
 	UIAlertAction *respring = [UIAlertAction
 								actionWithTitle:@"Respring"
 								style:UIAlertActionStyleDefault
@@ -290,7 +268,6 @@
 								[self dismissViewControllerAnimated:YES completion:nil];
 							}];
 
-	[alert addAction:uReboot];
 	[alert addAction:respring];
 	[alert addAction:uicache];
 	[alert addAction:none];

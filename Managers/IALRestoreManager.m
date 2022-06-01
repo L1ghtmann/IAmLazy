@@ -13,11 +13,8 @@
 @implementation IALRestoreManager
 
 -(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type{
-	// reset errors
-	[_generalManager setEncounteredError:NO];
-
 	NSNotificationCenter *notifCenter = [NSNotificationCenter defaultCenter];
-	[notifCenter postNotificationName:@"updateProgress" object:@"null"];
+	[notifCenter postNotificationName:@"updateProgress" object:@"-0.5"];
 
 	// check for backup dir
 	NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -40,8 +37,6 @@
 		return;
 	}
 
-	[notifCenter postNotificationName:@"updateProgress" object:@"0"];
-
 	// check for old tmp files
 	if([fileManager fileExistsAtPath:tmpDir]){
 		[_generalManager cleanupTmp];
@@ -49,6 +44,8 @@
 
 	// ensure logdir exists
 	[_generalManager ensureBackupDirExists];
+
+	[notifCenter postNotificationName:@"updateProgress" object:@"0"];
 
 	BOOL compatible = YES;
 	if(type == 0){
@@ -224,6 +221,7 @@
 
 	// get installed repo urls
 	NSMutableArray *repoURLS = [NSMutableArray new];
+	NSCharacterSet *newlineChars = [NSCharacterSet newlineCharacterSet];
 	for(NSString *path in srcListPaths){
 		if([fileManager fileExistsAtPath:path]){
 			NSError *readError = nil;
@@ -233,8 +231,10 @@
 				continue;
 			}
 
-			NSArray *srcListContents = [contents componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
-			if(![srcListContents count]) continue;
+			NSArray *srcListContents = [contents componentsSeparatedByCharactersInSet:newlineChars];
+			if(![srcListContents count]){
+				continue;
+			}
 
 			for(NSString *line in srcListContents){
 				if([line length] && [line hasPrefix:@"deb"]){
@@ -277,8 +277,10 @@
 					continue;
 				}
 
-				NSArray *lines = [contents componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
-				if(![lines count]) continue;
+				NSArray *lines = [contents componentsSeparatedByCharactersInSet:newlineChars];
+				if(![lines count]){
+					continue;
+				}
 
 				// grab package names and craft download urls
 				NSMutableArray *pkgs = [NSMutableArray new];
@@ -286,20 +288,24 @@
 				for(NSString *line in lines){
 					if([line length]){
 						if([line hasPrefix:@"Package:"]){
-							[pkgs addObject:[line stringByReplacingOccurrencesOfString:@"Package: " withString:@""]];
+							NSString *package = [line stringByReplacingOccurrencesOfString:@"Package: " withString:@""];
+							if([package length]){
+								[pkgs addObject:package];
+							}
 						}
 						else if([line hasPrefix:@"Filename:"]){
 							NSString *localFilePath = [line stringByReplacingOccurrencesOfString:@"Filename: " withString:@""];
+							if([localFilePath length]){
+								NSString *justFile = [file stringByReplacingOccurrencesOfString:path withString:@""];
+								NSString *repo = [justFile substringWithRange:NSMakeRange(0, [justFile rangeOfString:@"_"].location)];
 
-							NSString *justFile = [file stringByReplacingOccurrencesOfString:path withString:@""];
-							NSString *repo = [justFile substringWithRange:NSMakeRange(0, [justFile rangeOfString:@"_"].location)];
-
-							NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS %@", repo];
-							NSArray *repoUrl = [repoURLS filteredArrayUsingPredicate:thePredicate];
-							if([repoUrl count]){
-								NSURL *baseUrl = [NSURL URLWithString:[repoUrl firstObject]];
-								NSURL *url = [baseUrl URLByAppendingPathComponent:localFilePath];
-								[urls addObject:url];
+								NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS %@", repo];
+								NSArray *repoUrl = [repoURLS filteredArrayUsingPredicate:thePredicate];
+								if([repoUrl count]){
+									NSURL *baseUrl = [NSURL URLWithString:[repoUrl firstObject]];
+									NSURL *url = [baseUrl URLByAppendingPathComponent:localFilePath];
+									[urls addObject:url];
+								}
 							}
 						}
 					}
@@ -330,10 +336,10 @@
 	}
 
 	NSMutableArray *pkgs = [NSMutableArray new];
-	NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
-	[set addCharactersInString:@"+-."];
+	NSMutableCharacterSet *validChars = [NSMutableCharacterSet alphanumericCharacterSet];
+	[validChars addCharactersInString:@"+-."];
 	for(NSString *tweak in tweaks){
-		BOOL valid = ![[tweak stringByTrimmingCharactersInSet:set] length];
+		BOOL valid = ![[tweak stringByTrimmingCharactersInSet:validChars] length];
 		if(valid){
 			// ignore unfiltered list backup's bootstrap identifier
 			if([tweak isEqualToString:@"elucubratus"] || [tweak isEqualToString:@"bingner_elucubratus"] || [tweak isEqualToString:@"procursus"]){
@@ -469,7 +475,9 @@
 	NSString *fileName = [[[downloadTask originalRequest] URL] lastPathComponent];
 	NSInteger underscore = [fileName rangeOfString:@"_"].location;
 
-	if(underscore == NSNotFound) underscore = [fileName length];
+	if(underscore == NSNotFound){
+		underscore = [fileName length];
+	}
 
 	NSError *readError = nil;
 	NSData *fileData = [NSData dataWithContentsOfURL:location options:0 error:&readError];

@@ -14,19 +14,19 @@ NSString *getCurrentPackage(){
 	NSArray *tmpDirFiles = [fileManager contentsOfDirectoryAtPath:tmpDir error:&readError];
 	if(readError){
 		NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to get contents of %@! Error: %@", tmpDir, readError);
-		return @"";
+		return @"readErr";
 	}
 	else if(![tmpDirFiles count]){
-		return @"";
+		return @"readErr";
 	}
 
 	NSMutableDictionary *dirsAndCreationDates = [NSMutableDictionary new];
-	NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
-	[set addCharactersInString:@"+-."];
+	NSMutableCharacterSet *validChars = [NSMutableCharacterSet alphanumericCharacterSet];
+	[validChars addCharactersInString:@"+-."];
 	NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
 	[formatter setDateFormat:@"HH:mm:ss.SSS"];
 	for(NSString *file in tmpDirFiles){
-		BOOL valid = ![[file stringByTrimmingCharactersInSet:set] length];
+		BOOL valid = ![[file stringByTrimmingCharactersInSet:validChars] length];
 		if(valid){
 			NSString *filePath = [tmpDir stringByAppendingPathComponent:file];
 
@@ -68,11 +68,11 @@ int main(int argc, char *argv[]){
 	}
 
 	// get current process' parent PID
-	pid_t pid = getppid();
+	pid_t ppid = getppid();
 
 	// get absolute path of the command running at 'pid'
 	char buffer[PATH_MAX];
-	int ret = proc_pidpath(pid, buffer, sizeof(buffer));
+	int ret = proc_pidpath(ppid, buffer, sizeof(buffer));
 
 	// get attributes of parent process' command
 	struct stat parent;
@@ -227,10 +227,10 @@ int main(int argc, char *argv[]){
 		}
 
 		NSMutableArray *tweakDirs = [NSMutableArray new];
-		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
-		[set addCharactersInString:@"+-."];
+		NSMutableCharacterSet *validChars = [NSMutableCharacterSet alphanumericCharacterSet];
+		[validChars addCharactersInString:@"+-."];
 		for(NSString *item in tmpDirContents){
-			BOOL valid = ![[item stringByTrimmingCharactersInSet:set] length];
+			BOOL valid = ![[item stringByTrimmingCharactersInSet:validChars] length];
 			if(valid){
 				NSString *path = [tmpDir stringByAppendingPathComponent:item];
 
@@ -303,10 +303,10 @@ int main(int argc, char *argv[]){
 		}
 
 		NSMutableArray *debs = [NSMutableArray new];
-		NSMutableCharacterSet *set = [NSMutableCharacterSet alphanumericCharacterSet];
-		[set addCharactersInString:@"+-."];
+		NSMutableCharacterSet *validChars = [NSMutableCharacterSet alphanumericCharacterSet];
+		[validChars addCharactersInString:@"+-."];
 		for(NSString *item in tmpDirContents){
-			BOOL valid = ![[item stringByTrimmingCharactersInSet:set] length];
+			BOOL valid = ![[item stringByTrimmingCharactersInSet:validChars] length];
 			if(valid){
 				NSString *path = [tmpDir stringByAppendingPathComponent:item];
 				if([[item pathExtension] isEqualToString:@"deb"]){
@@ -329,7 +329,7 @@ int main(int argc, char *argv[]){
 			// running, but we don't want that so we check
 			// to see if the IAL process is alive and, if
 			// not, finish the current package and return
-			BOOL alive = !kill(pid, 0);
+			BOOL alive = !kill(ppid, 0);
 			if(!alive){
 				NSLog(@"[IAmLazyLog] AndSoAreYou: IAL process was killed; returning.");
 				return 1;
@@ -410,13 +410,6 @@ int main(int argc, char *argv[]){
 		if(writeError2){
 			NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to write to %@! Error: %@", log2, writeError2);
 		}
-	}
-	else if(strcmp(argv[1], "rebootUserspace") == 0){
-		NSTask *task = [[NSTask alloc] init];
-		[task setLaunchPath:@"/bin/launchctl"];
-		[task setArguments:@[@"reboot", @"userspace"]];
-		[task launch];
-		[task waitUntilExit];
 	}
 	else{
 		printf("Houston, we have a problem: an invalid argument was provided!\n");
