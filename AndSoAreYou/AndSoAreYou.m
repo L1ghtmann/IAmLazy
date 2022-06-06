@@ -203,9 +203,13 @@ int main(int argc, char *argv[]){
 				continue;
 			}
 
-			NSError *writeError = nil;
 			// remove tweakName prefix and copy file
 			NSString *strippedName = [file stringByReplacingOccurrencesOfString:[tweakName stringByAppendingString:@"."] withString:@""];
+			if(![strippedName length]){
+				continue;
+			}
+
+			NSError *writeError = nil;
 			[fileManager copyItemAtPath:filePath toPath:[debian stringByAppendingPathComponent:strippedName] error:&writeError];
 			if(writeError){
 				NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to copy %@! Error: %@", filePath, writeError);

@@ -100,7 +100,6 @@
 		function: 0 = standard|latest | 1 = unfiltered|specific
 	*/
 
-	// backup cell
 	if(purpose == 0){
 		if(type == 0){
 			if(function == 0) image = [UIImage systemImageNamed:@"plus.app"];
@@ -111,7 +110,6 @@
 			else image = [UIImage systemImageNamed:@"exclamationmark.circle"];
 		}
 	}
-	// restore cell
 	else{
 		if(type == 0){
 			if(function == 0) image = [UIImage systemImageNamed:@"arrow.counterclockwise.circle"];

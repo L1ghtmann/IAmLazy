@@ -259,6 +259,10 @@
 				NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", path, readError);
 				continue;
 			}
+			else if(![listDirContents count]){
+				NSLog(@"[IAmLazyLog] %@ has no contents!", path);
+				continue;
+			}
 
 			// grab repos' Packages files
 			NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH 'Packages'"];
@@ -295,14 +299,42 @@
 						}
 						else if([line hasPrefix:@"Filename:"]){
 							NSString *localFilePath = [line stringByReplacingOccurrencesOfString:@"Filename: " withString:@""];
-							if([localFilePath length]){
-								NSString *justFile = [file stringByReplacingOccurrencesOfString:path withString:@""];
-								NSString *repo = [justFile substringWithRange:NSMakeRange(0, [justFile rangeOfString:@"_"].location)];
+							if(![localFilePath length]){
+								continue;
+							}
 
-								NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS %@", repo];
-								NSArray *repoUrl = [repoURLS filteredArrayUsingPredicate:thePredicate];
-								if([repoUrl count]){
-									NSURL *baseUrl = [NSURL URLWithString:[repoUrl firstObject]];
+							NSString *justFile = [file stringByReplacingOccurrencesOfString:path withString:@""];
+							if(![justFile length]){
+								continue;
+							}
+
+							NSString *repo = [justFile substringWithRange:NSMakeRange(0, [justFile rangeOfString:@"_"].location)];
+							if(![repo length]){
+								continue;
+							}
+
+							NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS %@", repo];
+							NSArray *repoUrl = [repoURLS filteredArrayUsingPredicate:thePredicate];
+							if([repoUrl count]){ // count is 2
+								// confirm string is valid url (https://stackoverflow.com/a/20892574)
+								NSString *urlString = [repoUrl firstObject];
+								NSUInteger length = [urlString length];
+								if(!length){
+									continue;
+								}
+
+								NSError *initError = nil;
+								NSDataDetector *dataDetector = [NSDataDetector dataDetectorWithTypes:NSTextCheckingTypeLink error:&initError];
+								if(initError){
+									NSLog(@"[IAmLazyLog] Failed to initialize data detector! Error: %@", initError);
+									continue;
+								}
+
+								NSRange stringRange = NSMakeRange(0, length);
+								NSRange notFoundRange = (NSRange){NSNotFound, 0};
+								NSRange linkRange = [dataDetector rangeOfFirstMatchInString:urlString options:0 range:stringRange];
+								if(!NSEqualRanges(linkRange, notFoundRange) && NSEqualRanges(linkRange, stringRange)){
+									NSURL *baseUrl = [NSURL URLWithString:urlString];
 									NSURL *url = [baseUrl URLByAppendingPathComponent:localFilePath];
 									[urls addObject:url];
 								}
@@ -329,7 +361,7 @@
 		return [NSArray new];
 	}
 
-	NSArray	*tweaks = [tweakList componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
+	NSArray *tweaks = [tweakList componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
 	if(![tweaks count]){
 		NSLog(@"[IAmLazyLog] %@ is empty!", target);
 		return [NSArray new];
@@ -451,8 +483,11 @@
 	NSURLSession *session = [NSURLSession sessionWithConfiguration:config delegate:self delegateQueue:nil];
 	for(NSURL *url in urls){
 		NSURLRequest *request = [NSURLRequest requestWithURL:url];
-		NSURLSessionTask *task = [session downloadTaskWithRequest:request];
-		[task resume];
+		BOOL valid = [NSURLConnection canHandleRequest:request];
+		if(valid){
+			NSURLSessionTask *task = [session downloadTaskWithRequest:request];
+			[task resume];
+		}
 	}
 
 	// wait for 'done' notif
@@ -474,7 +509,6 @@
 -(void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didFinishDownloadingToURL:(NSURL *)location{
 	NSString *fileName = [[[downloadTask originalRequest] URL] lastPathComponent];
 	NSInteger underscore = [fileName rangeOfString:@"_"].location;
-
 	if(underscore == NSNotFound){
 		underscore = [fileName length];
 	}

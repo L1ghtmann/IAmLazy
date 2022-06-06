@@ -160,6 +160,9 @@
 	[validChars addCharactersInString:@"+-."];
 	for(NSString *control in _controlFiles){
 		NSArray *lines = [control componentsSeparatedByCharactersInSet:newlineChars];
+		if(![lines count]){
+			continue;
+		}
 
 		// get package name
 		NSString *packageLine = [[lines filteredArrayUsingPredicate:thePredicate1] firstObject];
@@ -202,6 +205,10 @@
 	NSArray *aptLists = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:aptListsDir error:&readError];
 	if(readError){
 		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", aptListsDir, readError);
+		return [NSArray new];
+	}
+	else if(![aptLists count]){
+		NSLog(@"[IAmLazyLog] %@ has no contents!", aptListsDir);
 		return [NSArray new];
 	}
 
@@ -396,7 +403,12 @@
 
 	NSString *theOne = [relevantControls firstObject];
 	NSString *noStatusLine = [theOne stringByReplacingOccurrencesOfString:@"Status: install ok installed\n" withString:@""]; // dpkg adds this at installation
-	NSString *info = [noStatusLine stringByAppendingString:@"\n"]; // ensure final newline (deb will fail to build if missing)
+	if(![noStatusLine length]){
+		return;
+	}
+
+	// ensure final newline (deb will fail to build if missing)
+	NSString *info = [noStatusLine stringByAppendingString:@"\n"];
 
 	// make DEBIAN dir
 	NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -433,6 +445,11 @@
 	NSArray *tmp = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:&readError];
 	if(readError){
 		NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", tmpDir, readError];
+		[_generalManager displayErrorWithMessage:msg];
+		return;
+	}
+	else if(![tmp count]){
+		NSString *msg = [NSString stringWithFormat:@"%@ has no contents!", tmpDir];
 		[_generalManager displayErrorWithMessage:msg];
 		return;
 	}
@@ -489,7 +506,9 @@
 		NSCharacterSet *nonNumericChars = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
 		NSMutableArray *numbers = [[latest componentsSeparatedByCharactersInSet:nonNumericChars] mutableCopy];
 		[numbers removeObject:@""]; // array contains numbers and an empty string(s); we only want the numbers
-		latestBackup = [[numbers lastObject] intValue]; // supports both the current and legacy naming schemes
+		if([numbers count]){
+			latestBackup = [[numbers lastObject] intValue]; // supports both the current and legacy naming schemes
+		}
 	}
 
 	// grab date in desired format

@@ -259,7 +259,7 @@
 
 -(void)updateProgress:(NSNotification *)notification{
 	CGFloat item = [(NSString *)notification.object floatValue];
-	NSUInteger itemInt = ceil(item);
+	NSInteger itemInt = ceil(item);
 	BOOL isInteger = item == itemInt;
 
 	// Note: colorWithRed:green:blue:alpha: seems to use sRGB, not Adobe RGB (https://stackoverflow.com/a/40052756)

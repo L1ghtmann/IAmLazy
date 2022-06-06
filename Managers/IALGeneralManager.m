@@ -39,7 +39,7 @@
 
 -(void)makeBackupOfType:(NSInteger)type withFilter:(BOOL)filter{
 	// reset errors
-	[self setEncounteredError:NO];
+	_encounteredError = NO;
 
 	if(!_backupManager) _backupManager = [[IALBackupManager alloc] init];
 	[_backupManager setGeneralManager:self];
@@ -54,7 +54,7 @@
 	}
 
 	// reset errors
-	[self setEncounteredError:NO];
+	_encounteredError = NO;
 
 	if(!_restoreManager) _restoreManager = [[IALRestoreManager alloc] init];
 	[_restoreManager setGeneralManager:self];
@@ -93,8 +93,7 @@
 		[self displayErrorWithMessage:msg];
 		return;
 	}
-
-	if(![contents count]){
+	else if(![contents count]){
 		return;
 	}
 
@@ -130,6 +129,10 @@
 	NSArray *backupDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:backupDir error:&readError];
 	if(readError){
 		[self displayErrorWithMessage:[NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", backupDir, readError]];
+		return [NSArray new];
+	}
+	else if(![backupDirContents count]){
+		[self displayErrorWithMessage:[NSString stringWithFormat:@"%@ has no contents!", backupDir]];
 		return [NSArray new];
 	}
 

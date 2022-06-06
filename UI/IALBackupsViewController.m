@@ -169,7 +169,7 @@
 }
 
 -(void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls{
-	// url array count will be >= 1
+	// urls count will always be 1
 	NSURL *url = [urls firstObject];
 
 	// Note: need to have the path be /destDir/filename.extension otherwise it'll try to overwrite the destDir??
