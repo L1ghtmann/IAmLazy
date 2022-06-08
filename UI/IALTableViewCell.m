@@ -21,8 +21,8 @@
 		[self addSubview:_icon];
 
 		[_icon setTranslatesAutoresizingMaskIntoConstraints:NO];
-		[[_icon.widthAnchor constraintEqualToConstant:75] setActive:YES];
-		[[_icon.heightAnchor constraintEqualToConstant:75] setActive:YES];
+		[[_icon.widthAnchor constraintEqualToConstant:(75 * scaleFactor)] setActive:YES];
+		[[_icon.heightAnchor constraintEqualToConstant:(75 * scaleFactor)] setActive:YES];
 		[[_icon.leftAnchor constraintEqualToAnchor:self.leftAnchor constant:25] setActive:YES];
 		[[_icon.centerYAnchor constraintEqualToAnchor:self.centerYAnchor] setActive:YES];
 
@@ -40,7 +40,7 @@
 		[_container setTranslatesAutoresizingMaskIntoConstraints:NO];
 		[[_container.widthAnchor constraintEqualToConstant:(self.frame.size.width - 75)] setActive:YES];
 		[[_container.heightAnchor constraintEqualToConstant:50] setActive:YES];
-		[[_container.leftAnchor constraintEqualToAnchor:self.leftAnchor constant:105] setActive:YES];
+		[[_container.leftAnchor constraintEqualToAnchor:self.leftAnchor constant:((75 * scaleFactor) + 30)] setActive:YES];
 		[[_container.centerYAnchor constraintEqualToAnchor:self.centerYAnchor] setActive:YES];
 
 		// function label setup
@@ -66,7 +66,7 @@
 			else functionDescriptor = [NSString stringWithFormat:@"From Specific %@", functionDescriptor];
 		}
 
-		[_functionLabel setFont:[UIFont systemFontOfSize:_functionLabel.font.pointSize weight:0.40]];
+		[_functionLabel setFont:[UIFont systemFontOfSize:([UIFont labelFontSize] * scaleFactor) weight:0.40]];
 		[_functionLabel setUserInteractionEnabled:NO];
 		[_functionLabel setText:functionDescriptor];
 
@@ -79,7 +79,7 @@
 		[[_descriptorLabel.heightAnchor constraintEqualToConstant:25] setActive:YES];
 		[[_descriptorLabel.topAnchor constraintEqualToAnchor:_container.topAnchor constant:22] setActive:YES];
 
-		[_descriptorLabel setFont:[UIFont systemFontOfSize:(_descriptorLabel.font.pointSize * 0.75) weight:-0.40]];
+		[_descriptorLabel setFont:[UIFont systemFontOfSize:(_functionLabel.font.pointSize * 0.75) weight:-0.40]];
 		[_descriptorLabel setUserInteractionEnabled:NO];
 		[_descriptorLabel setNumberOfLines:0];
 		[_descriptorLabel setText:[self descriptionForPurpose:purpose andFunction:function]];

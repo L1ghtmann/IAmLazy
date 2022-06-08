@@ -13,6 +13,8 @@
 #define kWidth [UIScreen mainScreen].bounds.size.width
 #define kHeight [UIScreen mainScreen].bounds.size.height
 
+#define scaleFactor (kWidth/375) // scale from iP7 size
+
 #define container (kHeight - [[UIApplication sharedApplication] statusBarHeight])
 #define cellHeight (container/6.5)
 

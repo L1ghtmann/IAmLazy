@@ -62,10 +62,23 @@
 }
 
 -(void)ensureBackupDirExists{
-	// check if Documents/ has root ownership (it shouldn't)
+	// ensure ~/Documents/ exists
+	NSString *documentsDir = @"/var/mobile/Documents/";
 	NSFileManager *fileManager = [NSFileManager defaultManager];
-	if(![fileManager isWritableFileAtPath:@"/var/mobile/Documents/"]){
-		[self displayErrorWithMessage:@"/var/mobile/Documents is not writeable.\n\nPlease ensure that the directory's owner is mobile and not root."];
+	if(![fileManager fileExistsAtPath:documentsDir]){
+		NSError *writeError = nil;
+		[fileManager createDirectoryAtPath:documentsDir withIntermediateDirectories:YES attributes:nil error:&writeError];
+		if(writeError){
+			NSString *msg = [NSString stringWithFormat:@"Failed to create %@.\n\nError: %@", documentsDir, writeError];
+			[self displayErrorWithMessage:msg];
+			return;
+		}
+	}
+
+	// check if ~/Documents/ has root ownership (it shouldn't)
+	if(![fileManager isWritableFileAtPath:documentsDir]){
+		NSString *msg = [NSString stringWithFormat:@"%@ is not writeable.\n\nPlease ensure that the directory's owner is mobile and not root.", documentsDir];
+		[self displayErrorWithMessage:msg];
 		return;
 	}
 

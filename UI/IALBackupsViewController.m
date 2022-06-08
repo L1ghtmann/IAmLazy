@@ -71,7 +71,7 @@
 
 -(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UITableViewHeaderFooterView *)header forSection:(NSInteger)section {
 	[header.textLabel setTextColor:[UIColor whiteColor]];
-	[header.textLabel setFont:[UIFont systemFontOfSize:20 weight:0.56]];
+	[header.textLabel setFont:[UIFont systemFontOfSize:(20 * scaleFactor) weight:0.56]];
 	[header.textLabel setText:[header.textLabel.text capitalizedString]];
 }
 
@@ -161,7 +161,7 @@
 		importer = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[UTTypeGZIP, UTTypePlainText] asCopy:YES];
 	}
 	else{
-		importer = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"org.gnu.gnu-zip-archive, public.plain-text"] inMode:UIDocumentPickerModeImport];
+		importer = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"org.gnu.gnu-zip-archive", @"public.plain-text"] inMode:UIDocumentPickerModeImport];
 	}
 	[importer setDelegate:self];
 

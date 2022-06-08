@@ -19,13 +19,23 @@
 		// setup top nav bar
 		[controller.navigationItem setTitleView:[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Assets/Clear-Icon-40"]]];
 
-		UIImage *githubMark = [UIImage imageNamed:@"Assets/GitHub-Mark-64px"];
-		githubMark = [UIImage imageWithCGImage:[githubMark CGImage] scale:([[UIScreen mainScreen] scale] * 1.45) orientation:[githubMark imageOrientation]];
-		_srcItem = [[UIBarButtonItem alloc] initWithImage:githubMark style:UIBarButtonItemStylePlain target:self action:@selector(openSrc)];
-		[controller.navigationItem setLeftBarButtonItem:_srcItem];
-
-		_infoItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"info.circle.fill"] style:UIBarButtonItemStylePlain target:self action:@selector(popInfo)];
+		UIImage *infoImg = [UIImage systemImageNamed:@"info.circle.fill"];
+		_infoItem = [[UIBarButtonItem alloc] initWithImage:infoImg style:UIBarButtonItemStylePlain target:self action:@selector(popInfo)];
 		[controller.navigationItem setRightBarButtonItem:_infoItem];
+
+		// scale GitHubMark image (https://stackoverflow.com/a/8224161)
+		UIImage *githubMark = [UIImage imageNamed:@"Assets/GitHub-Mark-64px"];
+		CGFloat scaleFactor = ((infoImg.size.width + 4)/githubMark.size.width);
+		CGFloat newHeight = (githubMark.size.height * scaleFactor);
+		CGFloat newWidth = (githubMark.size.width * scaleFactor);
+
+		UIGraphicsBeginImageContextWithOptions(CGSizeMake(newWidth, newHeight), NO, 0);
+		[githubMark drawInRect:CGRectMake(0, 0, newWidth, newHeight)];
+		UIImage *srcImg = UIGraphicsGetImageFromCurrentImageContext();
+		UIGraphicsEndImageContext();
+
+		_srcItem = [[UIBarButtonItem alloc] initWithImage:srcImg style:UIBarButtonItemStylePlain target:self action:@selector(openSrc)];
+		[controller.navigationItem setLeftBarButtonItem:_srcItem];
 	}
 
 	return self;

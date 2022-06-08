@@ -11,8 +11,8 @@
 #define fillColor [UIColor colorWithRed:16.0f/255.0f green:16.0f/255.0f blue:16.0f/255.0f alpha:1.0f]
 #define accentColor [UIColor colorWithRed:247.0f/255.0f green:249.0f/255.0f blue:250.0f/255.0f alpha:1.0f]
 
-#define titleSize 30
-#define backgroundSize 60
+#define titleSize (30 * scaleFactor)
+#define backgroundSize (60 * scaleFactor)
 #define startY titleSize + backgroundSize
 
 @implementation IALProgressViewController
@@ -222,8 +222,9 @@
 
 		[itemDesc setTranslatesAutoresizingMaskIntoConstraints:NO];
 		[[itemDesc.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:(backgroundSize + 20)] setActive:YES];
-		[[itemDesc.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:(y + 10)] setActive:YES];
+		[[itemDesc.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:(y + (10 * scaleFactor))] setActive:YES];
 
+		[itemDesc setFont:[UIFont systemFontOfSize:([UIFont labelFontSize] * scaleFactor)]];
 		[itemDesc setText:_itemDescriptions[i]];
 		[itemDesc setTextColor:accentColor];
 
@@ -234,9 +235,9 @@
 
 		[itemStatus setTranslatesAutoresizingMaskIntoConstraints:NO];
 		[[itemStatus.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:(backgroundSize + 20)] setActive:YES];
-		[[itemStatus.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:(y + 30)] setActive:YES];
+		[[itemStatus.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:(y + (30 * scaleFactor))] setActive:YES];
 
-		[itemStatus setFont:[UIFont systemFontOfSize:14 weight:-0.60]];
+		[itemStatus setFont:[UIFont systemFontOfSize:(itemDesc.font.pointSize - 3) weight:-0.60]];
 		[itemStatus setText:@"Waiting"];
 		[itemStatus setTextColor:accentColor];
 		[itemStatus setAlpha:0.75];
@@ -251,7 +252,13 @@
 	[[_loading.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:-20] setActive:YES];
 	[[_loading.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor] setActive:YES];
 
-	[_loading setActivityIndicatorViewStyle:UIActivityIndicatorViewStyleLarge];
+	// small devices
+	if(kWidth < 375){
+		[_loading setActivityIndicatorViewStyle:UIActivityIndicatorViewStyleMedium];
+	}
+	else{
+		[_loading setActivityIndicatorViewStyle:UIActivityIndicatorViewStyleLarge];
+	}
 	[_loading setColor:accentColor];
 	[_loading setHidesWhenStopped:YES];
 	[_loading startAnimating];
