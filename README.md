@@ -1,7 +1,7 @@
 # IAmLazy
-Easily backup and restore your tweaks!
+Easily backup and restore your tweaks
 
-Available for free on xxx. [Depiction]().
+Available for free on Chariz. [Depiction](https://chariz.com/get/iamlazy).
 
 ## Credits
 - [ScrawlingAfterlife on DeviantArt](https://www.deviantart.com/scrawlingafterlife/art/Snorlax-342569288) for the icon artwork
