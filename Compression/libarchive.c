@@ -47,8 +47,7 @@ void write_archive(const char *outname){
 		return;
 	}
 
-	const char *filearr[file_count];
-	const char **arrptr = filearr;
+	char **files = malloc(file_count * sizeof(char *));
 
 	struct dirent *ent;
 	DIR *directory = opendir("/tmp/me.lightmann.iamlazy/");
@@ -66,7 +65,6 @@ void write_archive(const char *outname){
 		// if entry is a regular file
 		if(ent->d_type == DT_REG){
 			size_t FILE = strlen(ent->d_name);
-
 			if((SIZE_MAX - (IAL + 1)) < FILE){
 				continue;
 			}
@@ -77,8 +75,7 @@ void write_archive(const char *outname){
 			}
 			strcpy(filepath, "me.lightmann.iamlazy/");
 			strcat(filepath, ent->d_name);
-
-			filearr[count] = filepath;
+			files[count] = filepath;
 			count++;
 		}
 	}
@@ -86,14 +83,17 @@ void write_archive(const char *outname){
 
 	// change CWD to avoid
 	// including it in archive
-	chdir("/tmp/");
+	int ret = chdir("/tmp/");
+	if(ret != 0){
+		return;
+	}
 
 	a = archive_write_new();
 	archive_write_add_filter_gzip(a); // gzip
 	archive_write_set_format_pax_restricted(a);
 	archive_write_open_filename(a, outname);
 	for(int i = 0; i < file_count; i++){
-		const char *file = arrptr[i];
+		char *file = files[i];
 		if(*file == 0){
 			continue;
 		}
@@ -112,9 +112,10 @@ void write_archive(const char *outname){
 			len = read(fd, buff, sizeof(buff));
 		}
 		close(fd);
-		free((char *)filearr[i]); // malloc'd char
+		free(file);
 		archive_entry_free(entry);
 	}
+	free(files);
 	archive_write_close(a);
 	archive_write_free(a);
 }
@@ -156,7 +157,10 @@ void extract_archive(const char *filename){
 	flags |= ARCHIVE_EXTRACT_FFLAGS;
 
 	// extract location
-	chdir("/tmp/");
+	int ret = chdir("/tmp/");
+	if(ret != 0){
+		return;
+	}
 
 	a = archive_read_new();
 	archive_read_support_format_all(a);
