@@ -84,7 +84,9 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-	return cellHeight;
+	CGFloat statusBarHeight = [[[[self view] window] windowScene] statusBarManager].statusBarFrame.size.height;
+	CGFloat container = ([UIScreen mainScreen].bounds.size.height - statusBarHeight);
+	return (container/6.5);
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{

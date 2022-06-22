@@ -7,6 +7,7 @@
 
 #import "../Common.h"
 #import <sys/stat.h>
+#import <NSTask.h>
 
 NSString *getCurrentPackage(){
 	NSError *readError = nil;
@@ -124,6 +125,7 @@ int main(int argc, char *argv[]){
 	else if(strcmp(argv[1], "cpGFiles") == 0){
 		// recreate directory structure and copy files
 		NSError *readError = nil;
+		NSString *filesToCopy = [tmpDir stringByAppendingPathComponent:@".filesToCopy"];
 		NSString *toCopy = [NSString stringWithContentsOfFile:filesToCopy encoding:NSUTF8StringEncoding error:&readError];
 		if(readError){
 			NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to get contents of %@! Error: %@", filesToCopy, readError);
@@ -171,6 +173,7 @@ int main(int argc, char *argv[]){
 	else if(strcmp(argv[1], "cpDFiles") == 0){
 		// get DEBIAN files (e.g., maintainer scripts)
 		NSError *readError = nil;
+		NSString *dpkgInfoDir = @"/var/lib/dpkg/info/";
 		NSFileManager *fileManager = [NSFileManager defaultManager];
 		NSArray *dpkgInfo = [fileManager contentsOfDirectoryAtPath:dpkgInfoDir error:&readError];
 		if(readError){
@@ -250,6 +253,7 @@ int main(int argc, char *argv[]){
 		}
 
 		// build debs and remove respective dirs when done
+		NSString *logDir = [backupDir stringByAppendingPathComponent:@"logs/"];
 		NSString *log = [logDir stringByAppendingPathComponent:@"build_log.txt"];
 		NSMutableString *logText = [NSMutableString new];
 		for(NSString *tweak in tweakDirs){
@@ -324,6 +328,7 @@ int main(int argc, char *argv[]){
 		}
 
 		// install debs one by one
+		NSString *logDir = [backupDir stringByAppendingPathComponent:@"logs/"];
 		NSString *log = [logDir stringByAppendingPathComponent:@"restore_log.txt"];
 		NSMutableString *logText = [NSMutableString new];
 		for(NSString *deb in debs){

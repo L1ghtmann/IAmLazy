@@ -8,12 +8,8 @@
 #import "IALProgressViewController.h"
 #import "../Common.h"
 
-#define fillColor [UIColor colorWithRed:16.0f/255.0f green:16.0f/255.0f blue:16.0f/255.0f alpha:1.0f]
-#define accentColor [UIColor colorWithRed:247.0f/255.0f green:249.0f/255.0f blue:250.0f/255.0f alpha:1.0f]
-
 #define titleSize (30 * scaleFactor)
 #define backgroundSize (60 * scaleFactor)
-#define startY titleSize + backgroundSize
 
 @implementation IALProgressViewController
 
@@ -41,7 +37,7 @@
 
 -(void)loadView{
 	[super loadView];
-	[self.view setBackgroundColor:fillColor];
+	[self.view setBackgroundColor:[self fillColor]];
 }
 
 -(NSMutableArray *)iconsForPurpose:(NSInteger)purpose ofType:(NSInteger)type{
@@ -142,13 +138,14 @@
 	[title setFont:[UIFont systemFontOfSize:titleSize weight:0.60]];
 	[title setTextAlignment:NSTextAlignmentCenter];
 	[title setText:[text uppercaseString]];
-	[title setTextColor:accentColor];
+	[title setTextColor:[self accentColor]];
 }
 
 -(void)makeItemList{
 	_items = [NSMutableArray new];
 	_itemStatusIcons = [NSMutableArray new];
 
+	CGFloat startY = (titleSize + backgroundSize);
 	for(int i = 0; i < [_itemIcons count]; i++){
 		CGFloat y = startY + (i * 100);
 
@@ -163,7 +160,7 @@
 		[[background.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:10] setActive:YES];
 
 		[background.layer setCornerRadius:backgroundSize/2];
-		[background setBackgroundColor:accentColor];
+		[background setBackgroundColor:[self accentColor]];
 
 		// circle fill
 		UIView *fill = [[UIView alloc] init];
@@ -176,7 +173,7 @@
 		[[fill.centerYAnchor constraintEqualToAnchor:background.centerYAnchor] setActive:YES];
 
 		[fill.layer setCornerRadius:backgroundSize/2];
-		[fill setBackgroundColor:fillColor];
+		[fill setBackgroundColor:[self fillColor]];
 
 		// icon
 		UIImageView *item = [[UIImageView alloc] init];
@@ -213,6 +210,7 @@
 -(void)elaborateItemList{
 	_itemStatusText = [NSMutableArray new];
 
+	CGFloat startY = (titleSize + backgroundSize);
 	for(int i = 0; i < [_items count]; i++){
 		CGFloat y = startY + (i * 100);
 
@@ -226,7 +224,7 @@
 
 		[itemDesc setFont:[UIFont systemFontOfSize:([UIFont labelFontSize] * scaleFactor)]];
 		[itemDesc setText:_itemDescriptions[i]];
-		[itemDesc setTextColor:accentColor];
+		[itemDesc setTextColor:[self accentColor]];
 
 		// bottom label
 		UILabel *itemStatus = [[UILabel alloc] init];
@@ -239,7 +237,7 @@
 
 		[itemStatus setFont:[UIFont systemFontOfSize:(itemDesc.font.pointSize - 3) weight:-0.60]];
 		[itemStatus setText:@"Waiting"];
-		[itemStatus setTextColor:accentColor];
+		[itemStatus setTextColor:[self accentColor]];
 		[itemStatus setAlpha:0.75];
 	}
 }
@@ -259,7 +257,7 @@
 	else{
 		[_loading setActivityIndicatorViewStyle:UIActivityIndicatorViewStyleLarge];
 	}
-	[_loading setColor:accentColor];
+	[_loading setColor:[self accentColor]];
 	[_loading setHidesWhenStopped:YES];
 	[_loading startAnimating];
 }
@@ -288,6 +286,14 @@
 	if((item + 1) == [_items count]){
 		[_loading stopAnimating];
 	}
+}
+
+-(UIColor *)fillColor{
+	return [UIColor colorWithRed:16.0f/255.0f green:16.0f/255.0f blue:16.0f/255.0f alpha:1.0f];
+}
+
+-(UIColor *)accentColor{
+	return [UIColor colorWithRed:247.0f/255.0f green:249.0f/255.0f blue:250.0f/255.0f alpha:1.0f];
 }
 
 @end

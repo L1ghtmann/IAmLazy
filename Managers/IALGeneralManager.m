@@ -10,6 +10,7 @@
 #import "IALRestoreManager.h"
 #import "IALBackupManager.h"
 #import "../Common.h"
+#import <NSTask.h>
 
 @implementation IALGeneralManager
 
@@ -83,6 +84,7 @@
 	}
 
 	// make backup and log dirs if they don't exist already
+	NSString *logDir = [backupDir stringByAppendingPathComponent:@"logs/"];
 	if(![fileManager fileExistsAtPath:logDir]){
 		NSError *writeError = nil;
 		[fileManager createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
@@ -98,6 +100,7 @@
 	// check for dpkg's tmp install file and, if it exists and has contents (padding), dpkg was interupted
 	// this means that the lock-frontend is most likely locked and dpkg will be unusable until it is freed
 	NSError *readError = nil;
+	NSString *dpkgInfoDir = @"/var/lib/dpkg/info/";
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	NSString *updatesDir = [[dpkgInfoDir stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"updates/"];
 	NSArray *contents = [fileManager contentsOfDirectoryAtPath:updatesDir error:&readError];

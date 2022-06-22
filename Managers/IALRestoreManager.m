@@ -155,10 +155,10 @@
 
 -(NSDictionary<NSString *, NSString *> *)getAptListLocations{
 	NSDictionary *aptListLocations = @{
-		@"cydia" : aptListsDir,
+		@"cydia" : @"/var/lib/apt/lists/",
 		@"zebra" : @"/var/mobile/Library/Application Support/xyz.willy.Zebra/lists/"
 		/*
-		@"sileo" : aptListsDir",
+		@"sileo" : @"/var/lib/apt/lists/",
 		@"sileo2" : @"/var/lib/apt/sileolists/", // superfluous
 		@"installer" : @"/var/mobile/Library/Application Support/Installer/SourcesFiles/" // these are XZ-compressed?!
 		*/
@@ -405,6 +405,7 @@
 		}
 
 		// get download urls for desired packages
+		NSString *logDir = [backupDir stringByAppendingPathComponent:@"logs/"];
 		NSString *log = [logDir stringByAppendingPathComponent:@"download_log.txt"];
 		NSMutableString *logText = [NSMutableString new];
 		for(NSString *pkg in desiredPkgs){

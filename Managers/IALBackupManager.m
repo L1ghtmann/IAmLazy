@@ -118,6 +118,7 @@
 -(NSArray<NSString *> *)getControlFiles{
 	// get control files for all installed packages
 	NSError *readError = nil;
+	NSString *dpkgInfoDir = @"/var/lib/dpkg/info/";
 	NSString *dpkgStatusDir = [[dpkgInfoDir stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"status"];
 	NSString *contents = [NSString stringWithContentsOfFile:dpkgStatusDir encoding:NSUTF8StringEncoding error:&readError];
 	if(readError){
@@ -202,6 +203,7 @@
 -(NSArray<NSString *> *)getUserPackages{
 	// get repo apt lists
 	NSError *readError = nil;
+	NSString *aptListsDir = @"/var/lib/apt/lists/";
 	NSArray *aptLists = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:aptListsDir error:&readError];
 	if(readError){
 		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", aptListsDir, readError);
@@ -267,8 +269,10 @@
 -(void)gatherFilesForPackages{
 	NSString *dir = @"NSFileTypeDirectory";
 	NSString *symLink = @"NSFileTypeSymbolicLink";
+	NSString *dpkgInfoDir = @"/var/lib/dpkg/info/";
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	NSCharacterSet *newlineChars = [NSCharacterSet newlineCharacterSet];
+	NSString *filesToCopy = [tmpDir stringByAppendingPathComponent:@".filesToCopy"];
 	for(NSString *package in _packages){
 		// get installed files
 		NSError *readError = nil;
@@ -456,6 +460,7 @@
 
 	NSArray *debs = [tmp filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"SELF ENDSWITH '.deb'"]];
 	if(![debs count]){
+		NSString *logDir = [backupDir stringByAppendingPathComponent:@"logs/"];
 		NSString *msg = [NSString stringWithFormat:@"Failed to build debs!\n\nPlease check %@build_log.txt.", logDir];
 		[_generalManager displayErrorWithMessage:msg];
 		return;
