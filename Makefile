@@ -1,5 +1,5 @@
 export DEBUG = 0
-export ARCHS = arm64 arm64e
+export ARCHS = arm64
 export TARGET = iphone:clang:latest:13.0
 
 INSTALL_TARGET_PROCESSES = IAmLazy
