@@ -5,9 +5,9 @@
 //	Created by Lightmann during COVID-19
 //
 
-#include <archive_entry.h>
+#include <libarchive/archive_entry.h>
+#include <libarchive/archive.h>
 #include <sys/fcntl.h>
-#include <archive.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
