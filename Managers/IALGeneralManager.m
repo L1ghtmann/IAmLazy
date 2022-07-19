@@ -153,14 +153,12 @@
 	}
 
 	NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '.tar.gz'"];
-	NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '.txt'"];
-	NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'IAL-'"];
-	NSPredicate *predicate4 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'IAmLazy-'"]; // pre v2
-	NSPredicate *predicate12 = [NSCompoundPredicate orPredicateWithSubpredicates:@[predicate1, predicate2]];
-	NSPredicate *thePredicate3 = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate12, predicate3]];
-	NSPredicate *thePredicate4 = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate12, predicate4]];
-	NSArray *newBackups = [backupDirContents filteredArrayUsingPredicate:thePredicate3];
-	NSArray *legacyBackups = [backupDirContents filteredArrayUsingPredicate:thePredicate4];
+	NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'IAL-'"];
+	NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'IAmLazy-'"]; // pre v2
+	NSPredicate *thePredicate2 = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate1, predicate2]];
+	NSPredicate *thePredicate3 = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate1, predicate3]];
+	NSArray *newBackups = [backupDirContents filteredArrayUsingPredicate:thePredicate2];
+	NSArray *legacyBackups = [backupDirContents filteredArrayUsingPredicate:thePredicate3];
 	if(![newBackups count] && ![legacyBackups count]){
 		return [NSArray new];
 	}

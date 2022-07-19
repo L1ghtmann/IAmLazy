@@ -17,11 +17,6 @@
 	self = [super init];
 
 	if(self){
-		/*
-			purpose: 0 = backup | 1 = restore
-			type: 0 = deb | 1 = list
-		*/
-
 		_itemIcons = [self iconsForPurpose:purpose ofType:type];
 		_itemDescriptions = [self itemDescriptionsForPurpose:purpose ofType:type withFilter:filter];
 
@@ -45,7 +40,7 @@
 
 	/*
 		purpose: 0 = backup | 1 = restore
-		type: 0 = deb | 1 = list
+		type: 0 = deb
 	*/
 
 	if(purpose == 0){
@@ -55,17 +50,14 @@
 			[icons addObject:@"rectangle.3.offgrid"];
 			[icons addObject:@"folder.badge.plus"];
 		}
-		else{
-			[icons addObject:@"increase.indent"];
-			[icons addObject:@"keyboard"];
-			[icons addObject:@"pencil"];
-		}
+		// else{
+		// }
 	}
 	else{
 		[icons addObject:@"text.badge.checkmark"];
 		if(type == 0) [icons addObject:@"wrench"];
 		[icons addObject:@"goforward"];
-		if(type != 0) [icons addObject:@"icloud.and.arrow.down"];
+		// if(type != 0)
 		[icons addObject:@"wand.and.stars"];
 	}
 
@@ -77,35 +69,33 @@
 
 	/*
 		purpose: 0 = backup | 1 = restore
-		type: 0 = deb | 1 = list
+		type: 0 = deb
 	*/
 
 	if(purpose == 0){
 		if(filter){
 			[itemDescs addObject:@"Generating list of user packages"];
 			if(type == 0) [itemDescs addObject:@"Gathering files for user packages"];
-			else [itemDescs addObject:@"Formatting list of user packages"];
+			// else
 		}
 		else {
 			[itemDescs addObject:@"Generating list of installed packages"];
 			if(type == 0) [itemDescs addObject:@"Gathering files for installed packages"];
-			else [itemDescs addObject:@"Formatting list of installed packages"];
+			// else
 		}
 
 		if(type == 0){
 			[itemDescs addObject:@"Building debs from gathered files"];
 			[itemDescs addObject:@"Creating backup from debs"];
 		}
-		else{
-			[itemDescs addObject:@"Toppling the Galactic Government"];
-			[itemDescs addObject:@"Writing list to file"];
-		}
+		// else{
+		// }
 	}
 	else{
 		[itemDescs addObject:@"Completing pre-restore checks"];
 		if(type == 0) [itemDescs addObject:@"Unpacking backup"];
 		[itemDescs addObject:@"Refreshing APT sources"];
-		if(type != 0) [itemDescs addObject:@"Downloading debs"];
+		// if(type != 0)
 		[itemDescs addObject:@"Installing debs"];
 	}
 

@@ -42,77 +42,34 @@
 
 	[notifCenter postNotificationName:@"updateProgress" object:@"0"];
 
-	if(type == 0){
-		// make fresh tmp directory
-		if(![fileManager fileExistsAtPath:tmpDir]){
-			NSError *writeError = nil;
-			[fileManager createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&writeError];
-			if(writeError){
-				NSString *msg = [NSString stringWithFormat:@"Failed to create %@.\n\nError: %@", tmpDir, writeError];
-				[_generalManager displayErrorWithMessage:msg];
-				return;
-			}
-		}
-
-		// gather bits for packages
-		[notifCenter postNotificationName:@"updateProgress" object:@"0.5"];
-		[self gatherFilesForPackages];
-		[notifCenter postNotificationName:@"updateProgress" object:@"1"];
-
-		// build debs from bits
-		[notifCenter postNotificationName:@"updateProgress" object:@"1.5"];
-		[self buildDebs];
-		[notifCenter postNotificationName:@"updateProgress" object:@"2"];
-
-		// specify the bootstrap it was created on
-		if(!filter) [self makeBootstrapFile];
-
-		// make archive of packages
-		[notifCenter postNotificationName:@"updateProgress" object:@"2.5"];
-		[self makeTarballWithFilter:filter];
-		[notifCenter postNotificationName:@"updateProgress" object:@"3"];
-	}
-	else{
-		[notifCenter postNotificationName:@"updateProgress" object:@"0.5"];
-
-		// put all packages in a list for easier writing
-		NSString *fileContent = [[_packages valueForKey:@"description"] componentsJoinedByString:@"\n"];
-		if(![fileContent length]){
-			[_generalManager displayErrorWithMessage:@"fileContent is blank!"];
+	// make fresh tmp directory
+	if(![fileManager fileExistsAtPath:tmpDir]){
+		NSError *writeError = nil;
+		[fileManager createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&writeError];
+		if(writeError){
+			NSString *msg = [NSString stringWithFormat:@"Failed to create %@.\n\nError: %@", tmpDir, writeError];
+			[_generalManager displayErrorWithMessage:msg];
 			return;
 		}
-
-		// specify bootstrap the list was made on
-		if(!filter){
-			NSString *bootstrap = @"elucubratus";
-			if([fileManager fileExistsAtPath:@"/.procursus_strapped"]){
-				bootstrap = @"procursus";
-			}
-
-			fileContent = [[NSString stringWithFormat:@"%@\n", bootstrap] stringByAppendingString:fileContent];
-		}
-
-		[notifCenter postNotificationName:@"updateProgress" object:@"1"];
-
-		// Oh geez Rick!
-		[notifCenter postNotificationName:@"updateProgress" object:@"2"];
-
-		[notifCenter postNotificationName:@"updateProgress" object:@"2.5"];
-
-		// craft new backup name and append the text file extension
-		NSString *listName;
-		NSString *new = [self craftNewBackupName];
-		if(!filter) listName = [new stringByAppendingString:@"u.txt"];
-		else listName = [new stringByAppendingPathExtension:@"txt"];
-
-		// write to file
-		NSString *filePath = [backupDir stringByAppendingPathComponent:listName];
-		[fileManager createFileAtPath:filePath contents:[fileContent dataUsingEncoding:NSUTF8StringEncoding] attributes:nil];
-
-		[notifCenter postNotificationName:@"updateProgress" object:@"3"];
-
-		[self verifyFileAtPath:filePath];
 	}
+
+	// gather bits for packages
+	[notifCenter postNotificationName:@"updateProgress" object:@"0.5"];
+	[self gatherFilesForPackages];
+	[notifCenter postNotificationName:@"updateProgress" object:@"1"];
+
+	// build debs from bits
+	[notifCenter postNotificationName:@"updateProgress" object:@"1.5"];
+	[self buildDebs];
+	[notifCenter postNotificationName:@"updateProgress" object:@"2"];
+
+	// specify the bootstrap it was created on
+	if(!filter) [self makeBootstrapFile];
+
+	// make archive of packages
+	[notifCenter postNotificationName:@"updateProgress" object:@"2.5"];
+	[self makeTarballWithFilter:filter];
+	[notifCenter postNotificationName:@"updateProgress" object:@"3"];
 }
 
 -(NSArray<NSString *> *)getControlFiles{

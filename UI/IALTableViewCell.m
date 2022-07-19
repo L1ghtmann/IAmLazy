@@ -55,7 +55,7 @@
 		// determine function text
 		NSString *functionDescriptor;
 		if(type == 0) functionDescriptor = @"Backup";
-		else functionDescriptor = @"List";
+		// else
 
 		if(purpose == 0){ // backup
 			if(function == 0) functionDescriptor = [NSString stringWithFormat:@"Standard %@", functionDescriptor];
@@ -96,7 +96,7 @@
 
 	/*
 		purpose: 0 = backup | 1 = restore
-		type: 0 = deb | 1 = list
+		type: 0 = deb
 		function: 0 = standard|latest | 1 = unfiltered|specific
 	*/
 
@@ -105,20 +105,16 @@
 			if(function == 0) image = [UIImage systemImageNamed:@"plus.app"];
 			else image = [UIImage systemImageNamed:@"exclamationmark.square"];
 		}
-		else{
-			if(function == 0) image = [UIImage systemImageNamed:@"line.horizontal.3.decrease.circle"];
-			else image = [UIImage systemImageNamed:@"exclamationmark.circle"];
-		}
+		// else{
+		// }
 	}
 	else{
 		if(type == 0){
 			if(function == 0) image = [UIImage systemImageNamed:@"arrow.counterclockwise.circle"];
 			else image = [UIImage systemImageNamed:@"questionmark.circle"];
 		}
-		else{
-			if(function == 0) image = [UIImage systemImageNamed:@"pencil.and.outline"];
-			else image = [UIImage systemImageNamed:@"pencil.tip.crop.circle"];
-		}
+		// else{
+		// }
 	}
 
 	return image;

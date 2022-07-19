@@ -38,27 +38,17 @@
 }
 
 -(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
-	return 2;
+	// return 2;
+	return 1;
 }
 
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-	return 2;
+	// return 2;
+	return 3;
 }
 
 -(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section{
-	NSString *sectionName;
-	switch(section){
-		case 0:
-			sectionName = @"Deb Restore";
-			break;
-		case 1:
-			sectionName = @"List Restore";
-			break;
-		default:
-			sectionName = @"";
-			break;
-	}
-	return sectionName;
+	return @"Restore";
 }
 
 -(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UITableViewHeaderFooterView *)header forSection:(NSInteger)section {
@@ -100,26 +90,13 @@
 #pragma mark Functionality
 
 -(void)restoreLatestBackup:(BOOL)latest ofType:(NSInteger)type{
-	// set extension based on type
-	NSString *extension;
-	switch(type){
-		case 0:
-			extension = @"tar.gz";
-			break;
-		case 1:
-			extension = @"txt";
-			break;
-		default:
-			extension = @"";
-			break;
-	}
-
 	NSArray *backups = [_manager getBackups];
 	if(![backups count]){
 		return;
 	}
 
 	// get desired backups
+	NSString *extension = @"tar.gz";
 	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH %@", extension];
 	NSArray *desiredBackups = [backups filteredArrayUsingPredicate:thePredicate];
 

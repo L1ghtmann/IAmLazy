@@ -40,27 +40,17 @@
 }
 
 -(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
-	return 2;
+	// return 2;
+	return 1;
 }
 
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-	return 2;
+	// return 2;
+	return 3;
 }
 
 -(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section{
-	NSString *sectionName;
-	switch(section){
-		case 0:
-			sectionName = @"Deb Backup";
-			break;
-		case 1:
-			sectionName = @"List Backup";
-			break;
-		default:
-			sectionName = @"";
-			break;
-	}
-	return sectionName;
+	return @"Backup";
 }
 
 -(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UITableViewHeaderFooterView *)header forSection:(NSInteger)section {
@@ -102,14 +92,9 @@
 #pragma mark Functionality
 
 -(void)selectedBackupOfType:(NSInteger)type withFilter:(BOOL)filter{
-	NSString *msg = @"Please confirm that you have adequate free storage before proceeding:";
-	if(type != 0){
-		msg = @"Please confirm that you'd like to proceed with the backup:";
-	}
-
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy"
-								message:msg
+								message:@"Please confirm that you have adequate free storage before proceeding:"
 								preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *confirm = [UIAlertAction

@@ -2,7 +2,7 @@
 
 @class IALGeneralManager;
 
-@interface IALRestoreManager : NSObject <NSURLSessionTaskDelegate, NSURLSessionDownloadDelegate>  {
+@interface IALRestoreManager : NSObject {
     NSUInteger _expectedDownloads;
     NSUInteger _actualDownloads;
 }

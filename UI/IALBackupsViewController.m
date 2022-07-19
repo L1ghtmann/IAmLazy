@@ -57,16 +57,7 @@
 }
 
 -(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section{
-	NSString *sectionName;
-	switch(section){
-		case 0:
-			sectionName = @"Backups";
-			break;
-		default:
-			sectionName = @"";
-			break;
-	}
-	return sectionName;
+	return @"Backups";
 }
 
 -(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UITableViewHeaderFooterView *)header forSection:(NSInteger)section {
@@ -158,10 +149,10 @@
 -(void)importBackup{
 	UIDocumentPickerViewController *importer;
 	if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"14")){
-		importer = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[UTTypeGZIP, UTTypePlainText] asCopy:YES];
+		importer = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[UTTypeGZIP] asCopy:YES];
 	}
 	else{
-		importer = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"org.gnu.gnu-zip-archive", @"public.plain-text"] inMode:UIDocumentPickerModeImport];
+		importer = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"org.gnu.gnu-zip-archive"] inMode:UIDocumentPickerModeImport];
 	}
 	[importer setDelegate:self];
 
