@@ -3,9 +3,8 @@
 @class IALGeneralManager;
 
 @interface IALRestoreManager : NSObject {
-    NSUInteger _expectedDownloads;
-    NSUInteger _actualDownloads;
+    NSNotificationCenter *_notifCenter;
 }
 @property (nonatomic, retain) IALGeneralManager *generalManager;
--(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type;
+-(void)restoreFromBackup:(NSString *)backupName;
 @end

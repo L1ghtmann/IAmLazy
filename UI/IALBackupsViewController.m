@@ -22,11 +22,6 @@
 
 	if(self){
 		_manager = [IALGeneralManager sharedManager];
-
-		// set tabbar item
-		UITabBarItem *backups = [[UITabBarItem alloc] initWithTitle:@"Backups" image:[UIImage systemImageNamed:@"folder.fill"] tag:1];
-		[backups setTitlePositionAdjustment:UIOffsetMake(0.0, -2.0)];
-		[self setTabBarItem:backups];
 	}
 
 	return self;
@@ -37,15 +32,6 @@
 
 	// get data to present
 	[self getBackups];
-
-	// replace info nav bar button with import button
-	UIBarButtonItem *importItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"plus.circle.fill"] style:UIBarButtonItemStylePlain target:self action:@selector(importBackup)];
-	[self.navigationItem setRightBarButtonItem:importItem];
-
-	// setup pull to refresh
-	UIRefreshControl *refreshControl = [[UIRefreshControl alloc] init];
-	[refreshControl addTarget:self action:@selector(refreshTable) forControlEvents:UIControlEventValueChanged];
-	[self.tableView setRefreshControl:refreshControl];
 }
 
 -(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
@@ -60,10 +46,24 @@
 	return @"Backups";
 }
 
--(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UITableViewHeaderFooterView *)header forSection:(NSInteger)section {
-	[header.textLabel setTextColor:[UIColor whiteColor]];
+-(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UITableViewHeaderFooterView *)header forSection:(NSInteger)section{
+	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [header.textLabel setTextColor:[UIColor whiteColor]];
+	else [header.textLabel setTextColor:[UIColor blackColor]];
 	[header.textLabel setFont:[UIFont systemFontOfSize:(20 * scaleFactor) weight:0.56]];
 	[header.textLabel setText:[header.textLabel.text capitalizedString]];
+
+	// add import "+" button to header
+	UIButton *import = [UIButton buttonWithType:UIButtonTypeSystem];
+	[header addSubview:import];
+
+	[import setTranslatesAutoresizingMaskIntoConstraints:NO];
+	[[import.widthAnchor constraintEqualToConstant:50] setActive:YES];
+	[[import.heightAnchor constraintEqualToConstant:50] setActive:YES];
+	[[import.trailingAnchor constraintEqualToAnchor:header.trailingAnchor constant:-5] setActive:YES];
+	[[import.topAnchor constraintEqualToAnchor:header.topAnchor constant:5] setActive:YES];
+
+	[import setImage:[UIImage systemImageNamed:@"plus.circle.fill"] forState:UIControlStateNormal];
+	[import addTarget:self action:@selector(importBackup) forControlEvents:UIControlEventTouchUpInside];
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -124,10 +124,12 @@
 			return;
 		}
 
-		[_backups removeObjectAtIndex:indexPath.row];
+		// [_backups removeObjectAtIndex:indexPath.row];
 
 		[tableView beginUpdates];
-		[tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+		// The method below causes the section header to shift up? Not sure why, but just refreshing works fine
+		// [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+		[self refreshTable];
 		[tableView endUpdates];
 	}
 }
@@ -135,9 +137,6 @@
 #pragma mark Functionality
 
 -(void)refreshTable{
-	if(self.tableView.refreshControl.refreshing){
-		[self.tableView.refreshControl endRefreshing];
-	}
 	[self getBackups];
 	[self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
 }

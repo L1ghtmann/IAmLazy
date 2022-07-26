@@ -38,16 +38,16 @@
 
 #pragma mark Functionality
 
--(void)makeBackupOfType:(NSInteger)type withFilter:(BOOL)filter{
+-(void)makeBackupWithFilter:(BOOL)filter{
 	// reset errors
 	_encounteredError = NO;
 
 	if(!_backupManager) _backupManager = [[IALBackupManager alloc] init];
 	[_backupManager setGeneralManager:self];
-	[_backupManager makeBackupOfType:type withFilter:filter];
+	[_backupManager makeBackupWithFilter:filter];
 }
 
--(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type{
+-(void)restoreFromBackup:(NSString *)backupName{
 	// check for internet connection
 	if(![self hasConnection]){
 		[self displayErrorWithMessage:@"Your device does not appear to be connected to the internet.\n\nA network connection is required for restores so packages can be downloaded if need be."];
@@ -59,7 +59,7 @@
 
 	if(!_restoreManager) _restoreManager = [[IALRestoreManager alloc] init];
 	[_restoreManager setGeneralManager:self];
-	[_restoreManager restoreFromBackup:backupName ofType:type];
+	[_restoreManager restoreFromBackup:backupName];
 }
 
 -(void)ensureBackupDirExists{

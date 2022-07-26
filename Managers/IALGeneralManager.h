@@ -9,8 +9,8 @@
 @property (nonatomic, retain) UIViewController *rootVC;
 @property (nonatomic) BOOL encounteredError;
 +(instancetype)sharedManager;
--(void)makeBackupOfType:(NSInteger)type withFilter:(BOOL)filter;
--(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type;
+-(void)makeBackupWithFilter:(BOOL)filter;
+-(void)restoreFromBackup:(NSString *)backupName;
 -(void)ensureBackupDirExists;
 -(void)cleanupTmp;
 -(void)updateAPT;

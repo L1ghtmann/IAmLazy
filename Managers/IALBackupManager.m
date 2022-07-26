@@ -12,7 +12,7 @@
 
 @implementation IALBackupManager
 
--(void)makeBackupOfType:(NSInteger)type withFilter:(BOOL)filter{
+-(void)makeBackupWithFilter:(BOOL)filter{
 	// check for old tmp files
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if([fileManager fileExistsAtPath:tmpDir]){
@@ -22,8 +22,8 @@
 	// ensure backupdir exists
 	[_generalManager ensureBackupDirExists];
 
-	NSNotificationCenter *notifCenter = [NSNotificationCenter defaultCenter];
-	[notifCenter postNotificationName:@"updateProgress" object:@"-0.5"];
+	_notifCenter = [NSNotificationCenter defaultCenter];
+	[_notifCenter postNotificationName:@"updateItemStatus" object:@"-0.5"];
 
 	// get control files
 	_controlFiles = [self getControlFiles];
@@ -40,7 +40,7 @@
 		return;
 	}
 
-	[notifCenter postNotificationName:@"updateProgress" object:@"0"];
+	[_notifCenter postNotificationName:@"updateItemStatus" object:@"0"];
 
 	// make fresh tmp directory
 	if(![fileManager fileExistsAtPath:tmpDir]){
@@ -54,22 +54,22 @@
 	}
 
 	// gather bits for packages
-	[notifCenter postNotificationName:@"updateProgress" object:@"0.5"];
+	[_notifCenter postNotificationName:@"updateItemStatus" object:@"0.5"];
 	[self gatherFilesForPackages];
-	[notifCenter postNotificationName:@"updateProgress" object:@"1"];
+	[_notifCenter postNotificationName:@"updateItemStatus" object:@"1"];
 
 	// build debs from bits
-	[notifCenter postNotificationName:@"updateProgress" object:@"1.5"];
+	[_notifCenter postNotificationName:@"updateItemStatus" object:@"1.5"];
 	[self buildDebs];
-	[notifCenter postNotificationName:@"updateProgress" object:@"2"];
+	[_notifCenter postNotificationName:@"updateItemStatus" object:@"2"];
 
 	// specify the bootstrap it was created on
 	if(!filter) [self makeBootstrapFile];
 
 	// make archive of packages
-	[notifCenter postNotificationName:@"updateProgress" object:@"2.5"];
+	[_notifCenter postNotificationName:@"updateItemStatus" object:@"2.5"];
 	[self makeTarballWithFilter:filter];
-	[notifCenter postNotificationName:@"updateProgress" object:@"3"];
+	[_notifCenter postNotificationName:@"updateItemStatus" object:@"3"];
 }
 
 -(NSArray<NSString *> *)getControlFiles{
@@ -104,6 +104,7 @@
 			else controlFile = nil;
 		}
 	}
+
 	return controls;
 }
 

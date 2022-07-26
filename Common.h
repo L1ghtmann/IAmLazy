@@ -1,6 +1,7 @@
 #import <UIKit/UIScreen.h>
 
 #define kWidth [UIScreen mainScreen].bounds.size.width
+#define kHeight [UIScreen mainScreen].bounds.size.height
 
 #define scaleFactor (kWidth/375) // scale from iP7 size
 

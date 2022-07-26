@@ -1,12 +1,15 @@
 #import <UIKit/UIKit.h>
 
 @interface IALProgressViewController : UIViewController {
-    NSMutableArray *_items;
-    NSMutableArray *_itemIcons;
-    NSMutableArray *_itemDescriptions;
-    NSMutableArray *_itemStatusIcons;
-    NSMutableArray *_itemStatusText;
-    UIActivityIndicatorView *_loading;
+    NSMutableArray<UIImageView *> *_items;
+    NSMutableArray<NSString *> *_itemIcons;
+    NSMutableArray<NSString *> *_itemDescriptions;
+    NSMutableArray<UIView *> *_itemStatusIcons;
+    NSMutableArray<UILabel *> *_itemStatusText;
+    UIView *_titleContainer;
+    UIView *_loadingContainer;
+    UIView *_itemContainer;
+    CAShapeLayer *_circleFill;
 }
--(instancetype)initWithPurpose:(NSInteger)purpose ofType:(NSInteger)type withFilter:(BOOL)filter;
+-(instancetype)initWithPurpose:(NSInteger)purpose withFilter:(BOOL)filter;
 @end

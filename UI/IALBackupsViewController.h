@@ -4,7 +4,6 @@
 
 @interface IALBackupsViewController : UITableViewController <UIDocumentPickerDelegate> {
     IALGeneralManager *_manager;
-    NSMutableArray *_backups;
+    NSMutableArray<NSString *> *_backups;
 }
--(void)refreshTable;
 @end

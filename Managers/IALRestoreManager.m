@@ -12,9 +12,9 @@
 
 @implementation IALRestoreManager
 
--(void)restoreFromBackup:(NSString *)backupName ofType:(NSInteger)type{
-	NSNotificationCenter *notifCenter = [NSNotificationCenter defaultCenter];
-	[notifCenter postNotificationName:@"updateProgress" object:@"-0.5"];
+-(void)restoreFromBackup:(NSString *)backupName{
+	_notifCenter = [NSNotificationCenter defaultCenter];
+	[_notifCenter postNotificationName:@"updateItemStatus" object:@"-0.5"];
 
 	// check for backup dir
 	NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -45,26 +45,26 @@
 	// ensure logdir exists
 	[_generalManager ensureBackupDirExists];
 
-	[notifCenter postNotificationName:@"updateProgress" object:@"0"];
+	[_notifCenter postNotificationName:@"updateItemStatus" object:@"0"];
 
 	BOOL compatible = YES;
 
-	[notifCenter postNotificationName:@"updateProgress" object:@"0.5"];
+	[_notifCenter postNotificationName:@"updateItemStatus" object:@"0.5"];
 	[self extractArchive:target];
-	[notifCenter postNotificationName:@"updateProgress" object:@"1"];
+	[_notifCenter postNotificationName:@"updateItemStatus" object:@"1"];
 
 	if([backupName hasSuffix:@"u.tar.gz"]){
 		compatible = [self verifyBootstrapForBackup:target];
 	}
 
 	if(compatible){
-		[notifCenter postNotificationName:@"updateProgress" object:@"1.5"];
+		[_notifCenter postNotificationName:@"updateItemStatus" object:@"1.5"];
 		[self updateAPT];
-		[notifCenter postNotificationName:@"updateProgress" object:@"2"];
+		[_notifCenter postNotificationName:@"updateItemStatus" object:@"2"];
 
-		[notifCenter postNotificationName:@"updateProgress" object:@"2.5"];
+		[_notifCenter postNotificationName:@"updateItemStatus" object:@"2.5"];
 		[self installDebs];
-		[notifCenter postNotificationName:@"updateProgress" object:@"3"];
+		[_notifCenter postNotificationName:@"updateItemStatus" object:@"3"];
 	}
 
 	[_generalManager cleanupTmp];
