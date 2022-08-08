@@ -3,6 +3,7 @@
 @class IALGeneralManager;
 
 @interface IALBackupManager : NSObject {
+    BOOL _filtered;
     NSNotificationCenter *_notifCenter;
     NSArray<NSString *> *_controlFiles;
     NSArray<NSString *> *_packages;

@@ -15,6 +15,7 @@
 -(void)restoreFromBackup:(NSString *)backupName{
 	_notifCenter = [NSNotificationCenter defaultCenter];
 	[_notifCenter postNotificationName:@"updateItemStatus" object:@"-0.5"];
+	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.0"];
 
 	// check for backup dir
 	NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -23,11 +24,16 @@
 		return;
 	}
 
+	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.2"];
+
 	// check for backups
-	if(![[_generalManager getBackups] count]){
+	_backups = [_generalManager getBackups];
+	if(![_backups count]){
 		[_generalManager displayErrorWithMessage:@"No backups were found!"];
 		return;
 	}
+
+	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.4"];
 
 	// check for target backup
 	NSString *target = [backupDir stringByAppendingPathComponent:backupName];
@@ -37,14 +43,19 @@
 		return;
 	}
 
+	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.6"];
+
 	// check for old tmp files
 	if([fileManager fileExistsAtPath:tmpDir]){
 		[_generalManager cleanupTmp];
 	}
 
+	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.8"];
+
 	// ensure logdir exists
 	[_generalManager ensureBackupDirExists];
 
+	[_notifCenter postNotificationName:@"updateItemProgress" object:@"1.0"];
 	[_notifCenter postNotificationName:@"updateItemStatus" object:@"0"];
 
 	BOOL compatible = YES;
@@ -73,9 +84,8 @@
 -(void)extractArchive:(NSString *)backupPath{
 	// extract tarball contents (and avoid stalling the main thread)
 	dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-		extract_archive([backupPath UTF8String]);
-
+	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+		extract_archive([backupPath UTF8String]); // UI fails to update due to hold below :/
 		// signal that we're good to go
 		dispatch_semaphore_signal(sema);
 	});
@@ -113,12 +123,22 @@
 
 -(void)updateAPT{
 	// ensure bootstrap repos' package files are up-to-date
+	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.0"];
 	[_generalManager updateAPT];
+	[_notifCenter postNotificationName:@"updateItemProgress" object:@"1.0"];
 }
 
 -(void)installDebs{
-	// installing via apt/dpkg requires root
-	[_generalManager executeCommandAsRoot:@"installDebs"];
+	NSUInteger total = [_backups count];
+	CGFloat progressPerPart = (1.0/total);
+	CGFloat progress = 0.0;
+	for(int i = 0; i < [_backups count]; i++){
+		// installing via apt/dpkg requires root
+		[_generalManager executeCommandAsRoot:@"installDeb"];
+
+		progress+=progressPerPart;
+		[_notifCenter postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+	}
 }
 
 @end

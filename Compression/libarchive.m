@@ -1,12 +1,15 @@
 //
-// 	libarchive.c
+// 	libarchive.m
 //	IAmLazy
 //
 //	Created by Lightmann during COVID-19
 //
 
+#include <Foundation/NSNotification.h>
 #include <libarchive/archive_entry.h>
+#include <Foundation/NSString.h>
 #include <libarchive/archive.h>
+#include <dispatch/queue.h>
 #include <sys/fcntl.h>
 #include <stdlib.h>
 #include <string.h>
@@ -92,6 +95,10 @@ void write_archive(const char *outname){
 	archive_write_add_filter_gzip(a); // gzip
 	archive_write_set_format_pax_restricted(a);
 	archive_write_open_filename(a, outname);
+
+	float progress_per_part = (1.0/file_count);
+	float progress = 0.0;
+
 	for(int i = 0; i < file_count; i++){
 		char *file = files[i];
 		if(*file == 0){
@@ -114,6 +121,11 @@ void write_archive(const char *outname){
 		close(fd);
 		free(file);
 		archive_entry_free(entry);
+
+		progress+=progress_per_part;
+		dispatch_async(dispatch_get_main_queue(), ^{
+			[[NSNotificationCenter defaultCenter] postNotificationName:@"IALUpdateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+		});
 	}
 	free(files);
 	archive_write_close(a);
@@ -162,9 +174,30 @@ void extract_archive(const char *filename){
 		return;
 	}
 
+	// item count read
 	a = archive_read_new();
-	archive_read_support_format_all(a);
-	archive_read_support_filter_all(a);
+	archive_read_support_format_tar(a);
+	archive_read_support_filter_gzip(a);
+	if((r = archive_read_open_filename(a, filename, 10240))){
+		return;
+	}
+
+	// get item count
+	int count = 0;
+	while(archive_read_next_header(a, &entry) == ARCHIVE_OK){
+		count++;
+		archive_read_data_skip(a);
+	}
+	archive_read_close(a);
+	archive_read_free(a);
+
+	float progress_per_part = (1.0/count);
+	float progress = 0.0;
+
+	// unpack read
+	a = archive_read_new();
+	archive_read_support_format_tar(a);
+	archive_read_support_filter_gzip(a);
 	ext = archive_write_disk_new();
 	archive_write_disk_set_options(ext, flags);
 	archive_write_disk_set_standard_lookup(ext);
@@ -172,10 +205,17 @@ void extract_archive(const char *filename){
 		return;
 	}
 
+	// unpack
 	for(;;){
 		r = archive_read_next_header(a, &entry);
 		if(r == ARCHIVE_EOF){
 			break;
+		}
+		else{
+			progress+=progress_per_part;
+			dispatch_async(dispatch_get_main_queue(), ^{
+				[[NSNotificationCenter defaultCenter] postNotificationName:@"IALUpdateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+			});
 		}
 		if(r < ARCHIVE_OK){
 			os_log_error(OS_LOG_DEFAULT, "[IAmLazyLog] libarchive: extract_archive: %s", archive_error_string(a));

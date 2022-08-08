@@ -24,11 +24,21 @@
 		[self makeLoadingWheel];
 		[self makeItemList];
 
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateItemStatus:) name:@"updateItemStatus" object:nil];
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateItemProgress:) name:@"updateItemProgress" object:nil];
+		NSNotificationCenter *notifCenter = [NSNotificationCenter defaultCenter];
+		[notifCenter addObserver:self selector:@selector(updateItemStatus:) name:@"updateItemStatus" object:nil];
+		[notifCenter addObserver:self selector:@selector(updateItemProgress:) name:@"updateItemProgress" object:nil];
+		[notifCenter addObserver:self selector:@selector(test:) name:@"IALUpdateItemProgress" object:nil];
 	}
 
 	return self;
+}
+
+-(void)test:(NSNotification *)sender{
+	// everything is sending fine (both in C and ObjC, but the layer doesn't update?!?)
+	CGFloat progress = [(NSString *)sender.object floatValue];
+	NSLog(@"IAmLazyLog TEST FUNC w/ prog: %f", progress);
+	[_circleFill setStrokeEnd:progress];
+	[_circleFill didChangeValueForKey:@"strokeEnd"];
 }
 
 -(void)loadView{
@@ -185,7 +195,7 @@
 							endAngle:((3 * M_PI)/2) // accounting for the -pi/2, we end at 3pi/2
 							clockwise:YES] CGPath]];
 	[_circleFill setStrokeStart:0.0f];
-    [_circleFill setStrokeEnd:0.0f];
+	[_circleFill setStrokeEnd:0.0f];
 	[_circleFill setStrokeColor:[[UIColor colorWithRed:40.0f/255.0f green:173.0f/255.0f blue:73.0f/255.0f alpha:1.0f] CGColor]];
 	[loading.layer addSublayer:_circleFill];
 }
@@ -331,7 +341,7 @@
 -(void)updateItemProgress:(NSNotification *)notification{
 	CGFloat progress = [(NSString *)notification.object floatValue];
 	[_circleFill setStrokeEnd:progress];
-    [_circleFill didChangeValueForKey:@"strokeEnd"];
+	[_circleFill didChangeValueForKey:@"strokeEnd"];
 }
 
 -(UIColor *)IALDarkGray{

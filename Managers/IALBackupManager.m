@@ -22,6 +22,7 @@
 	// ensure backupdir exists
 	[_generalManager ensureBackupDirExists];
 
+	_filtered = filter;
 	_notifCenter = [NSNotificationCenter defaultCenter];
 	[_notifCenter postNotificationName:@"updateItemStatus" object:@"-0.5"];
 
@@ -33,7 +34,7 @@
 	}
 
 	// get packages
-	if(!filter) _packages = [self getAllPackages];
+	if(!_filtered) _packages = [self getAllPackages];
 	else _packages = [self getUserPackages];
 	if(![_packages count]){
 		[_generalManager displayErrorWithMessage:@"Failed to generate list of packages!\n\nPlease try again."];
@@ -64,15 +65,17 @@
 	[_notifCenter postNotificationName:@"updateItemStatus" object:@"2"];
 
 	// specify the bootstrap it was created on
-	if(!filter) [self makeBootstrapFile];
+	if(!_filtered) [self makeBootstrapFile];
 
 	// make archive of packages
 	[_notifCenter postNotificationName:@"updateItemStatus" object:@"2.5"];
-	[self makeTarballWithFilter:filter];
+	[self makeTarball];
 	[_notifCenter postNotificationName:@"updateItemStatus" object:@"3"];
 }
 
 -(NSArray<NSString *> *)getControlFiles{
+	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.0"];
+
 	// get control files for all installed packages
 	NSError *readError = nil;
 	NSString *dpkgInfoDir = @"/var/lib/dpkg/info/";
@@ -87,6 +90,8 @@
 	if(![lines count]){
 		return [NSArray new];
 	}
+
+	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.1"];
 
 	// divvy up massive control collection into individual control files
 	NSMutableArray *controls = [NSMutableArray new];
@@ -105,6 +110,8 @@
 		}
 	}
 
+	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.2"];
+
 	return controls;
 }
 
@@ -117,6 +124,13 @@
 	NSPredicate *thePredicate2 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'Priority:'"];
 	NSMutableCharacterSet *validChars = [NSMutableCharacterSet alphanumericCharacterSet];
 	[validChars addCharactersInString:@"+-."];
+
+	NSUInteger total = [_controlFiles count];
+	CGFloat parts = 0.8;
+	if(_filtered) parts = 0.5;
+	CGFloat progressPerPart = (parts/total);
+	CGFloat progress = 0.2;
+
 	for(NSString *control in _controlFiles){
 		NSArray *lines = [control componentsSeparatedByCharactersInSet:newlineChars];
 		if(![lines count]){
@@ -144,8 +158,10 @@
 				[packages addObject:package];
 			}
 		}
-	}
 
+		progress+=progressPerPart;
+		[_notifCenter postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+	}
 	return packages;
 }
 
@@ -172,8 +188,12 @@
 		return [NSArray new];
 	}
 
+	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.8"];
+
 	// ensure bootstrap repos' package files are up-to-date
 	[_generalManager updateAPT];
+
+	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.9"];
 
 	// get packages to ignore
 	NSMutableArray *packagesToIgnore = [NSMutableArray new];
@@ -231,6 +251,11 @@
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	NSCharacterSet *newlineChars = [NSCharacterSet newlineCharacterSet];
 	NSString *filesToCopy = [tmpDir stringByAppendingPathComponent:@".filesToCopy"];
+
+	NSUInteger total = ([_packages count] * 5); // 5 steps/pkg
+	CGFloat progressPerPart = (1.0/total);
+	CGFloat progress = 0.0;
+
 	for(NSString *package in _packages){
 		// get installed files
 		NSError *readError = nil;
@@ -320,10 +345,28 @@
 			}
 		}
 
+		progress+=progressPerPart;
+		[_notifCenter postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+
 		[self makeSubDirectories:directories inDirectory:tweakDir];
+
+		progress+=progressPerPart;
+		[_notifCenter postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+
 		[self copyGenericFiles];
+
+		progress+=progressPerPart;
+		[_notifCenter postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+
 		[self makeControlForPackage:package inDirectory:tweakDir];
+
+		progress+=progressPerPart;
+		[_notifCenter postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+
 		[self copyDEBIANFiles];
+
+		progress+=progressPerPart;
+		[_notifCenter postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
 	}
 
 	// remove list file now that we're done w it
@@ -396,8 +439,16 @@
 }
 
 -(void)buildDebs{
-	// have to run as root in order to retain file attributes (ownership, etc)
-	[_generalManager executeCommandAsRoot:@"buildDebs"];
+	NSUInteger total = [_packages count];
+	CGFloat progressPerPart = (1.0/total);
+	CGFloat progress = 0.0;
+	for(int i = 0; i < [_packages count]; i++){
+		// have to run as root in order to retain file attributes (ownership, etc)
+		[_generalManager executeCommandAsRoot:@"buildDeb"];
+
+		progress+=progressPerPart;
+		[_notifCenter postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+	}
 
 	[self verifyDebs];
 }
@@ -436,18 +487,18 @@
 	[fileManager createFileAtPath:file contents:nil attributes:nil];
 }
 
--(void)makeTarballWithFilter:(BOOL)filter{
+-(void)makeTarball{
 	// craft new backup name and append the gzip tar extension
 	NSString *backupName;
 	NSString *new = [self craftNewBackupName];
-	if(!filter) backupName = [new stringByAppendingString:@"u.tar.gz"];
+	if(!_filtered) backupName = [new stringByAppendingString:@"u.tar.gz"];
 	else backupName = [new stringByAppendingPathExtension:@"tar.gz"];
 	NSString *backupPath = [backupDir stringByAppendingPathComponent:backupName];
 
 	// make tarball (and avoid stalling the main thread)
 	dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-		write_archive([backupPath UTF8String]);
+	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+		write_archive([backupPath UTF8String]); // UI fails to update due to hold below :/
 
 		// signal that we're good to go
 		dispatch_semaphore_signal(sema);
