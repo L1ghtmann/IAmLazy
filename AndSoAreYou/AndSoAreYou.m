@@ -15,10 +15,10 @@ NSString *getCurrentPackage(){
 	NSArray *tmpDirFiles = [fileManager contentsOfDirectoryAtPath:tmpDir error:&readError];
 	if(readError){
 		NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to get contents of %@! Error: %@", tmpDir, readError);
-		return @"readErr";
+		return @"err";
 	}
 	else if(![tmpDirFiles count]){
-		return @"readErr";
+		return @"err";
 	}
 
 	NSMutableDictionary *dirsAndCreationDates = [NSMutableDictionary new];
@@ -105,6 +105,8 @@ int main(int argc, char *argv[]){
 		[task2 setArguments:@[@"--configure", @"-a"]];
 		[task2 launch];
 		[task2 waitUntilExit];
+
+		NSLog(@"[IAmLazyLog] AndSoAreYou: dpkg should be fixed!");
 	}
 	else if(strcmp(argv[1], "cleanTmp") == 0){
 		// delete temporary directory
@@ -117,10 +119,12 @@ int main(int argc, char *argv[]){
 	}
 	else if(strcmp(argv[1], "updateAPT") == 0){
 		NSTask *task = [[NSTask alloc] init];
-		[task setLaunchPath:@"/usr/bin/apt-get"];
+		[task setLaunchPath:@"/usr/bin/apt"];
 		[task setArguments:@[@"update"]];
 		[task launch];
 		[task waitUntilExit];
+
+		NSLog(@"[IAmLazyLog] AndSoAreYou: apt sources up-to-date!");
 	}
 	else if(strcmp(argv[1], "cpGFiles") == 0){
 		// recreate directory structure and copy files
@@ -134,10 +138,17 @@ int main(int argc, char *argv[]){
 
 		NSArray *files = [toCopy componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
 		if(![files count]){
+			NSLog(@"[IAmLazyLog] %@ has no contents?!", filesToCopy);
 			return 1;
 		}
 
-		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:getCurrentPackage()];
+		NSString *current = getCurrentPackage();
+		if(![current length] || [current isEqualToString:@"err"]){
+			NSLog(@"[IAmLazyLog] AndSoAreYou: getCurrentPackage() failed.");
+			return 1;
+		}
+
+		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:current];
 		NSFileManager *fileManager = [NSFileManager defaultManager];
 		for(NSString *file in files){
 			if(![file length] || ![fileManager fileExistsAtPath:file] || [[file lastPathComponent] isEqualToString:@".."] || [[file lastPathComponent] isEqualToString:@"."]){
@@ -181,11 +192,16 @@ int main(int argc, char *argv[]){
 			return 1;
 		}
 		else if(![dpkgInfo count]){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: %@ is empty!", dpkgInfoDir);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: %@ is empty?!", dpkgInfoDir);
 			return 1;
 		}
 
 		NSString *tweakName = getCurrentPackage();
+		if(![tweakName length] || [tweakName isEqualToString:@"err"]){
+			NSLog(@"[IAmLazyLog] AndSoAreYou: getCurrentPackage() failed.");
+			return 1;
+		}
+
 		NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH %@", tweakName];
 		NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF CONTAINS '.md5sums'"];
 		NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF CONTAINS '.list'"];
@@ -221,11 +237,17 @@ int main(int argc, char *argv[]){
 	}
 	else if(strcmp(argv[1], "buildDeb") == 0){
 		// build deb and remove respective dir when done
-		NSString *logDir = [backupDir stringByAppendingPathComponent:@"logs/"]; // fix!
-		NSString *log = [logDir stringByAppendingPathComponent:@"build_log.txt"];
-		NSMutableString *logText = [NSMutableString new];
+		NSString *current = getCurrentPackage();
+		if(![current length] || [current isEqualToString:@"err"]){
+			// Have this check because if a removed package's install is borked
+			// and it shows as being installed despite not having any files on-device,
+			// this build step will go past the number of actual package dirs and
+			// will try to build tmpDir as a deb which will obv fail, so we need to catch it
+			NSLog(@"[IAmLazyLog] AndSoAreYou: getCurrentPackage() failed.");
+			return 1;
+		}
+		NSString *tweak = [tmpDir stringByAppendingPathComponent:current];
 		NSFileManager *fileManager = [NSFileManager defaultManager];
-		NSString *tweak = [tmpDir stringByAppendingPathComponent:getCurrentPackage()];
 		NSTask *task = [[NSTask alloc] init];
 		[task setLaunchPath:@"/usr/bin/dpkg-deb"];
 		[task setArguments:@[
@@ -234,22 +256,8 @@ int main(int argc, char *argv[]){
 			@"-z9",
 			tweak
 		]];
-
-		NSPipe *pipe = [NSPipe pipe];
-		[task setStandardOutput:pipe];
-
 		[task launch];
-
-		NSFileHandle *handle = [pipe fileHandleForReading];
-		NSData *data = [handle readDataToEndOfFile];
-		[handle closeFile];
-
-		// have to call after ^ to ensure that the output pipe doesn't fill
-		// if it does, the process will hang and block waitUntilExit from returning
 		[task waitUntilExit];
-
-		NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-		[logText appendString:output];
 
 		NSError *deleteError = nil;
 		// delete dir with files now that deb has been built
@@ -258,10 +266,11 @@ int main(int argc, char *argv[]){
 			NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to delete %@! Error: %@", tweak, deleteError);
 		}
 
-		NSError *writeError = nil;
-		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
-		if(writeError){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to write to %@! Error: %@", log, writeError);
+		if([fileManager fileExistsAtPath:[tweak stringByAppendingPathExtension:@"deb"]]){
+			NSLog(@"[IAmLazyLog] AndSoAreYou: %@.deb created successfully!", tweak);
+		}
+		else{
+			NSLog(@"[IAmLazyLog] AndSoAreYou: %@.deb failed to build!", tweak);
 		}
 	}
 	else if(strcmp(argv[1], "installDeb") == 0){
@@ -274,7 +283,7 @@ int main(int argc, char *argv[]){
 			return 1;
 		}
 		else if(![tmpDirContents count]){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: %@ is empty!", tmpDir);
+			NSLog(@"[IAmLazyLog] AndSoAreYou: %@ is empty?!", tmpDir);
 			return 1;
 		}
 
@@ -296,13 +305,11 @@ int main(int argc, char *argv[]){
 			return 1;
 		}
 		else if([debs count] == 1){
+			NSLog(@"[IAmLazyLog] AndSoAreYou: the laaaaaaassssst debbbbbbbbb....");
 			end = YES;
 		}
 
 		// install deb and remove when done
-		NSString *logDir = [backupDir stringByAppendingPathComponent:@"logs/"];
-		NSString *log = [logDir stringByAppendingPathComponent:@"restore_log.txt"]; // fix!
-		NSMutableString *logText = [NSMutableString new];
 		NSString *deb = [debs firstObject];
 		// there's an issue on u0 where the IAL
 		// app may be killed (w/o a crash log)
@@ -312,92 +319,74 @@ int main(int argc, char *argv[]){
 		// not, finish the current package and return
 		BOOL alive = !kill(ppid, 0);
 		if(!alive){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: IAL process was killed; returning.");
+			NSLog(@"[IAmLazyLog] AndSoAreYou: IAL process was killed. Returning.");
 			return 1;
 		}
 
 		NSTask *task = [[NSTask alloc] init];
 		[task setLaunchPath:@"/usr/bin/dpkg"];
 		[task setArguments:@[@"-i", deb]];
-
-		NSPipe *pipe = [NSPipe pipe];
-		[task setStandardOutput:pipe];
-
 		[task launch];
-
-		NSFileHandle *handle = [pipe fileHandleForReading];
-		NSData *data = [handle readDataToEndOfFile];
-		[handle closeFile];
-
 		[task waitUntilExit];
 
-		NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-		[logText appendString:output];
-
-		NSError *writeError = nil;
-		[logText writeToFile:log atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
-		if(writeError){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to write to %@! Error: %@", log, writeError);
-		}
-
 		NSError *deleteError = nil;
+		// delete deb now that it's been installed
 		[fileManager removeItemAtPath:deb error:&deleteError];
 		if(deleteError){;
 			NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to delete %@! Error: %@", deb, deleteError);
 			return 1;
 		}
 
+		// check deb install
+		// Note: this is costly, but likely worth it for sanity
+		NSString *path = [deb stringByDeletingPathExtension];
+		NSString *tweak = [path lastPathComponent];
+		NSTask *task2 = [[NSTask alloc] init];
+		[task2 setLaunchPath:@"/usr/bin/dpkg"];
+		[task2 setArguments:@[@"-s", tweak]];
+
+		NSPipe *pipe = [NSPipe pipe];
+		[task2 setStandardOutput:pipe];
+
+		[task2 launch];
+
+		NSFileHandle *handle = [pipe fileHandleForReading];
+		NSData *data = [handle readDataToEndOfFile];
+		[handle closeFile];
+
+		// have to call after ^ to ensure that the output pipe doesn't fill
+		// if it does, the process will hang and block waitUntilExit from returning
+		[task2 waitUntilExit];
+
+		NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+		if([output containsString:@"Status: install ok installed"]){
+			NSLog(@"[IAmLazyLog] AndSoAreYou: %@ installed successfully!", tweak);
+		}
+		else{
+			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to install %@!", tweak);
+			if(!end) return 1;
+		}
+
 		// resolve any lingering things (e.g., conflicts, partial installs due to dependencies, etc)
 		if(end){
-			NSString *log2 = [logDir stringByAppendingPathComponent:@"fixup_log.txt"];
-			NSMutableString *log2Text = [NSMutableString new];
-
-			NSTask *task2 = [[NSTask alloc] init];
-			[task2 setLaunchPath:@"/usr/bin/apt-get"];
-			[task2 setArguments:@[
+			NSTask *task3 = [[NSTask alloc] init];
+			[task3 setLaunchPath:@"/usr/bin/apt-get"];
+			[task3 setArguments:@[
 				@"install",
 				@"-fy",
 				@"--allow-unauthenticated"
 			]];
-
-			NSPipe *pipe2 = [NSPipe pipe];
-			[task2 setStandardOutput:pipe2];
-
-			[task2 launch];
-
-			NSFileHandle *handle2 = [pipe2 fileHandleForReading];
-			NSData *data2 = [handle2 readDataToEndOfFile];
-			[handle2 closeFile];
-
-			[task2 waitUntilExit];
-
-			NSString *output2 = [[NSString alloc] initWithData:data2 encoding:NSUTF8StringEncoding];
-			[log2Text appendString:output2];
-
-			// ensure everything that can be configured is
-			NSTask *task3 = [[NSTask alloc] init];
-			[task3 setLaunchPath:@"/usr/bin/dpkg"];
-			[task3 setArguments:@[@"--configure", @"-a"]];
-
-			NSPipe *pipe3 = [NSPipe pipe];
-			[task3 setStandardOutput:pipe3];
-
 			[task3 launch];
-
-			NSFileHandle *handle3 = [pipe3 fileHandleForReading];
-			NSData *data3 = [handle3 readDataToEndOfFile];
-			[handle3 closeFile];
-
 			[task3 waitUntilExit];
 
-			NSString *output3 = [[NSString alloc] initWithData:data3 encoding:NSUTF8StringEncoding];
-			[log2Text appendString:output3];
+			// ensure everything that can be configured is
+			NSTask *task4 = [[NSTask alloc] init];
+			[task4 setLaunchPath:@"/usr/bin/dpkg"];
+			[task4 setArguments:@[@"--configure", @"-a"]];
+			[task4 launch];
+			[task4 waitUntilExit];
 
-			NSError *writeError2 = nil;
-			[log2Text writeToFile:log2 atomically:YES encoding:NSUTF8StringEncoding error:&writeError2];
-			if(writeError2){
-				NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to write to %@! Error: %@", log2, writeError2);
-			}
+			NSLog(@"[IAmLazyLog] AndSoAreYou: apt fixed and dpkg configured (just in case).");
 		}
 	}
 	else{

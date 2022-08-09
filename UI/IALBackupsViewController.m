@@ -47,8 +47,7 @@
 }
 
 -(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UITableViewHeaderFooterView *)header forSection:(NSInteger)section{
-	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [header.textLabel setTextColor:[UIColor whiteColor]];
-	else [header.textLabel setTextColor:[UIColor blackColor]];
+	[header.textLabel setTextColor:[UIColor labelColor]];
 	[header.textLabel setFont:[UIFont systemFontOfSize:(20 * scaleFactor) weight:0.56]];
 	[header.textLabel setText:[header.textLabel.text capitalizedString]];
 

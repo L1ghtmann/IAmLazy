@@ -29,7 +29,7 @@
 	// get control files
 	_controlFiles = [self getControlFiles];
 	if(![_controlFiles count]){
-		[_generalManager displayErrorWithMessage:@"Failed to generate controls for installed packages!\n\nPlease try again."];
+		[_generalManager displayErrorWithMessage:@"Failed to generate controls for installed packages!"];
 		return;
 	}
 
@@ -37,7 +37,7 @@
 	if(!_filtered) _packages = [self getAllPackages];
 	else _packages = [self getUserPackages];
 	if(![_packages count]){
-		[_generalManager displayErrorWithMessage:@"Failed to generate list of packages!\n\nPlease try again."];
+		[_generalManager displayErrorWithMessage:@"Failed to generate list of packages!"];
 		return;
 	}
 
@@ -78,16 +78,18 @@
 
 	// get control files for all installed packages
 	NSError *readError = nil;
-	NSString *dpkgInfoDir = @"/var/lib/dpkg/info/";
-	NSString *dpkgStatusDir = [[dpkgInfoDir stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"status"];
-	NSString *contents = [NSString stringWithContentsOfFile:dpkgStatusDir encoding:NSUTF8StringEncoding error:&readError];
+	NSString *dpkgStatus = @"/var/lib/dpkg/status";
+	NSString *contents = [NSString stringWithContentsOfFile:dpkgStatus encoding:NSUTF8StringEncoding error:&readError];
 	if(readError){
-		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", dpkgStatusDir, readError);
+		NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", dpkgStatus, readError];
+		[_generalManager displayErrorWithMessage:msg];
 		return [NSArray new];
 	}
 
 	NSArray *lines = [contents componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
 	if(![lines count]){
+		NSString *msg = [NSString stringWithFormat:@"%@ is blank?!", dpkgStatus];
+		[_generalManager displayErrorWithMessage:msg];
 		return [NSArray new];
 	}
 
@@ -180,11 +182,13 @@
 	NSString *aptListsDir = @"/var/lib/apt/lists/";
 	NSArray *aptLists = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:aptListsDir error:&readError];
 	if(readError){
-		NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", aptListsDir, readError);
+		NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", aptListsDir, readError];
+		[_generalManager displayErrorWithMessage:msg];
 		return [NSArray new];
 	}
 	else if(![aptLists count]){
-		NSLog(@"[IAmLazyLog] %@ has no contents!", aptListsDir);
+		NSString *msg = [NSString stringWithFormat:@"%@ has no contents?!", aptListsDir];
+		[_generalManager displayErrorWithMessage:msg];
 		return [NSArray new];
 	}
 
@@ -214,13 +218,16 @@
 			NSString *listPath = [aptListsDir stringByAppendingPathComponent:list];
 			NSString *content = [NSString stringWithContentsOfFile:listPath encoding:NSUTF8StringEncoding error:&readError2];
 			if(readError2){
-				NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", listPath, readError2);
-				continue;
+				NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", listPath, readError2];
+				[_generalManager displayErrorWithMessage:msg];
+				return [NSArray new];
 			}
 
 			NSArray *lines = [content componentsSeparatedByCharactersInSet:newlineChars];
 			if(![lines count]){
-				continue;
+				NSString *msg = [NSString stringWithFormat:@"%@ has no contents?!", listPath];
+				[_generalManager displayErrorWithMessage:msg];
+				return [NSArray new];
 			}
 
 			NSArray *packages = [lines filteredArrayUsingPredicate:predicate3];
@@ -268,6 +275,7 @@
 
 		NSArray *lines = [contents componentsSeparatedByCharactersInSet:newlineChars];
 		if(![lines count]){
+			NSLog(@"[IAmLazyLog] %@ has no content?!", path);
 			continue;
 		}
 
@@ -403,12 +411,16 @@
 	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH %@", pkg];
 	NSArray *relevantControls = [_controlFiles filteredArrayUsingPredicate:thePredicate];
 	if(![relevantControls count]){
+		NSString *msg = [NSString stringWithFormat:@"There appear to be no controls for %@?!", package];
+		[_generalManager displayErrorWithMessage:msg];
 		return;
 	}
 
 	NSString *theOne = [relevantControls firstObject];
 	NSString *noStatusLine = [theOne stringByReplacingOccurrencesOfString:@"Status: install ok installed\n" withString:@""]; // dpkg adds this at installation
 	if(![noStatusLine length]){
+		NSString *msg = [NSString stringWithFormat:@"The control for %@ is blank?!", package];
+		[_generalManager displayErrorWithMessage:msg];
 		return;
 	}
 
@@ -422,7 +434,8 @@
 		NSError *writeError = nil;
 		[fileManager createDirectoryAtPath:debian withIntermediateDirectories:YES attributes:nil error:&writeError];
 		if(writeError){
-			NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", debian, writeError);
+			NSString *msg = [NSString stringWithFormat:@"Failed to create %@! Error: %@", debian, writeError];
+			[_generalManager displayErrorWithMessage:msg];
 			return;
 		}
 	}
@@ -442,7 +455,7 @@
 	NSUInteger total = [_packages count];
 	CGFloat progressPerPart = (1.0/total);
 	CGFloat progress = 0.0;
-	for(int i = 0; i < [_packages count]; i++){
+	for(int i = 0; i < total; i++){
 		// have to run as root in order to retain file attributes (ownership, etc)
 		[_generalManager executeCommandAsRoot:@"buildDeb"];
 
@@ -469,9 +482,7 @@
 
 	NSArray *debs = [tmp filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"SELF ENDSWITH '.deb'"]];
 	if(![debs count]){
-		NSString *logDir = [backupDir stringByAppendingPathComponent:@"logs/"];
-		NSString *msg = [NSString stringWithFormat:@"Failed to build debs!\n\nPlease check %@build_log.txt.", logDir];
-		[_generalManager displayErrorWithMessage:msg];
+		[_generalManager displayErrorWithMessage:@"Failed to build debs! Not sure how we got here honestly."];
 		return;
 	}
 }
@@ -528,7 +539,6 @@
 	// grab date in desired format
 	NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
 	[formatter setDateFormat:@"yyyyMMd"];
-
 	return [NSString stringWithFormat:@"IAL-%@_%lu", [formatter stringFromDate:[NSDate date]], (latestBackup + 1)];
 }
 

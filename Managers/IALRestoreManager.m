@@ -27,8 +27,7 @@
 	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.2"];
 
 	// check for backups
-	_backups = [_generalManager getBackups];
-	if(![_backups count]){
+	if(![[_generalManager getBackups] count]){
 		[_generalManager displayErrorWithMessage:@"No backups were found!"];
 		return;
 	}
@@ -52,7 +51,7 @@
 
 	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.8"];
 
-	// ensure logdir exists
+	// ensure backupDir exists
 	[_generalManager ensureBackupDirExists];
 
 	[_notifCenter postNotificationName:@"updateItemProgress" object:@"1.0"];
@@ -86,6 +85,7 @@
 	dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
 		extract_archive([backupPath UTF8String]); // UI fails to update due to hold below :/
+
 		// signal that we're good to go
 		dispatch_semaphore_signal(sema);
 	});
@@ -129,10 +129,43 @@
 }
 
 -(void)installDebs{
-	NSUInteger total = [_backups count];
+	// get debs from tmpDir
+	NSError *readError = nil;
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	NSArray *tmpDirContents = [fileManager contentsOfDirectoryAtPath:tmpDir error:&readError];
+	if(readError){
+		NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", tmpDir, readError];
+		[_generalManager displayErrorWithMessage:msg];
+		return;
+	}
+	else if(![tmpDirContents count]){
+		NSString *msg = [NSString stringWithFormat:@"%@ is empty?!", tmpDir];
+		[_generalManager displayErrorWithMessage:msg];
+		return;
+	}
+
+	NSMutableArray *debs = [NSMutableArray new];
+	NSMutableCharacterSet *validChars = [NSMutableCharacterSet alphanumericCharacterSet];
+	[validChars addCharactersInString:@"+-."];
+	for(NSString *item in tmpDirContents){
+		BOOL valid = ![[item stringByTrimmingCharactersInSet:validChars] length];
+		if(valid){
+			NSString *path = [tmpDir stringByAppendingPathComponent:item];
+			if([[item pathExtension] isEqualToString:@"deb"]){
+				[debs addObject:path];
+			}
+		}
+	}
+	if(![debs count]){
+		NSString *msg = [NSString stringWithFormat:@"%@ has no debs!", tmpDir];
+		[_generalManager displayErrorWithMessage:msg];
+		return;
+	}
+
+	NSUInteger total = [debs count];
 	CGFloat progressPerPart = (1.0/total);
 	CGFloat progress = 0.0;
-	for(int i = 0; i < [_backups count]; i++){
+	for(int i = 0; i < total; i++){
 		// installing via apt/dpkg requires root
 		[_generalManager executeCommandAsRoot:@"installDeb"];
 

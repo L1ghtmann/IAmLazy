@@ -64,7 +64,7 @@
 
 -(void)ensureBackupDirExists{
 	// ensure ~/Documents/ exists
-	NSString *documentsDir = @"/var/mobile/Documents/";
+	NSString *documentsDir = [backupDir stringByDeletingLastPathComponent];
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if(![fileManager fileExistsAtPath:documentsDir]){
 		NSError *writeError = nil;
@@ -83,13 +83,12 @@
 		return;
 	}
 
-	// make backup and log dirs if they don't exist already
-	NSString *logDir = [backupDir stringByAppendingPathComponent:@"logs/"];
-	if(![fileManager fileExistsAtPath:logDir]){
+	// make backup dir if it doesn't exist already
+	if(![fileManager fileExistsAtPath:backupDir]){
 		NSError *writeError = nil;
-		[fileManager createDirectoryAtPath:logDir withIntermediateDirectories:YES attributes:nil error:&writeError];
+		[fileManager createDirectoryAtPath:backupDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 		if(writeError){
-			NSString *msg = [NSString stringWithFormat:@"Failed to create %@.\n\nError: %@", logDir, writeError];
+			NSString *msg = [NSString stringWithFormat:@"Failed to create %@.\n\nError: %@", backupDir, writeError];
 			[self displayErrorWithMessage:msg];
 			return;
 		}
@@ -99,26 +98,13 @@
 -(void)ensureUsableDpkgLock{
 	// check for dpkg's tmp install file and, if it exists and has contents (padding), dpkg was interupted
 	// this means that the lock-frontend is most likely locked and dpkg will be unusable until it is freed
-	NSError *readError = nil;
-	NSString *dpkgInfoDir = @"/var/lib/dpkg/info/";
-	NSFileManager *fileManager = [NSFileManager defaultManager];
-	NSString *updatesDir = [[dpkgInfoDir stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"updates/"];
-	NSArray *contents = [fileManager contentsOfDirectoryAtPath:updatesDir error:&readError];
-	if(readError){
-		NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@.\n\nError: %@", updatesDir, readError];
-		[self displayErrorWithMessage:msg];
-		return;
-	}
-	else if(![contents count]){
-		return;
-	}
-
-	NSString *tmpFile = [updatesDir stringByAppendingPathComponent:@"tmp.i"];
-	if([fileManager fileExistsAtPath:tmpFile]){
-		NSError *readError2 = nil;
-		NSString *contentsString = [NSString stringWithContentsOfFile:tmpFile encoding:NSUTF8StringEncoding error:&readError2];
-		if(readError2){
-			NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@.\n\nError: %@", tmpFile, readError2];
+	NSString *dpkgUpdatesDir = @"/var/lib/dpkg/updates/";
+	NSString *tmpFile = [dpkgUpdatesDir stringByAppendingPathComponent:@"tmp.i"];
+	if([[NSFileManager defaultManager] fileExistsAtPath:tmpFile]){
+		NSError *readError = nil;
+		NSString *contentsString = [NSString stringWithContentsOfFile:tmpFile encoding:NSUTF8StringEncoding error:&readError];
+		if(readError){
+			NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@.\n\nError: %@", tmpFile, readError];
 			[self displayErrorWithMessage:msg];
 			return;
 		}
@@ -137,6 +123,7 @@
 }
 
 -(void)updateAPT{
+	// updating apt's repos requires root
 	[self executeCommandAsRoot:@"updateAPT"];
 }
 
@@ -148,7 +135,7 @@
 		return [NSArray new];
 	}
 	else if(![backupDirContents count]){
-		[self displayErrorWithMessage:[NSString stringWithFormat:@"%@ has no contents!", backupDir]];
+		NSLog(@"%@ has no contents!", backupDir);
 		return [NSArray new];
 	}
 
