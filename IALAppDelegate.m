@@ -1,10 +1,3 @@
-//
-//	IALAppDelegate.m
-//	IAmLazy
-//
-//	Created by Lightmann during COVID-19
-//
-
 #import "UI/IALRootViewController.h"
 #import "IALAppDelegate.h"
 

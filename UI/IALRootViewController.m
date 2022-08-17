@@ -263,16 +263,15 @@
 
 	// if control panel is at state 0 or if other main button was selected
 	if(_controlPanelState == 0 || (sender.tag + 1) != _controlPanelState){
+		[_configSwitch removeAllSegments];
 		switch(sender.tag){
 			case 0:
-				[_configSwitch removeAllSegments];
 				[_configSwitch insertSegmentWithTitle:@"Standard" atIndex:0 animated:NO];
 				[_configSwitch insertSegmentWithTitle:@"Developer" atIndex:1 animated:NO];
 				[_configSwitch setSelectedSegmentIndex:0];
 				_controlPanelState = 1;
 				break;
 			case 1:
-				[_configSwitch removeAllSegments];
 				[_configSwitch insertSegmentWithTitle:@"Latest" atIndex:0 animated:NO];
 				[_configSwitch insertSegmentWithTitle:@"Specific" atIndex:1 animated:NO];
 				[_configSwitch setSelectedSegmentIndex:0];
@@ -396,39 +395,13 @@
 		return;
 	}
 
-	// get desired backups
+	// get desired backup
 	NSString *extension = @"tar.gz";
 	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH %@", extension];
 	NSArray *desiredBackups = [backups filteredArrayUsingPredicate:thePredicate];
-
 	if(latest){
-		// get latest backup
-		NSString *backupName = [desiredBackups firstObject];
-
-		// get confirmation before proceeding
-		UIAlertController *alert = [UIAlertController
-									alertControllerWithTitle:@"IAmLazy"
-									message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backupName]
-									preferredStyle:UIAlertControllerStyleActionSheet];
-
-		UIAlertAction *yes = [UIAlertAction
-								actionWithTitle:@"Yes"
-								style:UIAlertActionStyleDefault
-								handler:^(UIAlertAction *action){
-									[self restoreFromBackup:backupName];
-								}];
-
-		UIAlertAction *no = [UIAlertAction
-								actionWithTitle:@"No"
-								style:UIAlertActionStyleDefault
-								handler:^(UIAlertAction *action){
-									[self dismissViewControllerAnimated:YES completion:nil];
-								}];
-
-		[alert addAction:yes];
-		[alert addAction:no];
-
-		[self presentViewController:alert animated:YES completion:nil];
+		NSString *backup = [desiredBackups firstObject];
+		[self confirmRestoreFromBackup:backup];
 	}
 	else{
 		// post list of available backups
@@ -439,34 +412,11 @@
 
 		// make each available backup its own action
 		for(NSString *backup in desiredBackups){
-			// get confirmation before proceeding
 			UIAlertAction *action = [UIAlertAction
 										actionWithTitle:backup
 										style:UIAlertActionStyleDefault
 										handler:^(UIAlertAction *action){
-											UIAlertController *subalert = [UIAlertController
-																			alertControllerWithTitle:@"IAmLazy"
-																			message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backup]
-																			preferredStyle:UIAlertControllerStyleActionSheet];
-
-											UIAlertAction *yes = [UIAlertAction
-																	actionWithTitle:@"Yes"
-																	style:UIAlertActionStyleDefault
-																	handler:^(UIAlertAction *action){
-																		[self restoreFromBackup:backup];
-																	}];
-
-											UIAlertAction *no = [UIAlertAction
-																	actionWithTitle:@"No"
-																	style:UIAlertActionStyleDefault
-																	handler:^(UIAlertAction *action){
-																		[self dismissViewControllerAnimated:YES completion:nil];
-																	}];
-
-											[subalert addAction:yes];
-											[subalert addAction:no];
-
-											[self presentViewController:subalert animated:YES completion:nil];
+											[self confirmRestoreFromBackup:backup];
 										}];
 
 			[alert addAction:action];
@@ -482,25 +432,80 @@
 		[alert addAction:cancel];
 
 		[self presentViewController:alert animated:YES completion:^{
-			// allow us to dismiss a UIAlertControllerStyleAlert when
-			// the user touches anywhere out of bounds of the view
+			// allows dismissal of the UIAlertControllerStyleAlert when
+			// the user touches anywhere out of bounds of the alert view
 			[alert.view.superview setUserInteractionEnabled:YES];
 			[alert.view.superview addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(alertOOBTap)]];
 		}];
 	}
 }
 
+-(void)confirmRestoreFromBackup:(NSString *)backup{
+	// get confirmation before proceeding
+	UIAlertController *alert = [UIAlertController
+								alertControllerWithTitle:@"IAmLazy"
+								message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backup]
+								preferredStyle:UIAlertControllerStyleActionSheet];
+
+	UIAlertAction *yes = [UIAlertAction
+							actionWithTitle:@"Yes"
+							style:UIAlertActionStyleDefault
+							handler:^(UIAlertAction *action){
+								if([backup hasSuffix:@"u.tar.gz"]){
+									// get extra confirmation before proceeding
+									UIAlertController *subalert = [UIAlertController
+																alertControllerWithTitle:@"Please note:"
+																message:@"You have chosen to restore from a developer backup. This backup includes bootstrap packages.\n\nPlease confirm that you understand this and still wish to proceed with the restore:"
+																preferredStyle:UIAlertControllerStyleActionSheet];
+
+									UIAlertAction *subyes = [UIAlertAction
+															actionWithTitle:@"Confirm"
+															style:UIAlertActionStyleDestructive
+															handler:^(UIAlertAction *action){
+																[self restoreFromBackup:backup];
+															}];
+
+									UIAlertAction *subno = [UIAlertAction
+															actionWithTitle:@"Cancel"
+															style:UIAlertActionStyleDefault
+															handler:^(UIAlertAction *action){
+																[self dismissViewControllerAnimated:YES completion:nil];
+															}];
+
+									[subalert addAction:subyes];
+									[subalert addAction:subno];
+
+									[self presentViewController:subalert animated:YES completion:nil];
+								}
+								else{
+									[self restoreFromBackup:backup];
+								}
+							}];
+
+	UIAlertAction *no = [UIAlertAction
+							actionWithTitle:@"No"
+							style:UIAlertActionStyleDefault
+							handler:^(UIAlertAction *action){
+								[self dismissViewControllerAnimated:YES completion:nil];
+							}];
+
+	[alert addAction:yes];
+	[alert addAction:no];
+
+	[self presentViewController:alert animated:YES completion:nil];
+}
+
 -(void)alertOOBTap{
 	[self dismissViewControllerAnimated:YES completion:nil];
 }
 
--(void)restoreFromBackup:(NSString *)backupName{
+-(void)restoreFromBackup:(NSString *)backup{
 	[self presentViewController:[[IALProgressViewController alloc] initWithPurpose:1 withFilter:nil] animated:YES completion:nil];
 
 	UIApplication *app = [UIApplication sharedApplication];
 	[app setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
 
-	[_manager restoreFromBackup:backupName];
+	[_manager restoreFromBackup:backup];
 
 	[app setIdleTimerDisabled:NO]; // reenable idle timer
 
