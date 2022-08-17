@@ -2,9 +2,7 @@
 
 @class IALGeneralManager;
 
-@interface IALRestoreManager : NSObject {
-    NSNotificationCenter *_notifCenter;
-}
+@interface IALRestoreManager : NSObject
 @property (nonatomic, retain) IALGeneralManager *generalManager;
 -(void)restoreFromBackup:(NSString *)backupName;
 @end

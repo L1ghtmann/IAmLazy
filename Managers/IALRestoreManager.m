@@ -13,9 +13,8 @@
 @implementation IALRestoreManager
 
 -(void)restoreFromBackup:(NSString *)backupName{
-	_notifCenter = [NSNotificationCenter defaultCenter];
-	[_notifCenter postNotificationName:@"updateItemStatus" object:@"-0.5"];
-	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.0"];
+	[_generalManager updateItemStatus:-0.5];
+	[_generalManager updateItemProgress:0];
 
 	// check for backup dir
 	NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -24,7 +23,7 @@
 		return;
 	}
 
-	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.2"];
+	[_generalManager updateItemProgress:0.2];
 
 	// check for backups
 	if(![[_generalManager getBackups] count]){
@@ -32,7 +31,7 @@
 		return;
 	}
 
-	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.4"];
+	[_generalManager updateItemProgress:0.4];
 
 	// check for target backup
 	NSString *target = [backupDir stringByAppendingPathComponent:backupName];
@@ -42,39 +41,39 @@
 		return;
 	}
 
-	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.6"];
+	[_generalManager updateItemProgress:0.6];
 
 	// check for old tmp files
 	if([fileManager fileExistsAtPath:tmpDir]){
 		[_generalManager cleanupTmp];
 	}
 
-	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.8"];
+	[_generalManager updateItemProgress:0.8];
 
 	// ensure backupDir exists
 	[_generalManager ensureBackupDirExists];
 
-	[_notifCenter postNotificationName:@"updateItemProgress" object:@"1.0"];
-	[_notifCenter postNotificationName:@"updateItemStatus" object:@"0"];
+	[_generalManager updateItemStatus:0];
+	[_generalManager updateItemProgress:1];
 
 	BOOL compatible = YES;
 
-	[_notifCenter postNotificationName:@"updateItemStatus" object:@"0.5"];
+	[_generalManager updateItemStatus:0.5];
 	[self extractArchive:target];
-	[_notifCenter postNotificationName:@"updateItemStatus" object:@"1"];
+	[_generalManager updateItemStatus:1];
 
 	if([backupName hasSuffix:@"u.tar.gz"]){
 		compatible = [self verifyBootstrapForBackup:target];
 	}
 
 	if(compatible){
-		[_notifCenter postNotificationName:@"updateItemStatus" object:@"1.5"];
+		[_generalManager updateItemStatus:1.5];
 		[self updateAPT];
-		[_notifCenter postNotificationName:@"updateItemStatus" object:@"2"];
+		[_generalManager updateItemStatus:2];
 
-		[_notifCenter postNotificationName:@"updateItemStatus" object:@"2.5"];
+		[_generalManager updateItemStatus:2.5];
 		[self installDebs];
-		[_notifCenter postNotificationName:@"updateItemStatus" object:@"3"];
+		[_generalManager updateItemStatus:3];
 	}
 
 	[_generalManager cleanupTmp];
@@ -123,9 +122,9 @@
 
 -(void)updateAPT{
 	// ensure bootstrap repos' package files are up-to-date
-	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.0"];
+	[_generalManager updateItemProgress:0];
 	[_generalManager updateAPT];
-	[_notifCenter postNotificationName:@"updateItemProgress" object:@"1.0"];
+	[_generalManager updateItemProgress:1];
 }
 
 -(void)installDebs{
@@ -170,7 +169,7 @@
 		[_generalManager executeCommandAsRoot:@"installDeb"];
 
 		progress+=progressPerPart;
-		[_notifCenter postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+		[_generalManager updateItemProgress:progress];
 	}
 }
 

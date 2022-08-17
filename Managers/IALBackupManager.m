@@ -23,8 +23,7 @@
 	[_generalManager ensureBackupDirExists];
 
 	_filtered = filter;
-	_notifCenter = [NSNotificationCenter defaultCenter];
-	[_notifCenter postNotificationName:@"updateItemStatus" object:@"-0.5"];
+	[_generalManager updateItemStatus:-0.5];
 
 	// get control files
 	_controlFiles = [self getControlFiles];
@@ -41,7 +40,7 @@
 		return;
 	}
 
-	[_notifCenter postNotificationName:@"updateItemStatus" object:@"0"];
+	[_generalManager updateItemStatus:0];
 
 	// make fresh tmp directory
 	if(![fileManager fileExistsAtPath:tmpDir]){
@@ -55,26 +54,26 @@
 	}
 
 	// gather bits for packages
-	[_notifCenter postNotificationName:@"updateItemStatus" object:@"0.5"];
+	[_generalManager updateItemStatus:0.5];
 	[self gatherFilesForPackages];
-	[_notifCenter postNotificationName:@"updateItemStatus" object:@"1"];
+	[_generalManager updateItemStatus:1];
 
 	// build debs from bits
-	[_notifCenter postNotificationName:@"updateItemStatus" object:@"1.5"];
+	[_generalManager updateItemStatus:1.5];
 	[self buildDebs];
-	[_notifCenter postNotificationName:@"updateItemStatus" object:@"2"];
+	[_generalManager updateItemStatus:2];
 
 	// specify the bootstrap it was created on
 	if(!_filtered) [self makeBootstrapFile];
 
 	// make archive of packages
-	[_notifCenter postNotificationName:@"updateItemStatus" object:@"2.5"];
+	[_generalManager updateItemStatus:2.5];
 	[self makeTarball];
-	[_notifCenter postNotificationName:@"updateItemStatus" object:@"3"];
+	[_generalManager updateItemStatus:3];
 }
 
 -(NSArray<NSString *> *)getControlFiles{
-	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.0"];
+	[_generalManager updateItemProgress:0];
 
 	// get control files for all installed packages
 	NSError *readError = nil;
@@ -93,7 +92,7 @@
 		return [NSArray new];
 	}
 
-	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.1"];
+	[_generalManager updateItemProgress:0.1];
 
 	// divvy up massive control collection into individual control files
 	NSMutableArray *controls = [NSMutableArray new];
@@ -112,7 +111,7 @@
 		}
 	}
 
-	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.2"];
+	[_generalManager updateItemProgress:0.2];
 
 	return controls;
 }
@@ -162,7 +161,7 @@
 		}
 
 		progress+=progressPerPart;
-		[_notifCenter postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+		[_generalManager updateItemProgress:progress];
 	}
 	return packages;
 }
@@ -192,12 +191,12 @@
 		return [NSArray new];
 	}
 
-	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.8"];
+	[_generalManager updateItemProgress:0.8];
 
 	// ensure bootstrap repos' package files are up-to-date
 	[_generalManager updateAPT];
 
-	[_notifCenter postNotificationName:@"updateItemProgress" object:@"0.9"];
+	[_generalManager updateItemProgress:0.9];
 
 	// get packages to ignore
 	NSMutableArray *packagesToIgnore = [NSMutableArray new];
@@ -354,27 +353,27 @@
 		}
 
 		progress+=progressPerPart;
-		[_notifCenter postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+		[_generalManager updateItemProgress:progress];
 
 		[self makeSubDirectories:directories inDirectory:tweakDir];
 
 		progress+=progressPerPart;
-		[_notifCenter postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+		[_generalManager updateItemProgress:progress];
 
 		[self copyGenericFiles];
 
 		progress+=progressPerPart;
-		[_notifCenter postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+		[_generalManager updateItemProgress:progress];
 
 		[self makeControlForPackage:package inDirectory:tweakDir];
 
 		progress+=progressPerPart;
-		[_notifCenter postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+		[_generalManager updateItemProgress:progress];
 
 		[self copyDEBIANFiles];
 
 		progress+=progressPerPart;
-		[_notifCenter postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+		[_generalManager updateItemProgress:progress];
 	}
 
 	// remove list file now that we're done w it
@@ -460,7 +459,7 @@
 		[_generalManager executeCommandAsRoot:@"buildDeb"];
 
 		progress+=progressPerPart;
-		[_notifCenter postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+		[_generalManager updateItemProgress:progress];
 	}
 
 	[self verifyDebs];

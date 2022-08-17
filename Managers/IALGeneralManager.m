@@ -179,6 +179,16 @@
 	}
 }
 
+-(void)updateItemStatus:(CGFloat)status{
+	NSString *statusStr = [NSString stringWithFormat:@"%f", status];
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemStatus" object:statusStr];
+}
+
+-(void)updateItemProgress:(CGFloat)status{
+	NSString *statusStr = [NSString stringWithFormat:@"%f", status];
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:statusStr];
+}
+
 -(BOOL)hasConnection{
 	Reachability *reachability = [Reachability reachabilityForInternetConnection];
 	BOOL reachable = YES;

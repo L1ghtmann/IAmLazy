@@ -89,7 +89,7 @@ int main(int argc, char *argv[]){
 	}
 
 	setuid(0);
-	setuid(0);
+	setgid(0);
 
 	if(strcmp(argv[1], "unlockDpkg") == 0){
 		// kill dpkg to free the lock and then
@@ -242,7 +242,7 @@ int main(int argc, char *argv[]){
 			// Have this check because if a removed package's install is borked
 			// and it shows as being installed despite not having any files on-device,
 			// this build step will go past the number of actual package dirs and
-			// will try to build tmpDir as a deb which will obv fail, so we need to catch it
+			// will try to build tmpDir as a deb (which will obv fail), so we need to catch it
 			NSLog(@"[IAmLazyLog] AndSoAreYou: getCurrentPackage() failed.");
 			return 1;
 		}
@@ -305,6 +305,7 @@ int main(int argc, char *argv[]){
 			return 1;
 		}
 		else if([debs count] == 1){
+			// https://youtu.be/i6XQY8jebs4
 			NSLog(@"[IAmLazyLog] AndSoAreYou: the laaaaaaassssst debbbbbbbbb....");
 			end = YES;
 		}
