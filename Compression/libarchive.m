@@ -118,13 +118,20 @@ void write_archive(const char *outname){
 			len = read(fd, buff, sizeof(buff));
 		}
 		close(fd);
-		free(file);
 		archive_entry_free(entry);
 
 		progress+=progress_per_part;
 		dispatch_sync(dispatch_get_main_queue(), ^{
+			// Note: file is .m because we need to use NSNotificationCenter
 			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
 		});
+
+		// delete debs as we
+		// go to save space
+		if(remove(file) != 0){
+			NSLog(@"[IALLogError] libarchive: failed to delete %s", file);
+		}
+		free(file);
 	}
 	free(files);
 	archive_write_close(a);
@@ -213,6 +220,7 @@ void extract_archive(const char *filename){
 		else{
 			progress+=progress_per_part;
 			dispatch_sync(dispatch_get_main_queue(), ^{
+				// Note: file is .m because we need to use NSNotificationCenter
 				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
 			});
 		}
