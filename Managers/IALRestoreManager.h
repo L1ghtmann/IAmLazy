@@ -4,5 +4,5 @@
 
 @interface IALRestoreManager : NSObject
 @property (nonatomic, retain) IALGeneralManager *generalManager;
--(void)restoreFromBackup:(NSString *)backupName;
+-(void)restoreFromBackup:(NSString *)backupName withCompletion:(void (^)(BOOL))completed;
 @end

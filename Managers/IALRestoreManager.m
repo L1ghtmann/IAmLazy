@@ -12,7 +12,7 @@
 
 @implementation IALRestoreManager
 
--(void)restoreFromBackup:(NSString *)backupName{
+-(void)restoreFromBackup:(NSString *)backupName withCompletion:(void (^)(BOOL))completed{
 	[_generalManager updateItemStatus:-0.5];
 	[_generalManager updateItemProgress:0];
 
@@ -56,41 +56,42 @@
 	[_generalManager updateItemStatus:0];
 	[_generalManager updateItemProgress:1];
 
-	BOOL compatible = YES;
-
 	[_generalManager updateItemStatus:0.5];
-	[self extractArchive:target];
-	[_generalManager updateItemStatus:1];
+	// extract tarball contents (and avoid stalling the main thread)
+	[self extractArchive:target withCompletion:^(BOOL done){
+		[_generalManager updateItemStatus:1];
 
-	if([backupName hasSuffix:@"u.tar.gz"]){
-		compatible = [self verifyBootstrapForBackup:target];
-	}
+		BOOL compatible = YES;
+		if([backupName hasSuffix:@"u.tar.gz"]){
+			compatible = [self verifyBootstrapForBackup:target];
+		}
 
-	if(compatible){
-		[_generalManager updateItemStatus:1.5];
-		[self updateAPT];
-		[_generalManager updateItemStatus:2];
+		if(compatible){
+			[_generalManager updateItemStatus:1.5];
+			[self updateAPT];
+			[_generalManager updateItemStatus:2];
 
-		[_generalManager updateItemStatus:2.5];
-		[self installDebs];
-		[_generalManager updateItemStatus:3];
-	}
+			[_generalManager updateItemStatus:2.5];
+			[self installDebs];
+			[_generalManager updateItemStatus:3];
+		}
 
-	[_generalManager cleanupTmp];
+		[_generalManager cleanupTmp];
+		completed(done);
+	}];
 }
 
--(void)extractArchive:(NSString *)backupPath{
-	// extract tarball contents (and avoid stalling the main thread)
-	dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+-(void)extractArchive:(NSString *)backupPath withCompletion:(void (^)(BOOL))completed{
+	// extract tarball (and avoid stalling the main thread)
+	// need completion block here to keep the main thread from proceeding before the
+	// libarchive op and corresponding stuff here has completed. This completion block
+	// goes all the way up to the initialization method in order to keep everything synchronous
 	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-		extract_archive([backupPath UTF8String]); // UI fails to update due to hold below :/
-
-		// signal that we're good to go
-		dispatch_semaphore_signal(sema);
+		extract_archive([backupPath UTF8String]);
+		dispatch_sync(dispatch_get_main_queue(), ^{
+			completed(YES);
+		});
 	});
-	while(dispatch_semaphore_wait(sema, DISPATCH_TIME_NOW)){ // stackoverflow magic (https://stackoverflow.com/a/4326754)
-		[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0]];
-	}
 }
 
 -(BOOL)verifyBootstrapForBackup:(NSString *)targetBackup{

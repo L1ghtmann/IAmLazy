@@ -38,16 +38,20 @@
 
 #pragma mark Functionality
 
--(void)makeBackupWithFilter:(BOOL)filter{
+-(void)makeBackupWithFilter:(BOOL)filter andCompletion:(void (^)(BOOL))completed{
 	// reset errors
 	_encounteredError = NO;
 
-	if(!_backupManager) _backupManager = [[IALBackupManager alloc] init];
+	if(!_backupManager){
+		_backupManager = [[IALBackupManager alloc] init];
+	}
 	[_backupManager setGeneralManager:self];
-	[_backupManager makeBackupWithFilter:filter];
+	[_backupManager makeBackupWithFilter:filter andCompletion:^(BOOL done){
+		completed(done);
+	}];
 }
 
--(void)restoreFromBackup:(NSString *)backupName{
+-(void)restoreFromBackup:(NSString *)backupName withCompletion:(void (^)(BOOL))completed{
 	// check for internet connection
 	if(![self hasConnection]){
 		[self displayErrorWithMessage:@"Your device does not appear to be connected to the internet.\n\nA network connection is required for restores so packages can be downloaded if need be."];
@@ -57,9 +61,13 @@
 	// reset errors
 	_encounteredError = NO;
 
-	if(!_restoreManager) _restoreManager = [[IALRestoreManager alloc] init];
+	if(!_restoreManager){
+		_restoreManager = [[IALRestoreManager alloc] init];
+	}
 	[_restoreManager setGeneralManager:self];
-	[_restoreManager restoreFromBackup:backupName];
+	[_restoreManager restoreFromBackup:backupName withCompletion:^(BOOL done){
+		completed(done);
+	}];
 }
 
 -(void)ensureBackupDirExists{

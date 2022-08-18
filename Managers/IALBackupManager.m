@@ -12,7 +12,7 @@
 
 @implementation IALBackupManager
 
--(void)makeBackupWithFilter:(BOOL)filter{
+-(void)makeBackupWithFilter:(BOOL)filter andCompletion:(void (^)(BOOL))completed{
 	// check for old tmp files
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if([fileManager fileExistsAtPath:tmpDir]){
@@ -68,8 +68,10 @@
 
 	// make archive of packages
 	[_generalManager updateItemStatus:2.5];
-	[self makeTarball];
-	[_generalManager updateItemStatus:3];
+	[self makeTarballWithCompletion:^(BOOL done){
+		[_generalManager updateItemStatus:3];
+		completed(done);
+	}];
 }
 
 -(NSArray<NSString *> *)getControlFiles{
@@ -497,7 +499,7 @@
 	[fileManager createFileAtPath:file contents:nil attributes:nil];
 }
 
--(void)makeTarball{
+-(void)makeTarballWithCompletion:(void (^)(BOOL))completed{
 	// craft new backup name and append the gzip tar extension
 	NSString *backupName;
 	NSString *new = [self craftNewBackupName];
@@ -505,21 +507,13 @@
 	else backupName = [new stringByAppendingPathExtension:@"tar.gz"];
 	NSString *backupPath = [backupDir stringByAppendingPathComponent:backupName];
 
-	// make tarball (and avoid stalling the main thread)
-	dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-		write_archive([backupPath UTF8String]); // UI fails to update due to hold below :/
+	// make tarball
+	[self writeArchiveToPath:backupPath withCompletion:^(BOOL done){
+		[self verifyFileAtPath:backupPath];
 
-		// signal that we're good to go
-		dispatch_semaphore_signal(sema);
-	});
-	while(dispatch_semaphore_wait(sema, DISPATCH_TIME_NOW)){ // stackoverflow magic (https://stackoverflow.com/a/4326754)
-		[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0]];
-	}
-
-	[self verifyFileAtPath:backupPath];
-
-	[_generalManager cleanupTmp];
+		[_generalManager cleanupTmp];
+		completed(done);
+	}];
 }
 
 -(NSString *)craftNewBackupName{
@@ -539,6 +533,19 @@
 	NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
 	[formatter setDateFormat:@"yyyyMMd"];
 	return [NSString stringWithFormat:@"IAL-%@_%lu", [formatter stringFromDate:[NSDate date]], (latestBackup + 1)];
+}
+
+-(void)writeArchiveToPath:(NSString *)path withCompletion:(void (^)(BOOL))completed{
+	// make tarball (and avoid stalling the main thread)
+	// need completion block here to keep the main thread from proceeding before the
+	// libarchive op and corresponding stuff here has completed. This completion block
+	// goes all the way up to the initialization method in order to keep everything synchronous
+	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+		write_archive([path UTF8String]);
+		dispatch_sync(dispatch_get_main_queue(), ^{
+			completed(YES);
+		});
+	});
 }
 
 -(void)verifyFileAtPath:(NSString *)filePath{

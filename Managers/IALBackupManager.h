@@ -8,5 +8,5 @@
     NSArray<NSString *> *_packages;
 }
 @property (nonatomic, retain) IALGeneralManager *generalManager;
--(void)makeBackupWithFilter:(BOOL)filter;
+-(void)makeBackupWithFilter:(BOOL)filter andCompletion:(void (^)(BOOL))completed;
 @end

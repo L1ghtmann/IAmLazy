@@ -27,18 +27,9 @@
 		NSNotificationCenter *notifCenter = [NSNotificationCenter defaultCenter];
 		[notifCenter addObserver:self selector:@selector(updateItemStatus:) name:@"updateItemStatus" object:nil];
 		[notifCenter addObserver:self selector:@selector(updateItemProgress:) name:@"updateItemProgress" object:nil];
-		[notifCenter addObserver:self selector:@selector(test:) name:@"IALUpdateItemProgress" object:nil];
 	}
 
 	return self;
-}
-
--(void)test:(NSNotification *)sender{
-	// everything is sending fine (both in C and ObjC, but the layer doesn't update?!?)
-	CGFloat progress = [(NSString *)sender.object floatValue];
-	NSLog(@"IAmLazyLog TEST FUNC w/ prog: %f", progress);
-	[_circleFill setStrokeEnd:progress];
-	[_circleFill didChangeValueForKey:@"strokeEnd"];
 }
 
 -(void)loadView{
