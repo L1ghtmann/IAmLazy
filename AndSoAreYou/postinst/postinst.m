@@ -14,7 +14,7 @@ int main(){
 	int retChown = lchown("/usr/libexec/iamlazy/AndSoAreYou", 0, 0);
 	int retChmod = lchmod("/usr/libexec/iamlazy/AndSoAreYou", 06755);
 	if(retChown != 0 || retChmod != 0){
-		printf("[IAmLazyLog] Failed to prep AndSoAreYou!");
+		printf("[IALLogError] Failed to set AndSoAreYou perms!");
 		return 1;
 	}
 

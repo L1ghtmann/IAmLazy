@@ -14,7 +14,7 @@ NSString *getCurrentPackage(){
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	NSArray *tmpDirFiles = [fileManager contentsOfDirectoryAtPath:tmpDir error:&readError];
 	if(readError){
-		NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to get contents of %@! Error: %@", tmpDir, readError);
+		NSLog(@"[IALLogError] AndSoAreYou: Failed to get contents of %@! Info: %@", tmpDir, readError.localizedDescription);
 		return @"err";
 	}
 	else if(![tmpDirFiles count]){
@@ -36,7 +36,7 @@ NSString *getCurrentPackage(){
 				NSError *readError2 = nil;
 				NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:filePath error:&readError2];
 				if(readError2){
-					NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to get attributes of %@! Error: %@", filePath, readError2);
+					NSLog(@"[IALLogError] AndSoAreYou: Failed to get attributes of %@! Info: %@", filePath, readError2.localizedDescription);
 					continue;
 				}
 
@@ -106,14 +106,14 @@ int main(int argc, char *argv[]){
 		[task2 launch];
 		[task2 waitUntilExit];
 
-		NSLog(@"[IAmLazyLog] AndSoAreYou: dpkg should be fixed!");
+		NSLog(@"[IALLog] AndSoAreYou: dpkg should be fixed!");
 	}
 	else if(strcmp(argv[1], "cleanTmp") == 0){
 		// delete temporary directory
 		NSError *deleteError = nil;
 		[[NSFileManager defaultManager] removeItemAtPath:tmpDir error:&deleteError];
 		if(deleteError){;
-			NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to delete %@! Error: %@", tmpDir, deleteError);
+			NSLog(@"[IALLogError] AndSoAreYou: Failed to delete %@! Info: %@", tmpDir, deleteError.localizedDescription);
 			return 1;
 		}
 	}
@@ -124,7 +124,7 @@ int main(int argc, char *argv[]){
 		[task launch];
 		[task waitUntilExit];
 
-		NSLog(@"[IAmLazyLog] AndSoAreYou: apt sources up-to-date!");
+		NSLog(@"[IALLog] AndSoAreYou: apt sources up-to-date!");
 	}
 	else if(strcmp(argv[1], "cpGFiles") == 0){
 		// recreate directory structure and copy files
@@ -132,19 +132,19 @@ int main(int argc, char *argv[]){
 		NSString *filesToCopy = [tmpDir stringByAppendingPathComponent:@".filesToCopy"];
 		NSString *toCopy = [NSString stringWithContentsOfFile:filesToCopy encoding:NSUTF8StringEncoding error:&readError];
 		if(readError){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to get contents of %@! Error: %@", filesToCopy, readError);
+			NSLog(@"[IALLogError] AndSoAreYou: Failed to get contents of %@! Info: %@", filesToCopy, readError.localizedDescription);
 			return 1;
 		}
 
 		NSArray *files = [toCopy componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
 		if(![files count]){
-			NSLog(@"[IAmLazyLog] %@ has no contents?!", filesToCopy);
+			NSLog(@"[IALLogError] %@ has no contents?!", filesToCopy);
 			return 1;
 		}
 
 		NSString *current = getCurrentPackage();
 		if(![current length] || [current isEqualToString:@"err"]){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: getCurrentPackage() failed.");
+			NSLog(@"[IALLogError] AndSoAreYou: getCurrentPackage() failed.");
 			return 1;
 		}
 
@@ -161,7 +161,7 @@ int main(int argc, char *argv[]){
 			NSString *newPath = [tweakDir stringByAppendingPathComponent:dirStructure];
 			[fileManager createDirectoryAtPath:newPath withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
-				NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to create %@! Error: %@", newPath, writeError);
+				NSLog(@"[IALLogError] AndSoAreYou: Failed to create %@! Info: %@", newPath, writeError.localizedDescription);
 				continue;
 			}
 
@@ -177,7 +177,7 @@ int main(int argc, char *argv[]){
 			NSError *writeError2 = nil;
 			[fileManager copyItemAtPath:file toPath:newFilePath error:&writeError2];
 			if(writeError2){
-				NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to copy %@! Error: %@", file, writeError2);
+				NSLog(@"[IALLogError] AndSoAreYou: Failed to copy %@! Info: %@", file, writeError2.localizedDescription);
 			}
 		}
 	}
@@ -188,17 +188,17 @@ int main(int argc, char *argv[]){
 		NSFileManager *fileManager = [NSFileManager defaultManager];
 		NSArray *dpkgInfo = [fileManager contentsOfDirectoryAtPath:dpkgInfoDir error:&readError];
 		if(readError){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to get contents of %@! Error: %@", dpkgInfoDir, readError);
+			NSLog(@"[IALLogError] AndSoAreYou: Failed to get contents of %@! Info: %@", dpkgInfoDir, readError.localizedDescription);
 			return 1;
 		}
 		else if(![dpkgInfo count]){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: %@ is empty?!", dpkgInfoDir);
+			NSLog(@"[IALLogError] AndSoAreYou: %@ is empty?!", dpkgInfoDir);
 			return 1;
 		}
 
 		NSString *tweakName = getCurrentPackage();
 		if(![tweakName length] || [tweakName isEqualToString:@"err"]){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: getCurrentPackage() failed.");
+			NSLog(@"[IALLogError] AndSoAreYou: getCurrentPackage() failed.");
 			return 1;
 		}
 
@@ -210,7 +210,7 @@ int main(int argc, char *argv[]){
 		NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate1, antiPredicate23]];
 		NSArray *debainFiles = [dpkgInfo filteredArrayUsingPredicate:thePredicate];
 		if(![debainFiles count]){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: %@ has no DEBIAN files.", tweakName);
+			NSLog(@"[IALLog] AndSoAreYou: %@ has no DEBIAN files.", tweakName);
 			return 1;
 		}
 
@@ -231,7 +231,7 @@ int main(int argc, char *argv[]){
 			NSError *writeError = nil;
 			[fileManager copyItemAtPath:filePath toPath:[debian stringByAppendingPathComponent:strippedName] error:&writeError];
 			if(writeError){
-				NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to copy %@! Error: %@", filePath, writeError);
+				NSLog(@"[IALLogError] AndSoAreYou: Failed to copy %@! Info: %@", filePath, writeError.localizedDescription);
 			}
 		}
 	}
@@ -243,7 +243,7 @@ int main(int argc, char *argv[]){
 			// and it shows as being installed despite not having any files on-device,
 			// this build step will go past the number of actual package dirs and
 			// will try to build tmpDir as a deb (which will obv fail), so we need to catch it
-			NSLog(@"[IAmLazyLog] AndSoAreYou: getCurrentPackage() failed.");
+			NSLog(@"[IALLogError] AndSoAreYou: getCurrentPackage() failed.");
 			return 1;
 		}
 		NSString *tweak = [tmpDir stringByAppendingPathComponent:current];
@@ -263,14 +263,14 @@ int main(int argc, char *argv[]){
 		// delete dir with files now that deb has been built
 		[fileManager removeItemAtPath:tweak error:&deleteError];
 		if(deleteError){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to delete %@! Error: %@", tweak, deleteError);
+			NSLog(@"[IALLogError] AndSoAreYou: Failed to delete %@! Info: %@", tweak, deleteError.localizedDescription);
 		}
 
 		if([fileManager fileExistsAtPath:[tweak stringByAppendingPathExtension:@"deb"]]){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: %@.deb created successfully!", tweak);
+			NSLog(@"[IALLog] AndSoAreYou: %@.deb created successfully!", tweak);
 		}
 		else{
-			NSLog(@"[IAmLazyLog] AndSoAreYou: %@.deb failed to build!", tweak);
+			NSLog(@"[IALLogError] AndSoAreYou: %@.deb failed to build!", tweak);
 		}
 	}
 	else if(strcmp(argv[1], "installDeb") == 0){
@@ -279,11 +279,11 @@ int main(int argc, char *argv[]){
 		NSFileManager *fileManager = [NSFileManager defaultManager];
 		NSArray *tmpDirContents = [fileManager contentsOfDirectoryAtPath:tmpDir error:&readError];
 		if(readError){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to get contents of %@! Error: %@", tmpDir, readError);
+			NSLog(@"[IALLogError] AndSoAreYou: Failed to get contents of %@! Info: %@", tmpDir, readError.localizedDescription);
 			return 1;
 		}
 		else if(![tmpDirContents count]){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: %@ is empty?!", tmpDir);
+			NSLog(@"[IALLogError] AndSoAreYou: %@ is empty?!", tmpDir);
 			return 1;
 		}
 
@@ -301,12 +301,12 @@ int main(int argc, char *argv[]){
 			}
 		}
 		if(![debs count]){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: %@ has no debs!", tmpDir);
+			NSLog(@"[IALLogError] AndSoAreYou: %@ has no debs!", tmpDir);
 			return 1;
 		}
 		else if([debs count] == 1){
 			// https://youtu.be/i6XQY8jebs4
-			NSLog(@"[IAmLazyLog] AndSoAreYou: the laaaaaaassssst debbbbbbbbb....");
+			NSLog(@"[IALLog] AndSoAreYou: the laaaaaaassssst debbbbbbbbb....");
 			end = YES;
 		}
 
@@ -320,7 +320,7 @@ int main(int argc, char *argv[]){
 		// not, finish the current package and return
 		BOOL alive = !kill(ppid, 0);
 		if(!alive){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: IAL process was killed. Returning.");
+			NSLog(@"[IALLogError] AndSoAreYou: IAL process was killed. Returning.");
 			return 1;
 		}
 
@@ -334,7 +334,7 @@ int main(int argc, char *argv[]){
 		// delete deb now that it's been installed
 		[fileManager removeItemAtPath:deb error:&deleteError];
 		if(deleteError){;
-			NSLog(@"[IAmLazyLog] AndSoAreYou: Failed to delete %@! Error: %@", deb, deleteError);
+			NSLog(@"[IALLogError] AndSoAreYou: Failed to delete %@! Info: %@", deb, deleteError.localizedDescription);
 			return 1;
 		}
 
@@ -361,10 +361,10 @@ int main(int argc, char *argv[]){
 
 		NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 		if([output containsString:@"Status: install ok installed"]){
-			NSLog(@"[IAmLazyLog] AndSoAreYou: %@ installed successfully!", tweak);
+			NSLog(@"[IALLog] AndSoAreYou: %@ installed successfully!", tweak);
 		}
 		else{
-			NSLog(@"[IAmLazyLog] AndSoAreYou: failed to install %@!", tweak);
+			NSLog(@"[IALLogError] AndSoAreYou: (potentially) failed to install %@!", tweak);
 			if(!end) return 1;
 		}
 
@@ -387,7 +387,7 @@ int main(int argc, char *argv[]){
 			[task4 launch];
 			[task4 waitUntilExit];
 
-			NSLog(@"[IAmLazyLog] AndSoAreYou: apt fixed and dpkg configured (just in case).");
+			NSLog(@"[IALLog] AndSoAreYou: apt fixed and dpkg configured (just in case).");
 		}
 	}
 	else{

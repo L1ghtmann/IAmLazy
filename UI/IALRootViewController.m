@@ -523,7 +523,7 @@
 	AudioServicesPlaySystemSound(4095); // vibration
 
 	UIAlertController *alert = [UIAlertController
-								alertControllerWithTitle:@"IAmLazy Notice:"
+								alertControllerWithTitle:@"IAmLazy"
 								message:[NSString stringWithFormat:@"Tweak backup completed successfully in %@ seconds!\n\nYour backup can be found in\n%@", [self getDuration], backupDir]
 								preferredStyle:UIAlertControllerStyleAlert];
 

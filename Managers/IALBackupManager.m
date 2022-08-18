@@ -47,7 +47,7 @@
 		NSError *writeError = nil;
 		[fileManager createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 		if(writeError){
-			NSString *msg = [NSString stringWithFormat:@"Failed to create %@.\n\nError: %@", tmpDir, writeError];
+			NSString *msg = [NSString stringWithFormat:@"Failed to create %@.\n\nInfo: %@", tmpDir, writeError.localizedDescription];
 			[_generalManager displayErrorWithMessage:msg];
 			return;
 		}
@@ -82,7 +82,7 @@
 	NSString *dpkgStatus = @"/var/lib/dpkg/status";
 	NSString *contents = [NSString stringWithContentsOfFile:dpkgStatus encoding:NSUTF8StringEncoding error:&readError];
 	if(readError){
-		NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", dpkgStatus, readError];
+		NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Info: %@", dpkgStatus, readError.localizedDescription];
 		[_generalManager displayErrorWithMessage:msg];
 		return [NSArray new];
 	}
@@ -183,7 +183,7 @@
 	NSString *aptListsDir = @"/var/lib/apt/lists/";
 	NSArray *aptLists = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:aptListsDir error:&readError];
 	if(readError){
-		NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", aptListsDir, readError];
+		NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Info: %@", aptListsDir, readError.localizedDescription];
 		[_generalManager displayErrorWithMessage:msg];
 		return [NSArray new];
 	}
@@ -219,7 +219,7 @@
 			NSString *listPath = [aptListsDir stringByAppendingPathComponent:list];
 			NSString *content = [NSString stringWithContentsOfFile:listPath encoding:NSUTF8StringEncoding error:&readError2];
 			if(readError2){
-				NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", listPath, readError2];
+				NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Info: %@", listPath, readError2.localizedDescription];
 				[_generalManager displayErrorWithMessage:msg];
 				return [NSArray new];
 			}
@@ -270,13 +270,13 @@
 		NSString *path = [[dpkgInfoDir stringByAppendingPathComponent:package] stringByAppendingPathExtension:@"list"];
 		NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&readError];
 		if(readError){
-			NSLog(@"[IAmLazyLog] Failed to get contents of %@! Error: %@", path, readError);
+			NSLog(@"[IALLogError] Failed to get contents of %@! Info: %@", path, readError.localizedDescription);
 			continue;
 		}
 
 		NSArray *lines = [contents componentsSeparatedByCharactersInSet:newlineChars];
 		if(![lines count]){
-			NSLog(@"[IAmLazyLog] %@ has no content?!", path);
+			NSLog(@"[IALLogError] %@ has no content?!", path);
 			continue;
 		}
 
@@ -291,7 +291,7 @@
 			NSError *readError2 = nil;
 			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:line error:&readError2];
 			if(readError2){
-				NSLog(@"[IAmLazyLog] Failed to get attributes for %@! Error: %@", line, readError2);
+				NSLog(@"[IALLogError] Failed to get attributes for %@! Info: %@", line, readError2.localizedDescription);
 				continue;
 			}
 
@@ -332,14 +332,14 @@
 		// put the files we want to copy into lists for easier writing
 		NSString *gFilePaths = [[genericFiles valueForKey:@"description"] componentsJoinedByString:@"\n"];
 		if(![gFilePaths length]){
-			NSLog(@"[IAmLazyLog] %@ has no generic files!", package);
+			NSLog(@"[IALLog] %@ has no generic files!", package);
 		}
 
 		// this is nice because it overwrites the file's content, unlike the write method from NSFileManager
 		NSError *writeError = nil;
 		[gFilePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
 		if(writeError){
-			NSLog(@"[IAmLazyLog] Failed to write generic files to %@ for %@! Error: %@", filesToCopy, package, writeError);
+			NSLog(@"[IALLogError] Failed to write generic files to %@ for %@! Info: %@", filesToCopy, package, writeError.localizedDescription);
 			continue;
 		}
 
@@ -349,7 +349,7 @@
 			NSError *writeError3 = nil;
 			[fileManager createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&writeError3];
 			if(writeError3){
-				NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", tweakDir, writeError3);
+				NSLog(@"[IALLogError] Failed to create %@! Info: %@", tweakDir, writeError3.localizedDescription);
 				continue;
 			}
 		}
@@ -382,7 +382,7 @@
 	NSError *deleteError = nil;
 	[fileManager removeItemAtPath:filesToCopy error:&deleteError];
 	if(deleteError){
-		NSLog(@"[IAmLazyLog] Failed to delete %@! Error: %@", filesToCopy, deleteError);
+		NSLog(@"[IALLogError] Failed to delete %@! Info: %@", filesToCopy, deleteError.localizedDescription);
 	}
 }
 
@@ -394,7 +394,7 @@
 			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
-				NSLog(@"[IAmLazyLog] Failed to create %@! Error: %@", path, writeError);
+				NSLog(@"[IALLogError] Failed to create %@! Info: %@", path, writeError.localizedDescription);
 				continue;
 			}
 		}
@@ -435,7 +435,7 @@
 		NSError *writeError = nil;
 		[fileManager createDirectoryAtPath:debian withIntermediateDirectories:YES attributes:nil error:&writeError];
 		if(writeError){
-			NSString *msg = [NSString stringWithFormat:@"Failed to create %@! Error: %@", debian, writeError];
+			NSString *msg = [NSString stringWithFormat:@"Failed to create %@! Info: %@", debian, writeError.localizedDescription];
 			[_generalManager displayErrorWithMessage:msg];
 			return;
 		}
@@ -471,7 +471,7 @@
 	NSError *readError = nil;
 	NSArray *tmp = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:&readError];
 	if(readError){
-		NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", tmpDir, readError];
+		NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Info: %@", tmpDir, readError.localizedDescription];
 		[_generalManager displayErrorWithMessage:msg];
 		return;
 	}

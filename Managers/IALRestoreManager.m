@@ -134,7 +134,7 @@
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	NSArray *tmpDirContents = [fileManager contentsOfDirectoryAtPath:tmpDir error:&readError];
 	if(readError){
-		NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Error: %@", tmpDir, readError];
+		NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Info: %@", tmpDir, readError.localizedDescription];
 		[_generalManager displayErrorWithMessage:msg];
 		return;
 	}
