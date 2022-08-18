@@ -39,9 +39,6 @@
 #pragma mark Functionality
 
 -(void)makeBackupWithFilter:(BOOL)filter andCompletion:(void (^)(BOOL))completed{
-	// reset errors
-	_encounteredError = NO;
-
 	if(!_backupManager){
 		_backupManager = [[IALBackupManager alloc] init];
 	}
@@ -57,9 +54,6 @@
 		[self displayErrorWithMessage:@"Your device does not appear to be connected to the internet.\n\nA network connection is required for restores so packages can be downloaded if need be."];
 		return;
 	}
-
-	// reset errors
-	_encounteredError = NO;
 
 	if(!_restoreManager){
 		_restoreManager = [[IALRestoreManager alloc] init];
@@ -209,8 +203,6 @@
 #pragma mark Popups
 
 -(void)displayErrorWithMessage:(NSString *)msg{
-	_encounteredError = YES;
-
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy Error:"
 								message:msg

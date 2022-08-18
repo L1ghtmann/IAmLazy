@@ -77,7 +77,7 @@
 		}
 
 		[_generalManager cleanupTmp];
-		completed(done);
+		completed(compatible);
 	}];
 }
 

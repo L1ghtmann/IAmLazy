@@ -7,7 +7,6 @@
     IALBackupManager *_backupManager;
 }
 @property (nonatomic, retain) UIViewController *rootVC;
-@property (nonatomic) BOOL encounteredError;
 +(instancetype)sharedManager;
 -(void)makeBackupWithFilter:(BOOL)filter andCompletion:(void (^)(BOOL))completed;
 -(void)restoreFromBackup:(NSString *)backupName withCompletion:(void (^)(BOOL))completed;
