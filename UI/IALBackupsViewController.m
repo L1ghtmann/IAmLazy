@@ -101,10 +101,10 @@
 }
 
 -(void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath{
-	AudioServicesPlaySystemSound(1520); // haptic feedback
+	AudioServicesPlaySystemSound(1520);
 
 	if(editingStyle == UITableViewCellEditingStyleDelete){
-		// remove backup
+		// delete backup
 		NSString *backupName = [tableView cellForRowAtIndexPath:indexPath].textLabel.text;
 		NSString *filePath = [backupDir stringByAppendingPathComponent:backupName];
 		NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -126,7 +126,7 @@
 		// [_backups removeObjectAtIndex:indexPath.row];
 
 		[tableView beginUpdates];
-		// The method below causes the section header to shift up? Not sure why, but just refreshing works fine
+		// the method below causes the section header to shift up?? Not sure why, but just refreshing works fine
 		// [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
 		[self refreshTable];
 		[tableView endUpdates];
@@ -158,7 +158,7 @@
 }
 
 -(void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls{
-	// urls count will always be 1
+	// 'urls' count will always be 1
 	NSURL *url = [urls firstObject];
 
 	// Note: need to have the path be /destDir/filename.extension otherwise it'll try to overwrite the destDir??

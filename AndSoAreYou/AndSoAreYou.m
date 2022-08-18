@@ -9,6 +9,8 @@
 #import <sys/stat.h>
 #import <NSTask.h>
 
+// have this so we don't have
+// to r/w filenames from a file
 NSString *getCurrentPackage(){
 	NSError *readError = nil;
 	NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -71,7 +73,7 @@ int main(int argc, char *argv[]){
 	// get current process' parent PID
 	pid_t ppid = getppid();
 
-	// get absolute path of the command running at 'pid'
+	// get absolute path of the command running at 'ppid'
 	char buffer[PATH_MAX];
 	int ret = proc_pidpath(ppid, buffer, sizeof(buffer));
 
@@ -92,14 +94,14 @@ int main(int argc, char *argv[]){
 	setgid(0);
 
 	if(strcmp(argv[1], "unlockDpkg") == 0){
-		// kill dpkg to free the lock and then
-		// configure any unconfigured packages
+		// kill dpkg to free the lock
 		NSTask *task = [[NSTask alloc] init];
 		[task setLaunchPath:@"/usr/bin/killall"];
 		[task setArguments:@[@"dpkg"]];
 		[task launch];
 		[task waitUntilExit];
 
+		// configure any unconfigured packages
 		NSTask *task2 = [[NSTask alloc] init];
 		[task2 setLaunchPath:@"/usr/bin/dpkg"];
 		[task2 setArguments:@[@"--configure", @"-a"]];
@@ -109,7 +111,6 @@ int main(int argc, char *argv[]){
 		NSLog(@"[IALLog] AndSoAreYou: dpkg should be fixed!");
 	}
 	else if(strcmp(argv[1], "cleanTmp") == 0){
-		// delete temporary directory
 		NSError *deleteError = nil;
 		[[NSFileManager defaultManager] removeItemAtPath:tmpDir error:&deleteError];
 		if(deleteError){;
@@ -165,7 +166,7 @@ int main(int argc, char *argv[]){
 				continue;
 			}
 
-			// 'reenable' tweaks that've been disabled with iCleaner Pro
+			// 're-enable' tweaks that've been 'disabled' with iCleaner Pro
 			NSString *extension = [file pathExtension];
 			if([[extension lowercaseString] isEqualToString:@"disabled"]){
 				extension = @"dylib";
@@ -173,7 +174,6 @@ int main(int argc, char *argv[]){
 			NSString *newFile = [[[file lastPathComponent] stringByDeletingPathExtension] stringByAppendingPathExtension:extension];
 			NSString *newFilePath = [newPath stringByAppendingPathComponent:newFile];
 
-			// copy file
 			NSError *writeError2 = nil;
 			[fileManager copyItemAtPath:file toPath:newFilePath error:&writeError2];
 			if(writeError2){
@@ -214,7 +214,6 @@ int main(int argc, char *argv[]){
 			return 1;
 		}
 
-		// copy files
 		NSString *debian = [[tmpDir stringByAppendingPathComponent:tweakName] stringByAppendingPathComponent:@"DEBIAN/"];
 		for(NSString *file in debainFiles){
 			NSString *filePath = [dpkgInfoDir stringByAppendingPathComponent:file];
@@ -222,7 +221,7 @@ int main(int argc, char *argv[]){
 				continue;
 			}
 
-			// remove tweakName prefix and copy file
+			// remove tweakName prefix
 			NSString *strippedName = [file stringByReplacingOccurrencesOfString:[tweakName stringByAppendingString:@"."] withString:@""];
 			if(![strippedName length]){
 				continue;
@@ -236,13 +235,12 @@ int main(int argc, char *argv[]){
 		}
 	}
 	else if(strcmp(argv[1], "buildDeb") == 0){
-		// build deb and remove respective dir when done
 		NSString *current = getCurrentPackage();
 		if(![current length] || [current isEqualToString:@"err"]){
-			// Have this check because if a removed package's install is borked
+			// have this check because if a removed package's install is borked
 			// and it shows as being installed despite not having any files on-device,
-			// this build step will go past the number of actual package dirs and
-			// will try to build tmpDir as a deb (which will obv fail), so we need to catch it
+			// this build step will go past the number of actual package dirs and will
+			// try to build tmpDir as a deb (which will obv fail), so we need to catch it
 			NSLog(@"[IALLogError] AndSoAreYou: getCurrentPackage() failed.");
 			return 1;
 		}
@@ -310,7 +308,6 @@ int main(int argc, char *argv[]){
 			end = YES;
 		}
 
-		// install deb and remove when done
 		NSString *deb = [debs firstObject];
 		// there's an issue on u0 where the IAL
 		// app may be killed (w/o a crash log)
@@ -318,6 +315,7 @@ int main(int argc, char *argv[]){
 		// running, but we don't want that so we check
 		// to see if the IAL process is alive and, if
 		// not, finish the current package and return
+		// TODO: figure out and fix
 		BOOL alive = !kill(ppid, 0);
 		if(!alive){
 			NSLog(@"[IALLogError] AndSoAreYou: IAL process was killed. Returning.");
@@ -368,8 +366,9 @@ int main(int argc, char *argv[]){
 			if(!end) return 1;
 		}
 
-		// resolve any lingering things (e.g., conflicts, partial installs due to dependencies, etc)
 		if(end){
+			// resolve any lingering things
+			// (e.g., conflicts, partial installs due to dependencies, etc)
 			NSTask *task3 = [[NSTask alloc] init];
 			[task3 setLaunchPath:@"/usr/bin/apt-get"];
 			[task3 setArguments:@[

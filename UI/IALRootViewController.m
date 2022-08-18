@@ -37,10 +37,19 @@
 }
 
 -(void)makeMainScreen{
-	// Setup main background
-	// TODO: do this with constraints(?)
-	_mainView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, kWidth, ((kHeight/4) * 3))];
+	// setup main background
+	_mainView = [[UIView alloc] init];
 	[self.view addSubview:_mainView];
+
+	[_mainView setTranslatesAutoresizingMaskIntoConstraints:NO];
+	[[_mainView.topAnchor constraintEqualToAnchor:self.view.topAnchor] setActive:YES];
+	[[_mainView.widthAnchor constraintEqualToConstant:kWidth] setActive:YES];
+	[[_mainView.heightAnchor constraintEqualToConstant:((kHeight/4) * 3)] setActive:YES];
+
+	// make sure bounds/frame are updated
+	// can't use constraints on calayers
+	// so need _mainView's bounds to exist
+	[_mainView layoutIfNeeded];
 
 	CAGradientLayer *gradient = [CAGradientLayer layer];
 	[gradient setFrame:_mainView.bounds];
@@ -48,7 +57,7 @@
 						(id)[UIColor colorWithRed:252.0f/255.0f green:251.0f/255.0f blue:216.0f/255.0f alpha:1.0f].CGColor]];
 	[_mainView.layer insertSublayer:gradient atIndex:0];
 
-	// Setup IAL icon
+	// setup IAL icon
 	UIImageView *imgView = [[UIImageView alloc] init];
 	[_mainView addSubview:imgView];
 
@@ -59,8 +68,8 @@
 	[imgView setImage:[UIImage imageNamed:@"Assets/AppIcon250-Clear"]];
 	[imgView setUserInteractionEnabled:NO];
 
-	// Setup primary function buttons
-	// Backup
+	// setup primary function buttons
+	// backup
 	UIButton *backup = [UIButton buttonWithType:UIButtonTypeCustom];
 	[_mainView addSubview:backup];
 
@@ -83,7 +92,7 @@
 	[backup setImage:[UIImage systemImageNamed:@"plus.app"] forState:UIControlStateNormal];
 	[backup addTarget:self action:@selector(mainButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
 
-	// Restore
+	// restore
 	UIButton *restore = [UIButton buttonWithType:UIButtonTypeCustom];
 	[_mainView addSubview:restore];
 
@@ -108,7 +117,7 @@
 }
 
 -(void)makeControlPanel{
-	// Setup control panel background
+	// setup control panel background
 	_controlPanelView = [[UIView alloc] init];
 	[self.view addSubview:_controlPanelView];
 
@@ -126,7 +135,7 @@
 }
 
 -(void)makePanelOne{
-	// Create container for buttons
+	// create container for buttons
 	_panelOneContainer = [[UIView alloc] init];
 	[_panelOneContainer setBackgroundColor:[UIColor clearColor]];
 	[_controlPanelView addSubview:_panelOneContainer];
@@ -137,7 +146,7 @@
 	[[_panelOneContainer.leadingAnchor constraintEqualToAnchor:_controlPanelView.leadingAnchor] setActive:YES];
 	[[_panelOneContainer.trailingAnchor constraintEqualToAnchor:_controlPanelView.trailingAnchor] setActive:YES];
 
-	// Src
+	// src
 	UIButton *src = [UIButton buttonWithType:UIButtonTypeSystem];
 	[_panelOneContainer addSubview:src];
 
@@ -157,7 +166,7 @@
 	else [src setBackgroundColor:[UIColor whiteColor]];
 	[src addTarget:self action:@selector(subButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
 
-	// Backups
+	// backups
 	UIButton *backups = [UIButton buttonWithType:UIButtonTypeSystem];
 	[_panelOneContainer addSubview:backups];
 
@@ -177,7 +186,7 @@
 	else [backups setBackgroundColor:[UIColor whiteColor]];
 	[backups addTarget:self action:@selector(subButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
 
-	// Me
+	// me
 	UIButton *me = [UIButton buttonWithType:UIButtonTypeSystem];
 	[_panelOneContainer addSubview:me];
 
@@ -198,7 +207,7 @@
 }
 
 -(void)makePanelTwo{
-	// Create container for buttons
+	// create container for buttons
 	_panelTwoContainer = [[UIView alloc] init];
 	[_panelTwoContainer setBackgroundColor:[UIColor clearColor]];
 	[_controlPanelView addSubview:_panelTwoContainer];
@@ -209,10 +218,10 @@
 	[[_panelTwoContainer.leadingAnchor constraintEqualToAnchor:_controlPanelView.leadingAnchor] setActive:YES];
 	[[_panelTwoContainer.trailingAnchor constraintEqualToAnchor:_controlPanelView.trailingAnchor] setActive:YES];
 
-	// Hide until needed
+	// hide until needed
 	[_panelTwoContainer setAlpha:0];
 
-	// Go
+	// go
 	UIButton *go = [UIButton buttonWithType:UIButtonTypeSystem];
 	[_panelTwoContainer addSubview:go];
 
@@ -231,7 +240,7 @@
 	else [go setBackgroundColor:[UIColor whiteColor]];
 	[go addTarget:self action:@selector(startWork) forControlEvents:UIControlEventTouchUpInside];
 
-	// Config switch
+	// config switch
 	_configSwitch = [[UISegmentedControl alloc] initWithItems:nil];
 	[_panelTwoContainer addSubview:_configSwitch];
 
@@ -279,7 +288,7 @@
 				break;
 		}
 	}
-	// if control pannel state is not 0 and/or tapped already selected button
+	// if control panel state is not 0 and/or tapped already selected button
 	else{
 		[UIView animateWithDuration:0.5 animations:^(void) {
 			[_panelOneContainer setAlpha:1];
@@ -293,7 +302,7 @@
 }
 
 -(void)subButtonTapped:(UIButton *)sender{
-	AudioServicesPlaySystemSound(1520); // haptic feedback
+	AudioServicesPlaySystemSound(1520);
 
 	switch(sender.tag){
 		case 0: {
@@ -311,7 +320,7 @@
 }
 
 -(void)startWork{
-	AudioServicesPlaySystemSound(1520); // haptic feedback
+	AudioServicesPlaySystemSound(1520);
 
 	switch(_controlPanelState){
 		case 1: // backup
@@ -332,7 +341,7 @@
 }
 
 -(void)configSegmentChanged:(UISegmentedControl *)sender{
-	AudioServicesPlaySystemSound(1520); // haptic feedback
+	AudioServicesPlaySystemSound(1520);
 }
 
 #pragma mark Functionality
@@ -371,7 +380,7 @@
 	_startTime = [NSDate date];
 
 	[_manager makeBackupWithFilter:filter andCompletion:^(BOOL completed){
-		[app setIdleTimerDisabled:NO]; // reenable idle timer
+		[app setIdleTimerDisabled:NO]; // re-enable idle timer regardless of completion status
 		if(completed){
 			_endTime = [NSDate date];
 
@@ -432,7 +441,7 @@
 		[alert addAction:cancel];
 
 		[self presentViewController:alert animated:YES completion:^{
-			// allows dismissal of the UIAlertControllerStyleAlert when
+			// allows dismissal of UIAlertControllerStyleAlerts when
 			// the user touches anywhere out of bounds of the alert view
 			[alert.view.superview setUserInteractionEnabled:YES];
 			[alert.view.superview addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(alertOOBTap)]];
@@ -452,7 +461,7 @@
 							style:UIAlertActionStyleDefault
 							handler:^(UIAlertAction *action){
 								if([backup hasSuffix:@"u.tar.gz"]){
-									// get extra confirmation before proceeding
+									// get *extra* confirmation before proceeding
 									UIAlertController *subalert = [UIAlertController
 																alertControllerWithTitle:@"Please note:"
 																message:@"You have chosen to restore from a developer backup. This backup includes bootstrap packages.\n\nPlease confirm that you understand this and still wish to proceed with the restore:"
@@ -506,7 +515,7 @@
 	[app setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
 
 	[_manager restoreFromBackup:backup withCompletion:^(BOOL completed){
-		[app setIdleTimerDisabled:NO]; // reenable idle timer
+		[app setIdleTimerDisabled:NO]; // re-enable idle timer regardless of completion status
 		if(completed){
 			dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
 				[self dismissViewControllerAnimated:YES completion:^{
@@ -554,7 +563,7 @@
 }
 
 -(void)popPostRestore{
-	AudioServicesPlaySystemSound(4095); // vibration
+	AudioServicesPlaySystemSound(4095);
 
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy"

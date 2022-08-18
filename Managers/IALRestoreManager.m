@@ -50,14 +50,12 @@
 
 	[_generalManager updateItemProgress:0.8];
 
-	// ensure backupDir exists
 	[_generalManager ensureBackupDirExists];
 
-	[_generalManager updateItemStatus:0];
 	[_generalManager updateItemProgress:1];
+	[_generalManager updateItemStatus:0];
 
 	[_generalManager updateItemStatus:0.5];
-	// extract tarball contents (and avoid stalling the main thread)
 	[self extractArchive:target withCompletion:^(BOOL done){
 		[_generalManager updateItemStatus:1];
 
@@ -82,7 +80,7 @@
 }
 
 -(void)extractArchive:(NSString *)backupPath withCompletion:(void (^)(BOOL))completed{
-	// extract tarball (and avoid stalling the main thread)
+	// extract tarball (and avoid stalling the main thread so UI can update)
 	// need completion block here to keep the main thread from proceeding before the
 	// libarchive op and corresponding stuff here has completed. This completion block
 	// goes all the way up to the initialization method in order to keep everything synchronous
@@ -108,7 +106,7 @@
 	BOOL check = YES;
 	if([targetBackup hasSuffix:@".tar.gz"]){
 		check = [fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap]];
-		if(!check){
+		if(!check){ // pre v2
 			check = [fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@.made_on_%@", tmpDir, oldBootstrap]];
 		}
 	}

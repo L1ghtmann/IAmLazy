@@ -104,9 +104,8 @@
 			break;
 	}
 
-	// Container for labels
+	// container for labels
 	_titleContainer = [[UIView alloc] init];
-	[_titleContainer setBackgroundColor:[UIColor systemGray6Color]];
 	[self.view addSubview:_titleContainer];
 
 	[_titleContainer setTranslatesAutoresizingMaskIntoConstraints:NO];
@@ -115,7 +114,9 @@
 	[[_titleContainer.topAnchor constraintEqualToAnchor:self.view.topAnchor] setActive:YES];
 	[[_titleContainer.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor] setActive:YES];
 
-	// Main title
+	[_titleContainer setBackgroundColor:[UIColor systemGray6Color]];
+
+	// main title
 	UILabel *title = [[UILabel alloc] init];
 	[_titleContainer addSubview:title];
 
@@ -128,7 +129,7 @@
 	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [title setTextColor:[self IALOffWhite]];
 	else [title setTextColor:[self IALDarkGray]];
 
-	// Subtitle
+	// subtitle
 	UILabel *subtitle = [[UILabel alloc] init];
 	[_titleContainer addSubview:subtitle];
 
@@ -142,9 +143,8 @@
 }
 
 -(void)makeLoadingWheel{
-	// Container for loading wheel
+	// container for loading wheel
 	_loadingContainer = [[UIView alloc] init];
-	[_loadingContainer setBackgroundColor:[UIColor clearColor]];
 	[self.view addSubview:_loadingContainer];
 
 	[_loadingContainer setTranslatesAutoresizingMaskIntoConstraints:NO];
@@ -153,9 +153,10 @@
 	[[_loadingContainer.topAnchor constraintEqualToAnchor:_titleContainer.bottomAnchor] setActive:YES];
 	[[_loadingContainer.centerXAnchor constraintEqualToAnchor:_titleContainer.centerXAnchor] setActive:YES];
 
-	// Create loading wheel
+	[_loadingContainer setBackgroundColor:[UIColor clearColor]];
+
+	// create loading wheel
 	UIView *loading = [[UIView alloc] init];
-	[loading setBackgroundColor:[UIColor clearColor]];
 	[_loadingContainer addSubview:loading];
 
 	[loading setTranslatesAutoresizingMaskIntoConstraints:NO];
@@ -164,7 +165,9 @@
 	[[loading.centerYAnchor constraintEqualToAnchor:_loadingContainer.centerYAnchor] setActive:YES];
 	[[loading.centerXAnchor constraintEqualToAnchor:_loadingContainer.centerXAnchor] setActive:YES];
 
-	// https://stackoverflow.com/a/38520766
+	[loading setBackgroundColor:[UIColor clearColor]];
+
+	// ref: https://stackoverflow.com/a/38520766
 	CAShapeLayer *circleFramework = [CAShapeLayer layer];
 	[circleFramework setFillColor:[[UIColor clearColor] CGColor]];
 	[circleFramework setFrame:CGRectMake(0, 0, 90, 90)];
@@ -174,8 +177,8 @@
 	[circleFramework setStrokeColor:[[UIColor colorWithRed:16.0f/255.0f green:71.0f/255.0f blue:30.0f/255.0f alpha:1.0f] CGColor]];
 	[loading.layer addSublayer:circleFramework];
 
-	// https://juannavas7.medium.com/how-to-make-an-animated-circle-progress-view-48fa2adb1501
-	// https://stackoverflow.com/questions/21872610/animate-a-cashapelayer-to-draw-a-progress-circle
+	// ref: https://juannavas7.medium.com/how-to-make-an-animated-circle-progress-view-48fa2adb1501
+	// 		https://stackoverflow.com/questions/21872610/animate-a-cashapelayer-to-draw-a-progress-circle
 	_circleFill = [CAShapeLayer layer];
 	[_circleFill setLineWidth:30];
 	[_circleFill setLineCap:kCALineCapRound];
@@ -195,15 +198,16 @@
 	_items = [NSMutableArray new];
 	_itemStatusIcons = [NSMutableArray new];
 
-	// Container for items
+	// container for items
 	_itemContainer = [[UIView alloc] init];
-	[_itemContainer setBackgroundColor:[UIColor clearColor]];
 	[self.view addSubview:_itemContainer];
 
 	[_itemContainer setTranslatesAutoresizingMaskIntoConstraints:NO];
 	[[_itemContainer.widthAnchor constraintEqualToConstant:kWidth] setActive:YES];
 	[[_itemContainer.topAnchor constraintEqualToAnchor:_loadingContainer.bottomAnchor] setActive:YES];
 	[[_itemContainer.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor] setActive:YES];
+
+	[_itemContainer setBackgroundColor:[UIColor clearColor]];
 
 	// make sure bounds/frame are updated
 	[_itemContainer layoutIfNeeded];
@@ -314,7 +318,6 @@
 
 	// Note: colorWithRed:green:blue:alpha: seems to use sRGB, not Adobe RGB (https://stackoverflow.com/a/40052756)
 	// a helpful link -- https://www.easyrgb.com/en/convert.php#inputFORM
-
 	if(isInteger){
 		[UIView animateWithDuration:0.5 animations:^{
 			[_itemStatusIcons[itemInt] setBackgroundColor:[UIColor colorWithRed:0.04716 green:0.73722 blue:0.09512 alpha:1.00000]];

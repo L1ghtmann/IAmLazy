@@ -91,7 +91,7 @@ void write_archive(const char *outname){
 	}
 
 	a = archive_write_new();
-	archive_write_add_filter_gzip(a); // gzip
+	archive_write_add_filter_gzip(a);
 	archive_write_set_format_pax_restricted(a);
 	archive_write_open_filename(a, outname);
 

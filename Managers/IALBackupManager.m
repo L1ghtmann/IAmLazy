@@ -19,20 +19,16 @@
 		[_generalManager cleanupTmp];
 	}
 
-	// ensure backupdir exists
 	[_generalManager ensureBackupDirExists];
-
 	_filtered = filter;
 	[_generalManager updateItemStatus:-0.5];
 
-	// get control files
 	_controlFiles = [self getControlFiles];
 	if(![_controlFiles count]){
 		[_generalManager displayErrorWithMessage:@"Failed to generate controls for installed packages!"];
 		return;
 	}
 
-	// get packages
 	if(!_filtered) _packages = [self getAllPackages];
 	else _packages = [self getUserPackages];
 	if(![_packages count]){
@@ -53,12 +49,10 @@
 		}
 	}
 
-	// gather bits for packages
 	[_generalManager updateItemStatus:0.5];
 	[self gatherFilesForPackages];
 	[_generalManager updateItemStatus:1];
 
-	// build debs from bits
 	[_generalManager updateItemStatus:1.5];
 	[self buildDebs];
 	[_generalManager updateItemStatus:2];
@@ -121,7 +115,7 @@
 -(NSArray<NSString *> *)getAllPackages{
 	NSMutableArray *packages = [NSMutableArray new];
 
-	// filter out packages with the 'requried' priorty
+	// filter out packages with the 'requried' priority
 	NSCharacterSet *newlineChars = [NSCharacterSet newlineCharacterSet];
 	NSPredicate *thePredicate1 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'Package:'"];
 	NSPredicate *thePredicate2 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'Priority:'"];
@@ -169,6 +163,13 @@
 }
 
 -(NSArray<NSString *> *)getReposToFilter{
+	// modern ios jbs have two bootstraps:
+	// elucubratus and procursus
+	// they are incompatible with eachother
+	// and as such we need to filter
+	// any exclusive packages to ensure
+	// the restore won't bork the jb
+	// (this applies only to stn/user backups)
 	NSArray *reposToFilter = @[
 		@"apt.bingner.com",
 		@"apt.procurs.us",
@@ -193,11 +194,9 @@
 		return [NSArray new];
 	}
 
-	[_generalManager updateItemProgress:0.8];
-
 	// ensure bootstrap repos' package files are up-to-date
+	[_generalManager updateItemProgress:0.8];
 	[_generalManager updateAPT];
-
 	[_generalManager updateItemProgress:0.9];
 
 	// get packages to ignore
@@ -232,7 +231,7 @@
 			}
 
 			NSArray *packages = [lines filteredArrayUsingPredicate:predicate3];
-			NSArray *packagesWithNoDups = [[NSOrderedSet orderedSetWithArray:packages] array]; // remove dups and retain order
+			NSArray *packagesWithNoDups = [[NSOrderedSet orderedSetWithArray:packages] array]; // removes dups and retains order
 			for(NSString *line in packagesWithNoDups){
 				if(![line length]){
 					continue;
@@ -260,7 +259,7 @@
 	NSCharacterSet *newlineChars = [NSCharacterSet newlineCharacterSet];
 	NSString *filesToCopy = [tmpDir stringByAppendingPathComponent:@".filesToCopy"];
 
-	NSUInteger total = ([_packages count] * 5); // 5 steps/pkg
+	NSUInteger total = ([_packages count] * 5); // 5 steps per pkg
 	CGFloat progressPerPart = (1.0/total);
 	CGFloat progress = 0.0;
 
@@ -285,7 +284,7 @@
 		NSMutableArray *directories = [NSMutableArray new];
 		for(NSString *line in lines){
 			if(![line length] || [line isEqualToString:@"/."] || [[line lastPathComponent] isEqualToString:@".."] || [[line lastPathComponent] isEqualToString:@"."]){
-				continue; // disregard
+				continue;
 			}
 
 			NSError *readError2 = nil;
@@ -507,13 +506,19 @@
 	else backupName = [new stringByAppendingPathExtension:@"tar.gz"];
 	NSString *backupPath = [backupDir stringByAppendingPathComponent:backupName];
 
-	// make tarball
-	[self writeArchiveToPath:backupPath withCompletion:^(BOOL done){
-		[self verifyFileAtPath:backupPath];
+	// make tarball (and avoid stalling the main thread so UI can update)
+	// need completion block here to keep the main thread from proceeding before the
+	// libarchive op and corresponding stuff here has completed. This completion block
+	// goes all the way up to the initialization method in order to keep everything synchronous
+	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+		write_archive([backupPath UTF8String]);
+		dispatch_sync(dispatch_get_main_queue(), ^{
+			[self verifyFileAtPath:backupPath];
 
-		[_generalManager cleanupTmp];
-		completed(done);
-	}];
+			[_generalManager cleanupTmp];
+			completed(YES);
+		});
+	});
 }
 
 -(NSString *)craftNewBackupName{
@@ -525,27 +530,14 @@
 		NSMutableArray *numbers = [[latest componentsSeparatedByCharactersInSet:nonNumericChars] mutableCopy];
 		[numbers removeObject:@""]; // array contains numbers and an empty string(s); we only want the numbers
 		if([numbers count]){
-			latestBackup = [[numbers lastObject] intValue]; // supports both the current and legacy naming schemes
+			// supports both the current and legacy naming schemes
+			latestBackup = [[numbers lastObject] intValue];
 		}
 	}
 
-	// grab date in desired format
 	NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
 	[formatter setDateFormat:@"yyyyMMd"];
 	return [NSString stringWithFormat:@"IAL-%@_%lu", [formatter stringFromDate:[NSDate date]], (latestBackup + 1)];
-}
-
--(void)writeArchiveToPath:(NSString *)path withCompletion:(void (^)(BOOL))completed{
-	// make tarball (and avoid stalling the main thread)
-	// need completion block here to keep the main thread from proceeding before the
-	// libarchive op and corresponding stuff here has completed. This completion block
-	// goes all the way up to the initialization method in order to keep everything synchronous
-	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-		write_archive([path UTF8String]);
-		dispatch_sync(dispatch_get_main_queue(), ^{
-			completed(YES);
-		});
-	});
 }
 
 -(void)verifyFileAtPath:(NSString *)filePath{
