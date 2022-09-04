@@ -121,7 +121,7 @@ int main(int argc, char *argv[]){
 	else if(strcmp(argv[1], "updateAPT") == 0){
 		NSTask *task = [[NSTask alloc] init];
 		[task setLaunchPath:@"/usr/bin/apt"];
-		[task setArguments:@[@"update"]];
+		[task setArguments:@[@"update", @"--allow-insecure-repositories"]];
 		[task launch];
 		[task waitUntilExit];
 
