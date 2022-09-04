@@ -146,6 +146,25 @@
 	[[_panelOneContainer.leadingAnchor constraintEqualToAnchor:_controlPanelView.leadingAnchor] setActive:YES];
 	[[_panelOneContainer.trailingAnchor constraintEqualToAnchor:_controlPanelView.trailingAnchor] setActive:YES];
 
+	// me
+	UIButton *me = [UIButton buttonWithType:UIButtonTypeSystem];
+	[_panelOneContainer addSubview:me];
+
+	[me setTranslatesAutoresizingMaskIntoConstraints:NO];
+	[[me.widthAnchor constraintEqualToConstant:(kWidth - 50)] setActive:YES];
+	[[me.heightAnchor constraintEqualToConstant:45] setActive:YES];
+	[[me.centerXAnchor constraintEqualToAnchor:_panelOneContainer.centerXAnchor] setActive:YES];
+	[[me.centerYAnchor constraintEqualToAnchor:_panelOneContainer.centerYAnchor constant:-27] setActive:YES];
+
+	[me setTag:2];
+	[me setClipsToBounds:YES];
+	[me.layer setCornerRadius:10];
+	[me setTitle:@"Created by Lightmann | v2.1.0" forState:UIControlStateNormal];
+	[me.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:0.40]];
+	[me setTintColor:[self IALBlue]];
+	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [me setBackgroundColor:[UIColor systemGray6Color]];
+	else [me setBackgroundColor:[UIColor whiteColor]];
+
 	// src
 	UIButton *src = [UIButton buttonWithType:UIButtonTypeSystem];
 	[_panelOneContainer addSubview:src];
@@ -154,7 +173,7 @@
 	[[src.widthAnchor constraintEqualToConstant:(kWidth/2)] setActive:YES];
 	[[src.heightAnchor constraintEqualToConstant:45] setActive:YES];
 	[[src.leadingAnchor constraintEqualToAnchor:_panelOneContainer.leadingAnchor constant:25] setActive:YES];
-	[[src.bottomAnchor constraintEqualToAnchor:_panelOneContainer.bottomAnchor constant:-35] setActive:YES];
+	[[src.centerYAnchor constraintEqualToAnchor:_panelOneContainer.centerYAnchor constant:27.5] setActive:YES];
 
 	[src setTag:0];
 	[src setClipsToBounds:YES];
@@ -174,7 +193,7 @@
 	[[backups.widthAnchor constraintEqualToConstant:(kWidth/2)] setActive:YES];
 	[[backups.heightAnchor constraintEqualToConstant:45] setActive:YES];
 	[[backups.trailingAnchor constraintEqualToAnchor:_panelOneContainer.trailingAnchor constant:-25] setActive:YES];
-	[[backups.bottomAnchor constraintEqualToAnchor:_panelOneContainer.bottomAnchor constant:-35] setActive:YES];
+	[[backups.centerYAnchor constraintEqualToAnchor:_panelOneContainer.centerYAnchor constant:27.5] setActive:YES];
 
 	[backups setTag:1];
 	[backups setClipsToBounds:YES];
@@ -185,25 +204,6 @@
 	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [backups setBackgroundColor:[UIColor systemGray6Color]];
 	else [backups setBackgroundColor:[UIColor whiteColor]];
 	[backups addTarget:self action:@selector(subButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-
-	// me
-	UIButton *me = [UIButton buttonWithType:UIButtonTypeSystem];
-	[_panelOneContainer addSubview:me];
-
-	[me setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[me.widthAnchor constraintEqualToConstant:(kWidth - 50)] setActive:YES];
-	[[me.heightAnchor constraintEqualToConstant:45] setActive:YES];
-	[[me.leadingAnchor constraintEqualToAnchor:_panelOneContainer.leadingAnchor constant:25] setActive:YES];
-	[[me.topAnchor constraintEqualToAnchor:_panelOneContainer.topAnchor constant:30] setActive:YES];
-
-	[me setTag:2];
-	[me setClipsToBounds:YES];
-	[me.layer setCornerRadius:10];
-	[me setTitle:@"Created by Lightmann | v2.1.0" forState:UIControlStateNormal];
-	[me.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:0.40]];
-	[me setTintColor:[self IALBlue]];
-	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [me setBackgroundColor:[UIColor systemGray6Color]];
-	else [me setBackgroundColor:[UIColor whiteColor]];
 }
 
 -(void)makePanelTwo{
@@ -228,8 +228,8 @@
 	[go setTranslatesAutoresizingMaskIntoConstraints:NO];
 	[[go.widthAnchor constraintEqualToConstant:(kWidth - 50)] setActive:YES];
 	[[go.heightAnchor constraintEqualToConstant:45] setActive:YES];
-	[[go.leadingAnchor constraintEqualToAnchor:_panelTwoContainer.leadingAnchor constant:25] setActive:YES];
-	[[go.topAnchor constraintEqualToAnchor:_panelTwoContainer.topAnchor constant:30] setActive:YES];
+	[[go.centerXAnchor constraintEqualToAnchor:_panelTwoContainer.centerXAnchor] setActive:YES];
+	[[go.centerYAnchor constraintEqualToAnchor:_panelTwoContainer.centerYAnchor constant:-27] setActive:YES];
 
 	[go setClipsToBounds:YES];
 	[go.layer setCornerRadius:10];
@@ -247,8 +247,8 @@
 	[_configSwitch setTranslatesAutoresizingMaskIntoConstraints:NO];
 	[[_configSwitch.widthAnchor constraintEqualToConstant:(kWidth - 50)] setActive:YES];
 	[[_configSwitch.heightAnchor constraintEqualToConstant:45] setActive:YES];
-	[[_configSwitch.leadingAnchor constraintEqualToAnchor:_panelTwoContainer.leadingAnchor constant:25] setActive:YES];
-	[[_configSwitch.bottomAnchor constraintEqualToAnchor:_panelTwoContainer.bottomAnchor constant:-35] setActive:YES];
+	[[_configSwitch.centerXAnchor constraintEqualToAnchor:_panelTwoContainer.centerXAnchor] setActive:YES];
+	[[_configSwitch.centerYAnchor constraintEqualToAnchor:_panelTwoContainer.centerYAnchor constant:27.5] setActive:YES];
 
 	[_configSwitch addTarget:self action:@selector(configSegmentChanged:) forControlEvents:UIControlEventValueChanged];
 }
