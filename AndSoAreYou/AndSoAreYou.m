@@ -59,7 +59,7 @@ int proc_pidpath(int pid, void *buffer, uint32_t buffersize); // libproc.h
 
 int main(int argc, char *argv[]){
 	if(argc != 2){
-		printf("Houston, we have a problem: an invalid argument (or arguments) was provided!\n");
+		printf("Nah.\n");
 		return 1;
 	}
 
@@ -139,7 +139,7 @@ int main(int argc, char *argv[]){
 
 		NSArray *files = [toCopy componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
 		if(![files count]){
-			NSLog(@"[IALLogError] %@ has no contents?!", filesToCopy);
+			NSLog(@"[IALLogError] AndSoAreYou: %@ has no contents?!", filesToCopy);
 			return 1;
 		}
 

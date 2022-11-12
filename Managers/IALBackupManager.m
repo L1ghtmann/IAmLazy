@@ -252,8 +252,6 @@
 }
 
 -(void)gatherFilesForPackages{
-	NSString *dir = @"NSFileTypeDirectory";
-	NSString *symLink = @"NSFileTypeSymbolicLink";
 	NSString *dpkgInfoDir = @"/var/lib/dpkg/info/";
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	NSCharacterSet *newlineChars = [NSCharacterSet newlineCharacterSet];
@@ -302,7 +300,7 @@
 			NSUInteger count = [[NSMutableString stringWithString:contents] replaceOccurrencesOfString:line withString:line options:NSLiteralSearch range:NSMakeRange(0, [contents length])];
 
 			if(count == 1){ // this is good, means it's unique!
-				if([type isEqualToString:dir]){
+				if(type == NSFileTypeDirectory){
 					[directories addObject:line];
 				}
 				else{
@@ -314,10 +312,10 @@
 				// though /usr/bin/zip will have a count > 1, since it's present in the other filepaths, we want to avoid disregarding it
 				// since it's a valid file. instead, we want to disregard all dirs and symlinks that don't lead to files as they're simply
 				// part of the package's list structure. in the above example, that would mean disregarding /usr and /usr/bin
-				if(![type isEqualToString:dir] && ![type isEqualToString:symLink]){
+				if(type != NSFileTypeDirectory && type != NSFileTypeSymbolicLink){
 					[genericFiles addObject:line];
 				}
-				else if([type isEqualToString:symLink]){
+				else if(type == NSFileTypeSymbolicLink){
 					// want to grab any symlniks that lead to files, but ignore those that lead to dirs
 					// this will traverse any links and check for the existence of a file at the link's final destination
 					BOOL isDir = NO;
@@ -511,7 +509,7 @@
 	// libarchive op and corresponding stuff here has completed. This completion block
 	// goes all the way up to the initialization method in order to keep everything synchronous
 	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-		write_archive([backupPath UTF8String]);
+		write_archive([backupPath fileSystemRepresentation]);
 		dispatch_sync(dispatch_get_main_queue(), ^{
 			[self verifyFileAtPath:backupPath];
 

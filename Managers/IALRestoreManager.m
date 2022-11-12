@@ -85,7 +85,7 @@
 	// libarchive op and corresponding stuff here has completed. This completion block
 	// goes all the way up to the initialization method in order to keep everything synchronous
 	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-		extract_archive([backupPath UTF8String]);
+		extract_archive([backupPath fileSystemRepresentation]);
 		dispatch_sync(dispatch_get_main_queue(), ^{
 			completed(YES);
 		});
