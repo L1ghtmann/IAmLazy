@@ -220,7 +220,6 @@ void extract_archive(const char *filename){
 		else{
 			progress+=progress_per_part;
 			dispatch_sync(dispatch_get_main_queue(), ^{
-				// Note: file is .m because we need to use NSNotificationCenter
 				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
 			});
 		}

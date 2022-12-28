@@ -277,18 +277,17 @@
 			case 0:
 				[_configSwitch insertSegmentWithTitle:@"Standard" atIndex:0 animated:NO];
 				[_configSwitch insertSegmentWithTitle:@"Developer" atIndex:1 animated:NO];
-				[_configSwitch setSelectedSegmentIndex:0];
 				_controlPanelState = 1;
 				break;
 			case 1:
 				[_configSwitch insertSegmentWithTitle:@"Latest" atIndex:0 animated:NO];
 				[_configSwitch insertSegmentWithTitle:@"Specific" atIndex:1 animated:NO];
-				[_configSwitch setSelectedSegmentIndex:0];
 				_controlPanelState = 2;
 				break;
 		}
+		[_configSwitch setSelectedSegmentIndex:0];
 	}
-	// if control panel state is not 0 and/or tapped already selected button
+	// if control panel state is not 0 and/or tapped an already selected button
 	else{
 		[UIView animateWithDuration:0.5 animations:^(void) {
 			[_panelOneContainer setAlpha:1];

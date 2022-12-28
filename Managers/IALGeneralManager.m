@@ -50,8 +50,7 @@
 
 -(void)restoreFromBackup:(NSString *)backupName withCompletion:(void (^)(BOOL))completed{
 	// check for internet connection
-	// used for dep resolution with
-	// standard backups w/ missing deps
+	// used for dep resolution of standard backups w/ missing deps
 	if(![self hasConnection]){
 		[self displayErrorWithMessage:@"Your device does not appear to be connected to the internet.\n\nA network connection is required for restores so packages can be downloaded if need be."];
 		return;
