@@ -67,10 +67,10 @@
 
 -(void)ensureBackupDirExists{
 	// ensure ~/Documents/ exists
-	NSString *documentsDir = [backupDir stringByDeletingLastPathComponent];
+	NSError *writeError = nil;
 	NSFileManager *fileManager = [NSFileManager defaultManager];
+	NSString *documentsDir = [backupDir stringByDeletingLastPathComponent];
 	if(![fileManager fileExistsAtPath:documentsDir]){
-		NSError *writeError = nil;
 		[fileManager createDirectoryAtPath:documentsDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 		if(writeError){
 			NSString *msg = [NSString stringWithFormat:@"Failed to create %@.\n\nInfo: %@", documentsDir, writeError.localizedDescription];
@@ -88,7 +88,6 @@
 
 	// make backup dir if it doesn't exist already
 	if(![fileManager fileExistsAtPath:backupDir]){
-		NSError *writeError = nil;
 		[fileManager createDirectoryAtPath:backupDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 		if(writeError){
 			NSString *msg = [NSString stringWithFormat:@"Failed to create %@.\n\nInfo: %@", backupDir, writeError.localizedDescription];

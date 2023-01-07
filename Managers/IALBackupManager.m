@@ -214,11 +214,10 @@
 
 		// count should be one for pkgLists
 		for(NSString *list in pkgLists){
-			NSError *readError2 = nil;
 			NSString *listPath = [aptListsDir stringByAppendingPathComponent:list];
-			NSString *content = [NSString stringWithContentsOfFile:listPath encoding:NSUTF8StringEncoding error:&readError2];
-			if(readError2){
-				NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Info: %@", listPath, readError2.localizedDescription];
+			NSString *content = [NSString stringWithContentsOfFile:listPath encoding:NSUTF8StringEncoding error:&readError];
+			if(readError){
+				NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Info: %@", listPath, readError.localizedDescription];
 				[_generalManager displayErrorWithMessage:msg];
 				return [NSArray new];
 			}
@@ -261,13 +260,13 @@
 	CGFloat progressPerPart = (1.0/total);
 	CGFloat progress = 0.0;
 
+	NSError *error = nil;
 	for(NSString *package in _packages){
 		// get installed files
-		NSError *readError = nil;
 		NSString *path = [[dpkgInfoDir stringByAppendingPathComponent:package] stringByAppendingPathExtension:@"list"];
-		NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&readError];
-		if(readError){
-			NSLog(@"[IALLogError] Failed to get contents of %@! Info: %@", path, readError.localizedDescription);
+		NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&error];
+		if(error){
+			NSLog(@"[IALLogError] Failed to get contents of %@! Info: %@", path, error.localizedDescription);
 			continue;
 		}
 
@@ -285,10 +284,9 @@
 				continue;
 			}
 
-			NSError *readError2 = nil;
-			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:line error:&readError2];
-			if(readError2){
-				NSLog(@"[IALLogError] Failed to get attributes for %@! Info: %@", line, readError2.localizedDescription);
+			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:line error:&error];
+			if(error){
+				NSLog(@"[IALLogError] Failed to get attributes for %@! Info: %@", line, error.localizedDescription);
 				continue;
 			}
 
@@ -333,20 +331,18 @@
 		}
 
 		// this is nice because it overwrites the file's content, unlike the write method from NSFileManager
-		NSError *writeError = nil;
-		[gFilePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
-		if(writeError){
-			NSLog(@"[IALLogError] Failed to write generic files to %@ for %@! Info: %@", filesToCopy, package, writeError.localizedDescription);
+		[gFilePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&error];
+		if(error){
+			NSLog(@"[IALLogError] Failed to write generic files to %@ for %@! Info: %@", filesToCopy, package, error.localizedDescription);
 			continue;
 		}
 
 		// make dir to hold stuff for the tweak
 		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:package];
 		if(![fileManager fileExistsAtPath:tweakDir]){
-			NSError *writeError3 = nil;
-			[fileManager createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&writeError3];
-			if(writeError3){
-				NSLog(@"[IALLogError] Failed to create %@! Info: %@", tweakDir, writeError3.localizedDescription);
+			[fileManager createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&error];
+			if(error){
+				NSLog(@"[IALLogError] Failed to create %@! Info: %@", tweakDir, error.localizedDescription);
 				continue;
 			}
 		}
@@ -376,19 +372,18 @@
 	}
 
 	// remove list file now that we're done w it
-	NSError *deleteError = nil;
-	[fileManager removeItemAtPath:filesToCopy error:&deleteError];
-	if(deleteError){
-		NSLog(@"[IALLogError] Failed to delete %@! Info: %@", filesToCopy, deleteError.localizedDescription);
+	[fileManager removeItemAtPath:filesToCopy error:&error];
+	if(error){
+		NSLog(@"[IALLogError] Failed to delete %@! Info: %@", filesToCopy, error.localizedDescription);
 	}
 }
 
 -(void)makeSubDirectories:(NSArray<NSString *> *)directories inDirectory:(NSString *)tweakDir{
+	NSError *writeError = nil;
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	for(NSString *dir in directories){
 		NSString *path = [tweakDir stringByAppendingPathComponent:dir];
 		if(![fileManager fileExistsAtPath:path]){
-			NSError *writeError = nil;
 			[fileManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
 				NSLog(@"[IALLogError] Failed to create %@! Info: %@", path, writeError.localizedDescription);

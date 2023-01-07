@@ -35,10 +35,9 @@ NSString *getCurrentPackage(){
 
 			BOOL isDir = NO;
 			if([fileManager fileExistsAtPath:filePath isDirectory:&isDir] && isDir){
-				NSError *readError2 = nil;
-				NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:filePath error:&readError2];
-				if(readError2){
-					NSLog(@"[IALLogError] AndSoAreYou: Failed to get attributes of %@! Info: %@", filePath, readError2.localizedDescription);
+				NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:filePath error:&readError];
+				if(readError){
+					NSLog(@"[IALLogError] AndSoAreYou: Failed to get attributes of %@! Info: %@", filePath, readError.localizedDescription);
 					continue;
 				}
 
@@ -130,11 +129,11 @@ int main(int argc, char *argv[]){
 		}
 		else if(strcmp(argv[1], "cpGFiles") == 0){
 			// recreate directory structure and copy files
-			NSError *readError = nil;
+			NSError *error = nil;
 			NSString *filesToCopy = [tmpDir stringByAppendingPathComponent:@".filesToCopy"];
-			NSString *toCopy = [NSString stringWithContentsOfFile:filesToCopy encoding:NSUTF8StringEncoding error:&readError];
-			if(readError){
-				NSLog(@"[IALLogError] AndSoAreYou: Failed to get contents of %@! Info: %@", filesToCopy, readError.localizedDescription);
+			NSString *toCopy = [NSString stringWithContentsOfFile:filesToCopy encoding:NSUTF8StringEncoding error:&error];
+			if(error){
+				NSLog(@"[IALLogError] AndSoAreYou: Failed to get contents of %@! Info: %@", filesToCopy, error.localizedDescription);
 				return 1;
 			}
 
@@ -158,12 +157,11 @@ int main(int argc, char *argv[]){
 				}
 
 				// recreate parent directory structure
-				NSError *writeError = nil;
 				NSString *dirStructure = [file stringByDeletingLastPathComponent]; // grab parent directory structure
 				NSString *newPath = [tweakDir stringByAppendingPathComponent:dirStructure];
-				[fileManager createDirectoryAtPath:newPath withIntermediateDirectories:YES attributes:nil error:&writeError];
-				if(writeError){
-					NSLog(@"[IALLogError] AndSoAreYou: Failed to create %@! Info: %@", newPath, writeError.localizedDescription);
+				[fileManager createDirectoryAtPath:newPath withIntermediateDirectories:YES attributes:nil error:&error];
+				if(error){
+					NSLog(@"[IALLogError] AndSoAreYou: Failed to create %@! Info: %@", newPath, error.localizedDescription);
 					continue;
 				}
 
@@ -175,21 +173,20 @@ int main(int argc, char *argv[]){
 				NSString *newFile = [[[file lastPathComponent] stringByDeletingPathExtension] stringByAppendingPathExtension:extension];
 				NSString *newFilePath = [newPath stringByAppendingPathComponent:newFile];
 
-				NSError *writeError2 = nil;
-				[fileManager copyItemAtPath:file toPath:newFilePath error:&writeError2];
-				if(writeError2){
-					NSLog(@"[IALLogError] AndSoAreYou: Failed to copy %@! Info: %@", file, writeError2.localizedDescription);
+				[fileManager copyItemAtPath:file toPath:newFilePath error:&error];
+				if(error){
+					NSLog(@"[IALLogError] AndSoAreYou: Failed to copy %@! Info: %@", file, error.localizedDescription);
 				}
 			}
 		}
 		else if(strcmp(argv[1], "cpDFiles") == 0){
 			// get DEBIAN files (e.g., maintainer scripts)
-			NSError *readError = nil;
+			NSError *error = nil;
 			NSString *dpkgInfoDir = @"/var/lib/dpkg/info/";
 			NSFileManager *fileManager = [NSFileManager defaultManager];
-			NSArray *dpkgInfo = [fileManager contentsOfDirectoryAtPath:dpkgInfoDir error:&readError];
-			if(readError){
-				NSLog(@"[IALLogError] AndSoAreYou: Failed to get contents of %@! Info: %@", dpkgInfoDir, readError.localizedDescription);
+			NSArray *dpkgInfo = [fileManager contentsOfDirectoryAtPath:dpkgInfoDir error:&error];
+			if(error){
+				NSLog(@"[IALLogError] AndSoAreYou: Failed to get contents of %@! Info: %@", dpkgInfoDir, error.localizedDescription);
 				return 1;
 			}
 			else if(![dpkgInfo count]){
@@ -228,10 +225,9 @@ int main(int argc, char *argv[]){
 					continue;
 				}
 
-				NSError *writeError = nil;
-				[fileManager copyItemAtPath:filePath toPath:[debian stringByAppendingPathComponent:strippedName] error:&writeError];
-				if(writeError){
-					NSLog(@"[IALLogError] AndSoAreYou: Failed to copy %@! Info: %@", filePath, writeError.localizedDescription);
+				[fileManager copyItemAtPath:filePath toPath:[debian stringByAppendingPathComponent:strippedName] error:&error];
+				if(error){
+					NSLog(@"[IALLogError] AndSoAreYou: Failed to copy %@! Info: %@", filePath, error.localizedDescription);
 				}
 			}
 		}
@@ -274,11 +270,11 @@ int main(int argc, char *argv[]){
 		}
 		else if(strcmp(argv[1], "installDeb") == 0){
 			// get debs from tmpDir
-			NSError *readError = nil;
+			NSError *error = nil;
 			NSFileManager *fileManager = [NSFileManager defaultManager];
-			NSArray *tmpDirContents = [fileManager contentsOfDirectoryAtPath:tmpDir error:&readError];
-			if(readError){
-				NSLog(@"[IALLogError] AndSoAreYou: Failed to get contents of %@! Info: %@", tmpDir, readError.localizedDescription);
+			NSArray *tmpDirContents = [fileManager contentsOfDirectoryAtPath:tmpDir error:&error];
+			if(error){
+				NSLog(@"[IALLogError] AndSoAreYou: Failed to get contents of %@! Info: %@", tmpDir, error.localizedDescription);
 				return 1;
 			}
 			else if(![tmpDirContents count]){
@@ -329,11 +325,10 @@ int main(int argc, char *argv[]){
 			[task launch];
 			[task waitUntilExit];
 
-			NSError *deleteError = nil;
 			// delete deb now that it's been installed
-			[fileManager removeItemAtPath:deb error:&deleteError];
-			if(deleteError){;
-				NSLog(@"[IALLogError] AndSoAreYou: Failed to delete %@! Info: %@", deb, deleteError.localizedDescription);
+			[fileManager removeItemAtPath:deb error:&error];
+			if(error){;
+				NSLog(@"[IALLogError] AndSoAreYou: Failed to delete %@! Info: %@", deb, error.localizedDescription);
 				return 1;
 			}
 
