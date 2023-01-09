@@ -159,7 +159,7 @@
 	[me setTag:2];
 	[me setClipsToBounds:YES];
 	[me.layer setCornerRadius:10];
-	[me setTitle:@"Created by Lightmann | v2.1.0" forState:UIControlStateNormal];
+	[me setTitle:@"Created by Lightmann | v2.1.1" forState:UIControlStateNormal];
 	[me.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:0.40]];
 	[me setTintColor:[self IALBlue]];
 	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [me setBackgroundColor:[UIColor systemGray6Color]];
