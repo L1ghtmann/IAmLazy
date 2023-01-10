@@ -56,6 +56,10 @@ void write_archive(const char *outname){
 	}
 
 	char **files = malloc(file_count * sizeof(char *));
+	if(!files){
+		closedir(directory);
+		return;
+	}
 
 	int count = 0;
 	size_t IAL = strlen("me.lightmann.iamlazy/");
@@ -87,6 +91,7 @@ void write_archive(const char *outname){
 	// including it in archive
 	int ret = chdir("/tmp/");
 	if(ret != 0){
+		free(files);
 		return;
 	}
 
