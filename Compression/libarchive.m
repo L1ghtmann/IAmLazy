@@ -49,13 +49,13 @@ void write_archive(const char *outname){
 		return;
 	}
 
-	char **files = malloc(file_count * sizeof(char *));
-
 	struct dirent *ent;
 	DIR *directory = opendir("/tmp/me.lightmann.iamlazy/");
 	if(!directory){
 		return;
 	}
+
+	char **files = malloc(file_count * sizeof(char *));
 
 	int count = 0;
 	size_t IAL = strlen("me.lightmann.iamlazy/");
@@ -144,7 +144,7 @@ int copy_data(struct archive *ar, struct archive *aw){
 	size_t size;
 	la_int64_t offset;
 
-	for(;;){
+	while(true){
 		r = archive_read_data_block(ar, &buff, &size, &offset);
 		if(r == ARCHIVE_EOF){
 			return ARCHIVE_OK;
@@ -212,7 +212,7 @@ void extract_archive(const char *filename){
 	}
 
 	// unpack
-	for(;;){
+	while(true){
 		r = archive_read_next_header(a, &entry);
 		if(r == ARCHIVE_EOF){
 			break;
