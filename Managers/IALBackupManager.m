@@ -267,6 +267,7 @@
 		NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&error];
 		if(error){
 			NSLog(@"[IALLogError] Failed to get contents of %@! Info: %@", path, error.localizedDescription);
+			error = nil;
 			continue;
 		}
 
@@ -287,6 +288,7 @@
 			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:line error:&error];
 			if(error){
 				NSLog(@"[IALLogError] Failed to get attributes for %@! Info: %@", line, error.localizedDescription);
+				error = nil;
 				continue;
 			}
 
@@ -334,6 +336,7 @@
 		[gFilePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&error];
 		if(error){
 			NSLog(@"[IALLogError] Failed to write generic files to %@ for %@! Info: %@", filesToCopy, package, error.localizedDescription);
+			error = nil;
 			continue;
 		}
 
@@ -343,6 +346,7 @@
 			[fileManager createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&error];
 			if(error){
 				NSLog(@"[IALLogError] Failed to create %@! Info: %@", tweakDir, error.localizedDescription);
+				error = nil;
 				continue;
 			}
 		}
@@ -387,6 +391,7 @@
 			[fileManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
 				NSLog(@"[IALLogError] Failed to create %@! Info: %@", path, writeError.localizedDescription);
+				writeError = nil;
 				continue;
 			}
 		}

@@ -38,6 +38,7 @@ NSString *getCurrentPackage(){
 				NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:filePath error:&readError];
 				if(readError){
 					NSLog(@"[IALLogError] AndSoAreYou: Failed to get attributes of %@! Info: %@", filePath, readError.localizedDescription);
+					readError = nil;
 					continue;
 				}
 
@@ -162,6 +163,7 @@ int main(int argc, char *argv[]){
 				[fileManager createDirectoryAtPath:newPath withIntermediateDirectories:YES attributes:nil error:&error];
 				if(error){
 					NSLog(@"[IALLogError] AndSoAreYou: Failed to create %@! Info: %@", newPath, error.localizedDescription);
+					error = nil;
 					continue;
 				}
 
@@ -176,6 +178,7 @@ int main(int argc, char *argv[]){
 				[fileManager copyItemAtPath:file toPath:newFilePath error:&error];
 				if(error){
 					NSLog(@"[IALLogError] AndSoAreYou: Failed to copy %@! Info: %@", file, error.localizedDescription);
+					error = nil;
 				}
 			}
 		}
@@ -228,6 +231,7 @@ int main(int argc, char *argv[]){
 				[fileManager copyItemAtPath:filePath toPath:[debian stringByAppendingPathComponent:strippedName] error:&error];
 				if(error){
 					NSLog(@"[IALLogError] AndSoAreYou: Failed to copy %@! Info: %@", filePath, error.localizedDescription);
+					error = nil;
 				}
 			}
 		}
