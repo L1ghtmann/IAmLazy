@@ -1,4 +1,4 @@
-#import <UIKit/UIScreen.h>
+#import "Log.h"
 
 #define kWidth [UIScreen mainScreen].bounds.size.width
 #define kHeight [UIScreen mainScreen].bounds.size.height

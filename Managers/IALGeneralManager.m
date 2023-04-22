@@ -112,7 +112,7 @@
 		}
 
 		if([[contentsString componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]] count] > 0){
-			NSLog(@"[IALLog] dpkg appears to have been interrupted. Fixing now...");
+			IALLog(@"dpkg appears to have been interrupted. Fixing now...");
 
 			[self executeCommandAsRoot:@"unlockDpkg"];
 		}
@@ -222,7 +222,7 @@
 		[_rootVC presentViewController:alert animated:YES completion:nil];
 	}];
 
-	NSLog(@"[IALLogError] %@", [msg stringByReplacingOccurrencesOfString:@"\n" withString:@" "]);
+	IALLogErr(@"%@", [msg stringByReplacingOccurrencesOfString:@"\n" withString:@" "]);
 }
 
 @end

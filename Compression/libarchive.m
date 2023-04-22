@@ -15,6 +15,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <limits.h>
+#include "../Log.h"
 
 int get_file_count(){
 	int file_count = 0;
@@ -134,7 +135,7 @@ void write_archive(const char *outname){
 		// delete debs as we
 		// go to save space
 		if(remove(file) != 0){
-			NSLog(@"[IALLogError] libarchive: failed to delete %s", file);
+			IALLogErr(@"failed to delete %s", file);
 		}
 		free(file);
 	}
@@ -160,7 +161,7 @@ int copy_data(struct archive *ar, struct archive *aw){
 
 		r = archive_write_data_block(aw, buff, size, offset);
 		if(r < ARCHIVE_OK){
-			NSLog(@"[IALLogError] libarchive: copy_data: %s", archive_error_string(aw));
+			IALLogErr(@"copy_data: %s", archive_error_string(aw));
 			return r;
 		}
 	}
@@ -229,7 +230,7 @@ void extract_archive(const char *filename){
 			});
 		}
 		if(r < ARCHIVE_OK){
-			NSLog(@"[IALLogError] libarchive: extract_archive: %s", archive_error_string(a));
+			IALLogErr(@"extract_archive: %s", archive_error_string(a));
 		}
 		if(r < ARCHIVE_WARN){
 			return;
@@ -237,12 +238,12 @@ void extract_archive(const char *filename){
 
 		r = archive_write_header(ext, entry);
 		if(r < ARCHIVE_OK){
-			NSLog(@"[IALLogError] libarchive: extract_archive: %s", archive_error_string(ext));
+			IALLogErr(@"extract_archive: %s", archive_error_string(ext));
 		}
 		else if(archive_entry_size(entry) > 0){
 			r = copy_data(a, ext);
 			if(r < ARCHIVE_OK){
-				NSLog(@"[IALLogError] libarchive: extract_archive: %s", archive_error_string(ext));
+				IALLogErr(@"extract_archive: %s", archive_error_string(ext));
 			}
 			if(r < ARCHIVE_WARN){
 				return;
@@ -251,7 +252,7 @@ void extract_archive(const char *filename){
 
 		r = archive_write_finish_entry(ext);
 		if(r < ARCHIVE_OK){
-			NSLog(@"[IALLogError] libarchive: extract_archive: %s", archive_error_string(ext));
+			IALLogErr(@"extract_archive: %s", archive_error_string(ext));
 		}
 		if(r < ARCHIVE_WARN){
 			return;

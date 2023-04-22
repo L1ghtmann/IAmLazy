@@ -266,14 +266,14 @@
 		NSString *path = [[dpkgInfoDir stringByAppendingPathComponent:package] stringByAppendingPathExtension:@"list"];
 		NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&error];
 		if(error){
-			NSLog(@"[IALLogError] Failed to get contents of %@! Info: %@", path, error.localizedDescription);
+			IALLogErr(@"Failed to get contents of %@! Info: %@", path, error.localizedDescription);
 			error = nil;
 			continue;
 		}
 
 		NSArray *lines = [contents componentsSeparatedByCharactersInSet:newlineChars];
 		if(![lines count]){
-			NSLog(@"[IALLogError] %@ has no content?!", path);
+			IALLogErr(@"%@ has no content?!", path);
 			continue;
 		}
 
@@ -287,7 +287,7 @@
 
 			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:line error:&error];
 			if(error){
-				NSLog(@"[IALLogError] Failed to get attributes for %@! Info: %@", line, error.localizedDescription);
+				IALLogErr(@"Failed to get attributes for %@! Info: %@", line, error.localizedDescription);
 				error = nil;
 				continue;
 			}
@@ -329,13 +329,13 @@
 		// put the files we want to copy into lists for easier writing
 		NSString *gFilePaths = [[genericFiles valueForKey:@"description"] componentsJoinedByString:@"\n"];
 		if(![gFilePaths length]){
-			NSLog(@"[IALLog] %@ has no generic files!", package);
+			IALLog(@"%@ has no generic files!", package);
 		}
 
 		// this is nice because it overwrites the file's content, unlike the write method from NSFileManager
 		[gFilePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&error];
 		if(error){
-			NSLog(@"[IALLogError] Failed to write generic files to %@ for %@! Info: %@", filesToCopy, package, error.localizedDescription);
+			IALLogErr(@"Failed to write generic files to %@ for %@! Info: %@", filesToCopy, package, error.localizedDescription);
 			error = nil;
 			continue;
 		}
@@ -345,7 +345,7 @@
 		if(![fileManager fileExistsAtPath:tweakDir]){
 			[fileManager createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&error];
 			if(error){
-				NSLog(@"[IALLogError] Failed to create %@! Info: %@", tweakDir, error.localizedDescription);
+				IALLogErr(@"Failed to create %@! Info: %@", tweakDir, error.localizedDescription);
 				error = nil;
 				continue;
 			}
@@ -378,7 +378,7 @@
 	// remove list file now that we're done w it
 	[fileManager removeItemAtPath:filesToCopy error:&error];
 	if(error){
-		NSLog(@"[IALLogError] Failed to delete %@! Info: %@", filesToCopy, error.localizedDescription);
+		IALLogErr(@"Failed to delete %@! Info: %@", filesToCopy, error.localizedDescription);
 	}
 }
 
@@ -390,7 +390,7 @@
 		if(![fileManager fileExistsAtPath:path]){
 			[fileManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
-				NSLog(@"[IALLogError] Failed to create %@! Info: %@", path, writeError.localizedDescription);
+				IALLogErr(@"Failed to create %@! Info: %@", path, writeError.localizedDescription);
 				writeError = nil;
 				continue;
 			}
