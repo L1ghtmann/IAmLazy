@@ -43,7 +43,7 @@
 }
 
 -(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section{
-	return @"Backups";
+	return localize(@"backups");
 }
 
 -(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UITableViewHeaderFooterView *)header forSection:(NSInteger)section{
@@ -112,13 +112,17 @@
 			NSError *deleteError = nil;
 			[fileManager removeItemAtPath:filePath error:&deleteError];
 			if(deleteError){
-				NSString *msg = [NSString stringWithFormat:@"An error occured and %@ was not deleted!\n\nInfo: %@", backupName, deleteError.localizedDescription];
+				NSString *msg = [NSString stringWithFormat:@"%@ %@ %@!\n\n%@: %@", localize(@"del_err_1"),
+																					backupName,
+																					localize(@"del_err_2"),
+																					localize(@"info"),
+																					deleteError.localizedDescription];
 				[_manager displayErrorWithMessage:msg];
 				return;
 			}
 		}
 		else{
-			NSString *msg = [NSString stringWithFormat:@"%@ cannot be deleted?!", filePath];
+			NSString *msg = [NSString stringWithFormat:@"%@ %@?!", filePath, localize(@"rm_err_1")];
 			[_manager displayErrorWithMessage:msg];
 			return;
 		}
@@ -167,7 +171,11 @@
 	NSError *writeError = nil;
 	[[NSFileManager defaultManager] copyItemAtURL:url toURL:backupDirURL error:&writeError];
 	if(writeError){
-		NSString *msg = [NSString stringWithFormat:@"An error occured and %@ could not be imported!\n\nInfo: %@", [url absoluteString], writeError.localizedDescription];
+		NSString *msg = [NSString stringWithFormat:@"%@ %@ %@!\n\n%@: %@", localize(@"del_err_1"),
+																			[url absoluteString],
+																			localize(@"import_err_1"),
+																			localize(@"info"),
+																			writeError.localizedDescription];
 		[_manager displayErrorWithMessage:msg];
 		return;
 	}

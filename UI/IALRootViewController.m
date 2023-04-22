@@ -82,7 +82,7 @@
 	[backup setTag:0];
 	[backup setClipsToBounds:YES];
 	[backup.layer setCornerRadius:10];
-	[backup setTitle:@"Backup" forState:UIControlStateNormal];
+	[backup setTitle:localize(@"backup") forState:UIControlStateNormal];
 	[backup.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:0.56]];
 	[backup setTintColor:[self IALBlue]];
 	[backup setTitleColor:[self IALBlue] forState:UIControlStateNormal];
@@ -105,7 +105,7 @@
 	[restore setTag:1];
 	[restore setClipsToBounds:YES];
 	[restore.layer setCornerRadius:10];
-	[restore setTitle:@"Restore" forState:UIControlStateNormal];
+	[restore setTitle:localize(@"restore") forState:UIControlStateNormal];
 	[restore.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:0.56]];
 	[restore setTintColor:[self IALBlue]];
 	[restore setTitleColor:[self IALBlue] forState:UIControlStateNormal];
@@ -159,7 +159,7 @@
 	[me setTag:2];
 	[me setClipsToBounds:YES];
 	[me.layer setCornerRadius:10];
-	[me setTitle:@"Created by Lightmann | v2.1.2" forState:UIControlStateNormal];
+	[me setTitle:[localize(@"created_by") stringByAppendingString:@" | v2.1.2"] forState:UIControlStateNormal];
 	[me.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:0.40]];
 	[me setTintColor:[self IALBlue]];
 	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [me setBackgroundColor:[UIColor systemGray6Color]];
@@ -178,7 +178,7 @@
 	[src setTag:0];
 	[src setClipsToBounds:YES];
 	[src.layer setCornerRadius:10];
-	[src setTitle:@"Source" forState:UIControlStateNormal];
+	[src setTitle:localize(@"source") forState:UIControlStateNormal];
 	[src.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:0.40]];
 	[src setTintColor:[self IALBlue]];
 	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [src setBackgroundColor:[UIColor systemGray6Color]];
@@ -198,7 +198,7 @@
 	[backups setTag:1];
 	[backups setClipsToBounds:YES];
 	[backups.layer setCornerRadius:10];
-	[backups setTitle:@"Backups" forState:UIControlStateNormal];
+	[backups setTitle:localize(@"backups") forState:UIControlStateNormal];
 	[backups.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:0.40]];
 	[backups setTintColor:[self IALBlue]];
 	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [backups setBackgroundColor:[UIColor systemGray6Color]];
@@ -233,7 +233,7 @@
 
 	[go setClipsToBounds:YES];
 	[go.layer setCornerRadius:10];
-	[go setTitle:@"Go" forState:UIControlStateNormal];
+	[go setTitle:localize(@"go") forState:UIControlStateNormal];
 	[go.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:0.40]];
 	[go setTintColor:[UIColor systemGreenColor]];
 	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [go setBackgroundColor:[UIColor systemGray6Color]];
@@ -275,13 +275,13 @@
 		[_configSwitch removeAllSegments];
 		switch(sender.tag){
 			case 0:
-				[_configSwitch insertSegmentWithTitle:@"Standard" atIndex:0 animated:NO];
-				[_configSwitch insertSegmentWithTitle:@"Developer" atIndex:1 animated:NO];
+				[_configSwitch insertSegmentWithTitle:localize(@"standard") atIndex:0 animated:NO];
+				[_configSwitch insertSegmentWithTitle:localize(@"developer") atIndex:1 animated:NO];
 				_controlPanelState = 1;
 				break;
 			case 1:
-				[_configSwitch insertSegmentWithTitle:@"Latest" atIndex:0 animated:NO];
-				[_configSwitch insertSegmentWithTitle:@"Specific" atIndex:1 animated:NO];
+				[_configSwitch insertSegmentWithTitle:localize(@"latest") atIndex:0 animated:NO];
+				[_configSwitch insertSegmentWithTitle:localize(@"specific") atIndex:1 animated:NO];
 				_controlPanelState = 2;
 				break;
 		}
@@ -348,18 +348,18 @@
 -(void)selectedBackupWithFilter:(BOOL)filter{
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy"
-								message:@"Please confirm that you have adequate free storage before proceeding:"
+								message:[localize(@"storage_msg") stringByAppendingString:@":"]
 								preferredStyle:UIAlertControllerStyleActionSheet];
 
 	UIAlertAction *confirm = [UIAlertAction
-								actionWithTitle:@"Confirm"
+								actionWithTitle:localize(@"confirm")
 								style:UIAlertActionStyleDefault
 								handler:^(UIAlertAction *action){
 									[self makeBackupWithFilter:filter];
 								}];
 
 	UIAlertAction *cancel = [UIAlertAction
-								actionWithTitle:@"Cancel"
+								actionWithTitle:localize(@"cancel")
 								style:UIAlertActionStyleDefault
 								handler:^(UIAlertAction *action){
 									[self dismissViewControllerAnimated:YES completion:nil];
@@ -415,7 +415,7 @@
 		// post list of available backups
 		UIAlertController *alert = [UIAlertController
 									alertControllerWithTitle:@"IAmLazy"
-									message:@"Choose the backup you'd like to restore from:"
+									message:[localize(@"selection_msg") stringByAppendingString:@":"]
 									preferredStyle:UIAlertControllerStyleAlert];
 
 		// make each available backup its own action
@@ -431,7 +431,7 @@
 		}
 
 		UIAlertAction *cancel = [UIAlertAction
-									actionWithTitle:@"Cancel"
+									actionWithTitle:localize(@"cancel")
 									style:UIAlertActionStyleDefault
 									handler:^(UIAlertAction *action){
 										[self dismissViewControllerAnimated:YES completion:nil];
@@ -452,29 +452,29 @@
 	// get confirmation before proceeding
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy"
-								message:[NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backup]
+								message:[NSString stringWithFormat:@"%@ %@?", localize(@"restore_confirmation"), backup]
 								preferredStyle:UIAlertControllerStyleActionSheet];
 
 	UIAlertAction *yes = [UIAlertAction
-							actionWithTitle:@"Yes"
+							actionWithTitle:localize(@"yes")
 							style:UIAlertActionStyleDefault
 							handler:^(UIAlertAction *action){
 								if([backup hasSuffix:@"u.tar.gz"]){
 									// get *extra* confirmation before proceeding
 									UIAlertController *subalert = [UIAlertController
-																alertControllerWithTitle:@"Please note:"
-																message:@"You have chosen to restore from a developer backup. This backup includes bootstrap packages.\n\nPlease confirm that you understand this and still wish to proceed with the restore:"
+																alertControllerWithTitle:[localize(@"note") stringByAppendingString:@":"]
+																message:[NSString stringWithFormat:@"%@\n\n%@:", localize(@"bootstrap_warning"), localize(@"bootstrap_confirmation")]
 																preferredStyle:UIAlertControllerStyleActionSheet];
 
 									UIAlertAction *subyes = [UIAlertAction
-															actionWithTitle:@"Confirm"
+															actionWithTitle:localize(@"confirm")
 															style:UIAlertActionStyleDestructive
 															handler:^(UIAlertAction *action){
 																[self restoreFromBackup:backup];
 															}];
 
 									UIAlertAction *subno = [UIAlertAction
-															actionWithTitle:@"Cancel"
+															actionWithTitle:localize(@"cancel")
 															style:UIAlertActionStyleDefault
 															handler:^(UIAlertAction *action){
 																[self dismissViewControllerAnimated:YES completion:nil];
@@ -491,7 +491,7 @@
 							}];
 
 	UIAlertAction *no = [UIAlertAction
-							actionWithTitle:@"No"
+							actionWithTitle:localize(@"no")
 							style:UIAlertActionStyleDefault
 							handler:^(UIAlertAction *action){
 								[self dismissViewControllerAnimated:YES completion:nil];
@@ -532,11 +532,15 @@
 
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy"
-								message:[NSString stringWithFormat:@"Tweak backup completed successfully in %@ seconds!\n\nYour backup can be found in\n%@", [self getDuration], backupDir]
+								message:[NSString stringWithFormat:@"%@ %@ %@!\n\n%@\n%@", localize(@"success"),
+																							[self getDuration],
+																							localize(@"seconds"),
+																							localize(@"backup_loc"),
+																							backupDir]
 								preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *export = [UIAlertAction
-								actionWithTitle:@"Export"
+								actionWithTitle:localize(@"export")
 								style:UIAlertActionStyleDefault
 								handler:^(UIAlertAction *action){
 									// Note: to export a local file, need to use an NSURL
@@ -549,7 +553,7 @@
 								}];
 
 	UIAlertAction *okay = [UIAlertAction
-							actionWithTitle:@"Okay"
+							actionWithTitle:localize(@"ok")
 							style:UIAlertActionStyleDefault
 							handler:^(UIAlertAction *action){
 								[self dismissViewControllerAnimated:YES completion:nil];
@@ -566,7 +570,7 @@
 
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy"
-								message:@"Choose a post-restore command:"
+								message:[localize(@"post_restore") stringByAppendingString:@":"]
 								preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *respring = [UIAlertAction
@@ -589,7 +593,7 @@
 								}];
 
 	UIAlertAction *none = [UIAlertAction
-							actionWithTitle:@"None"
+							actionWithTitle:localize(@"none")
 							style:UIAlertActionStyleDefault
 							handler:^(UIAlertAction *action){
 								[self dismissViewControllerAnimated:YES completion:nil];

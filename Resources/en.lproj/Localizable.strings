@@ -1,0 +1,89 @@
+//
+//	Translation by Lightmann
+//
+
+// RootVC
+"backup" = "Backup";
+"restore" = "Restore";
+"created_by" = "Created by Lightmann";
+"source" = "Source";
+"backups" = "Backups";
+"go" = "Go";
+
+"standard" = "Standard";
+"developer" = "Developer";
+"latest" = "Latest";
+"specific" = "Specific";
+
+"storage_msg" = "Please confirm that you have adequate free storage before proceeding";
+"selection_msg" = "Choose the backup you'd like to restore from";
+"restore_confirmation" = "Are you sure that you want to restore from";
+"yes" = "Yes";
+"no" = "No";
+"note" = "Please note";
+"bootstrap_warning" = "You have chosen to restore from a developer backup. This backup includes bootstrap packages.";
+"bootstrap_confirmation" = "Please confirm that you understand this and still wish to proceed with the restore";
+
+"confirm" = "Confirm";
+"cancel" = "Cancel";
+
+"success" = "Tweak backup completed successfully in";
+"seconds" = "seconds";
+"backup_loc" = "Your backup can be found in";
+"post_restore" = "Choose a post-restore command";
+"none" = "None";
+"export" = "Export";
+"ok" = "Okay";
+
+// ProgressVC
+"progress" = "Progress";
+"waiting" = "Waiting";
+"completed" = "Completed";
+"in-progress" = "In-progress";
+
+"backup_s1_f" = "Determining user packages";
+"backup_s1" = "Determining installed packages";
+"backup_s2" = "Gathering files for packages";
+"backup_s3" = "Building debs from files";
+"backup_s4" = "Creating backup from debs";
+
+"restore_s1" = "Completing pre-restore checks";
+"restore_s2" = "Unpacking backup";
+"restore_s3" = "Refreshing APT sources";
+"restore_s4" = "Installing debs";
+
+// BackupsVC
+"del_err_1" = "An error occured and";
+"del_err_2" = "was not deleted";
+"info" = "Info";
+"rm_err_1" = "cannot be deleted";
+"import_err_1" = "could not be imported";
+
+// BackupManager
+"backup_err_1" = "Failed to generate controls for installed packages";
+"backup_err_2" = "Failed to generate list of packages";
+"backup_err_3" = "is blank";
+"backup_err_4" = "has no contents";
+"backup_err_5" = "There appear to be no controls for";
+"backup_err_6" = "The control for";
+"backup_err_7" = "Failed to build debs! Not sure how we got here honestly";
+
+// GenManager
+"error" = "Error";
+"gen_err_1" = "Your device does not appear to be connected to the internet";
+"gen_err_2" = "A network connection is required for restores so packages can be downloaded if need be";
+"gen_err_3" = "Failed to create";
+"gen_err_4" = "Failed to get contents of";
+"gen_err_5" = "is not writeable";
+"gen_err_6" = "Please ensure that the directory's owner is mobile and not root";
+
+// RestoreManager
+"restore_err_1" = "The backup dir does not exist";
+"restore_err_2" = "No backups were found";
+"restore_err_3" = "The target backup";
+"restore_err_4" = "could not be found";
+"restore_err_5" = "The backup you're trying to restore from was made for jailbreaks using the";
+"bootstrap" = "bootstrap";
+"restore_err_6" = "Your current jailbreak is using";
+"restore_err_7" = "is empty";
+"restore_err_8" = "has no debs";

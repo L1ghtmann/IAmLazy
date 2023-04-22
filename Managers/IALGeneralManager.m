@@ -52,7 +52,7 @@
 	// check for internet connection
 	// used for dep resolution of standard backups w/ missing deps
 	if(![self hasConnection]){
-		[self displayErrorWithMessage:@"Your device does not appear to be connected to the internet.\n\nA network connection is required for restores so packages can be downloaded if need be."];
+		[self displayErrorWithMessage:[NSString stringWithFormat:@"%@.\n\n%@.", localize(@"gen_err_1"), localize(@"gen_err_2")]];
 		return;
 	}
 
@@ -73,7 +73,7 @@
 	if(![fileManager fileExistsAtPath:documentsDir]){
 		[fileManager createDirectoryAtPath:documentsDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 		if(writeError){
-			NSString *msg = [NSString stringWithFormat:@"Failed to create %@.\n\nInfo: %@", documentsDir, writeError.localizedDescription];
+			NSString *msg = [NSString stringWithFormat:@"%@ %@.\n\n%@: %@", localize(@"gen_err_3"), documentsDir, localize(@"info"), writeError.localizedDescription];
 			[self displayErrorWithMessage:msg];
 			return;
 		}
@@ -81,7 +81,7 @@
 
 	// check if ~/Documents/ has root ownership (it shouldn't)
 	if(![fileManager isWritableFileAtPath:documentsDir]){
-		NSString *msg = [NSString stringWithFormat:@"%@ is not writeable.\n\nPlease ensure that the directory's owner is mobile and not root.", documentsDir];
+		NSString *msg = [NSString stringWithFormat:@"%@ %@.\n\n%@.", localize(@"gen_err_5"), documentsDir, localize(@"gen_err_6")];
 		[self displayErrorWithMessage:msg];
 		return;
 	}
@@ -90,7 +90,7 @@
 	if(![fileManager fileExistsAtPath:backupDir]){
 		[fileManager createDirectoryAtPath:backupDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 		if(writeError){
-			NSString *msg = [NSString stringWithFormat:@"Failed to create %@.\n\nInfo: %@", backupDir, writeError.localizedDescription];
+			NSString *msg = [NSString stringWithFormat:@"%@ %@.\n\n%@: %@", localize(@"gen_err_3"), backupDir, localize(@"info"), writeError.localizedDescription];
 			[self displayErrorWithMessage:msg];
 			return;
 		}
@@ -106,7 +106,7 @@
 		NSError *readError = nil;
 		NSString *contentsString = [NSString stringWithContentsOfFile:tmpFile encoding:NSUTF8StringEncoding error:&readError];
 		if(readError){
-			NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@.\n\nInfo: %@", tmpFile, readError.localizedDescription];
+			NSString *msg = [NSString stringWithFormat:@"%@ %@.\n\n%@: %@", localize(@"gen_err_4"), tmpFile, localize(@"info"), readError.localizedDescription];
 			[self displayErrorWithMessage:msg];
 			return;
 		}
@@ -133,11 +133,11 @@
 	NSError *readError = nil;
 	NSArray *backupDirContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:backupDir error:&readError];
 	if(readError){
-		[self displayErrorWithMessage:[NSString stringWithFormat:@"Failed to get contents of %@! Info: %@", backupDir, readError.localizedDescription]];
+		[self displayErrorWithMessage:[NSString stringWithFormat:@"%@ %@! %@: %@", localize(@"gen_err_4"), backupDir, localize(@"info"), readError.localizedDescription]];
 		return [NSArray new];
 	}
 	else if(![backupDirContents count]){
-		NSLog(@"%@ has no contents!", backupDir);
+		IALLog(@"%@ has no contents!", backupDir);
 		return [NSArray new];
 	}
 
@@ -204,12 +204,12 @@
 
 -(void)displayErrorWithMessage:(NSString *)msg{
 	UIAlertController *alert = [UIAlertController
-								alertControllerWithTitle:@"IAmLazy Error:"
+								alertControllerWithTitle:[NSString stringWithFormat:@"IAmLazy %@:", localize(@"error")]
 								message:msg
 								preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *okay = [UIAlertAction
-							actionWithTitle:@"Okay"
+							actionWithTitle:localize(@"ok")
 							style:UIAlertActionStyleDefault
 							handler:^(UIAlertAction *action){
 								[_rootVC dismissViewControllerAnimated:YES completion:nil];

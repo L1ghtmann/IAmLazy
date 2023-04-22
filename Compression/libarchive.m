@@ -161,7 +161,7 @@ int copy_data(struct archive *ar, struct archive *aw){
 
 		r = archive_write_data_block(aw, buff, size, offset);
 		if(r < ARCHIVE_OK){
-			IALLogErr(@"copy_data: %s", archive_error_string(aw));
+			IALLogErr(@"%s", archive_error_string(aw));
 			return r;
 		}
 	}
@@ -230,7 +230,7 @@ void extract_archive(const char *filename){
 			});
 		}
 		if(r < ARCHIVE_OK){
-			IALLogErr(@"extract_archive: %s", archive_error_string(a));
+			IALLogErr(@"%s", archive_error_string(a));
 		}
 		if(r < ARCHIVE_WARN){
 			return;
@@ -238,12 +238,12 @@ void extract_archive(const char *filename){
 
 		r = archive_write_header(ext, entry);
 		if(r < ARCHIVE_OK){
-			IALLogErr(@"extract_archive: %s", archive_error_string(ext));
+			IALLogErr(@"%s", archive_error_string(ext));
 		}
 		else if(archive_entry_size(entry) > 0){
 			r = copy_data(a, ext);
 			if(r < ARCHIVE_OK){
-				IALLogErr(@"extract_archive: %s", archive_error_string(ext));
+				IALLogErr(@"%s", archive_error_string(ext));
 			}
 			if(r < ARCHIVE_WARN){
 				return;
@@ -252,7 +252,7 @@ void extract_archive(const char *filename){
 
 		r = archive_write_finish_entry(ext);
 		if(r < ARCHIVE_OK){
-			IALLogErr(@"extract_archive: %s", archive_error_string(ext));
+			IALLogErr(@"%s", archive_error_string(ext));
 		}
 		if(r < ARCHIVE_WARN){
 			return;

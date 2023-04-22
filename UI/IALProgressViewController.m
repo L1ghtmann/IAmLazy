@@ -71,20 +71,20 @@
 
 	if(purpose == 0){
 		if(filter){
-			[itemDescs addObject:@"Determining user packages"];
+			[itemDescs addObject:localize(@"backup_s1_f")];
 		}
 		else {
-			[itemDescs addObject:@"Determining installed packages"];
+			[itemDescs addObject:localize(@"backup_s1")];
 		}
-		[itemDescs addObject:@"Gathering files for packages"];
-		[itemDescs addObject:@"Building debs from files"];
-		[itemDescs addObject:@"Creating backup from debs"];
+		[itemDescs addObject:localize(@"backup_s2")];
+		[itemDescs addObject:localize(@"backup_s3")];
+		[itemDescs addObject:localize(@"backup_s4")];
 	}
 	else{
-		[itemDescs addObject:@"Completing pre-restore checks"];
-		[itemDescs addObject:@"Unpacking backup"];
-		[itemDescs addObject:@"Refreshing APT sources"];
-		[itemDescs addObject:@"Installing debs"];
+		[itemDescs addObject:localize(@"restore_s1")];
+		[itemDescs addObject:localize(@"restore_s2")];
+		[itemDescs addObject:localize(@"restore_s3")];
+		[itemDescs addObject:localize(@"restore_s4")];
 	}
 
 	return itemDescs;
@@ -94,10 +94,10 @@
 	NSString *purposeString;
 	switch(purpose){
 		case 0:
-			purposeString = @"backup";
+			purposeString = localize(@"backup");
 			break;
 		case 1:
-			purposeString = @"restore";
+			purposeString = localize(@"restore");
 			break;
 		default:
 			purposeString = @"";
@@ -125,7 +125,7 @@
 	[[title.leadingAnchor constraintEqualToAnchor:_titleContainer.leadingAnchor constant:10] setActive:YES];
 
 	[title setFont:[UIFont systemFontOfSize:titleSize weight:0.60]];
-	[title setText:@"Progress"];
+	[title setText:localize(@"progress")];
 	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [title setTextColor:[self IALOffWhite]];
 	else [title setTextColor:[self IALDarkGray]];
 
@@ -304,7 +304,7 @@
 		[[itemStatus.topAnchor constraintEqualToAnchor:itemDesc.topAnchor constant:20] setActive:YES];
 
 		[itemStatus setFont:[UIFont systemFontOfSize:(itemDesc.font.pointSize - 3) weight:-0.60]];
-		[itemStatus setText:@"Waiting"];
+		[itemStatus setText:localize(@"waiting")];
 		if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [itemStatus setTextColor:[self IALOffWhite]];
 		else [itemStatus setTextColor:[self IALDarkGray]];
 		[itemStatus setAlpha:0.75];
@@ -321,13 +321,13 @@
 	if(isInteger){
 		[UIView animateWithDuration:0.5 animations:^{
 			[_itemStatusIcons[itemInt] setBackgroundColor:[UIColor colorWithRed:0.04716 green:0.73722 blue:0.09512 alpha:1.00000]];
-			[_itemStatusText[itemInt] setText:@"Completed"];
+			[_itemStatusText[itemInt] setText:localize(@"completed")];
 		}];
 	}
 	else{
 		[UIView animateWithDuration:0.5 animations:^{
 			[_itemStatusIcons[itemInt] setBackgroundColor:[UIColor colorWithRed:1.00000 green:0.67260 blue:0.21379 alpha:1.00000]];
-			[_itemStatusText[itemInt] setText:@"In-progress"];
+			[_itemStatusText[itemInt] setText:localize(@"in-progress")];
 		}];
 	}
 }

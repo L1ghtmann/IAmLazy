@@ -19,7 +19,7 @@
 	// check for backup dir
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if(![fileManager fileExistsAtPath:backupDir]){
-		[_generalManager displayErrorWithMessage:@"The backup dir does not exist!"];
+		[_generalManager displayErrorWithMessage:[localize(@"restore_err_1") stringByAppendingString:@"!"]];
 		return;
 	}
 
@@ -27,7 +27,7 @@
 
 	// check for backups
 	if(![[_generalManager getBackups] count]){
-		[_generalManager displayErrorWithMessage:@"No backups were found!"];
+		[_generalManager displayErrorWithMessage:[localize(@"restore_err_2") stringByAppendingString:@"!"]];
 		return;
 	}
 
@@ -36,7 +36,7 @@
 	// check for target backup
 	NSString *target = [backupDir stringByAppendingPathComponent:backupName];
 	if(![fileManager fileExistsAtPath:target]){
-		NSString *msg = [NSString stringWithFormat:@"The target backup -- %@ -- could not be found!", backupName];
+		NSString *msg = [NSString stringWithFormat:@"%@ -- %@ -- %@!", localize(@"restore_err_3"), backupName, localize(@"restore_err_4")];
 		[_generalManager displayErrorWithMessage:msg];
 		return;
 	}
@@ -112,7 +112,7 @@
 	}
 
 	if(!check){
-		NSString *msg = [NSString stringWithFormat:@"The backup you're trying to restore from was made for jailbreaks using the %@ bootstrap.\n\nYour current jailbreak is using %@!", altBootstrap, bootstrap];
+		NSString *msg = [NSString stringWithFormat:@"%@ %@ %@.\n\n%@ %@!", localize(@"restore_err_5"), altBootstrap, localize(@"bootstrap"), localize(@"restore_err_6"), bootstrap];
 		[_generalManager displayErrorWithMessage:msg];
 	}
 
@@ -132,12 +132,12 @@
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	NSArray *tmpDirContents = [fileManager contentsOfDirectoryAtPath:tmpDir error:&readError];
 	if(readError){
-		NSString *msg = [NSString stringWithFormat:@"Failed to get contents of %@! Info: %@", tmpDir, readError.localizedDescription];
+		NSString *msg = [NSString stringWithFormat:@"%@ %@! %@: %@", localize(@"gen_err_4"), tmpDir, localize(@"info"), readError.localizedDescription];
 		[_generalManager displayErrorWithMessage:msg];
 		return;
 	}
 	else if(![tmpDirContents count]){
-		NSString *msg = [NSString stringWithFormat:@"%@ is empty?!", tmpDir];
+		NSString *msg = [NSString stringWithFormat:@"%@ %@?!", tmpDir, localize(@"restore_err_7")];
 		[_generalManager displayErrorWithMessage:msg];
 		return;
 	}
@@ -155,7 +155,7 @@
 		}
 	}
 	if(![debs count]){
-		NSString *msg = [NSString stringWithFormat:@"%@ has no debs!", tmpDir];
+		NSString *msg = [NSString stringWithFormat:@"%@ %@!", tmpDir, localize(@"restore_err_8")];
 		[_generalManager displayErrorWithMessage:msg];
 		return;
 	}
