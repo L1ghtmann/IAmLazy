@@ -117,13 +117,13 @@
 																					localize(@"del_err_2"),
 																					localize(@"info"),
 																					deleteError.localizedDescription];
-				[_manager displayErrorWithMessage:msg];
+				[self displayErrorWithMessage:msg];
 				return;
 			}
 		}
 		else{
 			NSString *msg = [NSString stringWithFormat:@"%@ %@?!", filePath, localize(@"rm_err_1")];
-			[_manager displayErrorWithMessage:msg];
+			[self displayErrorWithMessage:msg];
 			return;
 		}
 
@@ -176,11 +176,29 @@
 																			localize(@"import_err_1"),
 																			localize(@"info"),
 																			writeError.localizedDescription];
-		[_manager displayErrorWithMessage:msg];
+		[self displayErrorWithMessage:msg];
 		return;
 	}
 
 	[self refreshTable];
+}
+
+#pragma mark Popups
+
+-(void)displayErrorWithMessage:(NSString *)msg{
+	UIAlertController *alert = [UIAlertController
+								alertControllerWithTitle:[NSString stringWithFormat:@"IAmLazy %@:", localize(@"error")]
+								message:msg
+								preferredStyle:UIAlertControllerStyleAlert];
+
+	UIAlertAction *okay = [UIAlertAction
+							actionWithTitle:localize(@"ok")
+							style:UIAlertActionStyleDefault
+							handler:nil];
+
+	[alert addAction:okay];
+
+	[self presentViewController:alert animated:YES completion:nil];
 }
 
 @end
