@@ -12,7 +12,7 @@
 #import "IALBackupsViewController.h"
 #import "IALRootViewController.h"
 #import "../Common.h"
-#import <NSTask.h>
+#import "../Task.h"
 
 @implementation IALRootViewController
 
@@ -576,19 +576,26 @@
 								actionWithTitle:@"Respring"
 								style:UIAlertActionStyleDefault
 								handler:^(UIAlertAction *action){
-									NSTask *task = [[NSTask alloc] init];
-									[task setLaunchPath:@"/usr/bin/sbreload"];
-									[task launch];
+									const char *args[] = {
+										"/usr/bin/sbreload",
+										NULL,
+										NULL,
+										NULL
+									};
+									task(args);
 								}];
 
 	UIAlertAction *uicache = [UIAlertAction
 								actionWithTitle:@"UICache & Respring"
 								style:UIAlertActionStyleDefault
 								handler:^(UIAlertAction *action){
-									NSTask *task = [[NSTask alloc] init];
-									[task setLaunchPath:@"/usr/bin/uicache"];
-									[task setArguments:@[@"-a", @"-r"]];
-									[task launch];
+									const char *args[] = {
+										"/usr/bin/uicache",
+										"-a",
+										"-r",
+										NULL
+									};
+									task(args);
 								}];
 
 	UIAlertAction *none = [UIAlertAction

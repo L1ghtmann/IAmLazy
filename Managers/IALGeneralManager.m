@@ -10,7 +10,7 @@
 #import "IALRestoreManager.h"
 #import "IALBackupManager.h"
 #import "../Common.h"
-#import <NSTask.h>
+#import "../Task.h"
 
 @implementation IALGeneralManager
 
@@ -173,11 +173,13 @@
 	NSCharacterSet *alphaChars = [NSCharacterSet alphanumericCharacterSet];
 	BOOL valid = ![[cmd stringByTrimmingCharactersInSet:alphaChars] length];
 	if(valid){
-		NSTask *task = [[NSTask alloc] init];
-		[task setLaunchPath:@"/usr/libexec/iamlazy/AndSoAreYou"];
-		[task setArguments:@[cmd]];
-		[task launch];
-		[task waitUntilExit];
+		const char *args[] = {
+			"/usr/libexec/iamlazy/AndSoAreYou",
+			[cmd UTF8String],
+			NULL,
+			NULL
+		};
+		task(args);
 	}
 }
 

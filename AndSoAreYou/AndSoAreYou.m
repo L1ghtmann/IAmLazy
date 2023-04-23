@@ -8,7 +8,7 @@
 #import <Foundation/Foundation.h>
 #import "../Common.h"
 #import <sys/stat.h>
-#import <NSTask.h>
+#import "../Task.h"
 
 // have this so we don't have
 // to r/w filenames from a file
@@ -97,18 +97,22 @@ int main(int argc, char *argv[]){
 
 		if(strcmp(argv[1], "unlockDpkg") == 0){
 			// kill dpkg to free the lock
-			NSTask *task = [[NSTask alloc] init];
-			[task setLaunchPath:@"/usr/bin/killall"];
-			[task setArguments:@[@"dpkg"]];
-			[task launch];
-			[task waitUntilExit];
+			const char *args[] = {
+				"/usr/bin/killall",
+				"dpkg",
+				NULL,
+				NULL
+			};
+			task(args);
 
 			// configure any unconfigured packages
-			NSTask *task2 = [[NSTask alloc] init];
-			[task2 setLaunchPath:@"/usr/bin/dpkg"];
-			[task2 setArguments:@[@"--configure", @"-a"]];
-			[task2 launch];
-			[task2 waitUntilExit];
+			const char *args2[] = {
+				"/usr/bin/dpkg",
+				"--configure",
+				"-a",
+				NULL
+			};
+			task(args2);
 
 			IALLog(@"dpkg should be fixed!");
 		}
@@ -121,11 +125,13 @@ int main(int argc, char *argv[]){
 			}
 		}
 		else if(strcmp(argv[1], "updateAPT") == 0){
-			NSTask *task = [[NSTask alloc] init];
-			[task setLaunchPath:@"/usr/bin/apt"];
-			[task setArguments:@[@"update", @"--allow-insecure-repositories"]];
-			[task launch];
-			[task waitUntilExit];
+			const char *args[] = {
+				"/usr/bin/apt",
+				"update",
+				"--allow-insecure-repositories",
+				NULL
+			};
+			task(args);
 
 			IALLog(@"apt sources up-to-date!");
 		}
@@ -246,21 +252,21 @@ int main(int argc, char *argv[]){
 				IALLogErr(@"getCurrentPackage() failed.");
 				return 1;
 			}
+
 			NSString *tweak = [tmpDir stringByAppendingPathComponent:current];
-			NSFileManager *fileManager = [NSFileManager defaultManager];
-			NSTask *task = [[NSTask alloc] init];
-			[task setLaunchPath:@"/usr/bin/dpkg-deb"];
-			[task setArguments:@[
-				@"-b",
-				@"-Zgzip",
-				@"-z9",
-				tweak
-			]];
-			[task launch];
-			[task waitUntilExit];
+			const char *args[] = {
+				"/usr/bin/dpkg-deb",
+				"-b",
+				"-Zgzip",
+				"-z9",
+				[tweak UTF8String],
+				NULL
+			};
+			task(args);
 
 			NSError *deleteError = nil;
 			// delete dir with files now that deb has been built
+			NSFileManager *fileManager = [NSFileManager defaultManager];
 			[fileManager removeItemAtPath:tweak error:&deleteError];
 			if(deleteError){
 				IALLogErr(@"Failed to delete %@! Info: %@", tweak, deleteError.localizedDescription);
@@ -324,11 +330,13 @@ int main(int argc, char *argv[]){
 				return 1;
 			}
 
-			NSTask *task = [[NSTask alloc] init];
-			[task setLaunchPath:@"/usr/bin/dpkg"];
-			[task setArguments:@[@"-i", deb]];
-			[task launch];
-			[task waitUntilExit];
+			const char *args[] = {
+				"/usr/bin/dpkg",
+				"-i",
+				[deb UTF8String],
+				NULL
+			};
+			task(args);
 
 			// delete deb now that it's been installed
 			[fileManager removeItemAtPath:deb error:&error];
@@ -337,55 +345,26 @@ int main(int argc, char *argv[]){
 				return 1;
 			}
 
-			// check deb install
-			// Note: this is costly, but likely worth it for sanity
-			NSString *path = [deb stringByDeletingPathExtension];
-			NSString *tweak = [path lastPathComponent];
-			NSTask *task2 = [[NSTask alloc] init];
-			[task2 setLaunchPath:@"/usr/bin/dpkg"];
-			[task2 setArguments:@[@"-s", tweak]];
-
-			NSPipe *pipe = [NSPipe pipe];
-			[task2 setStandardOutput:pipe];
-
-			[task2 launch];
-
-			NSFileHandle *handle = [pipe fileHandleForReading];
-			NSData *data = [handle readDataToEndOfFile];
-			[handle closeFile];
-
-			// have to call after ^ to ensure that the output pipe doesn't fill
-			// if it does, the process will hang and block waitUntilExit from returning
-			[task2 waitUntilExit];
-
-			NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-			if([output containsString:@"Status: install ok installed"]){
-				IALLog(@"%@ installed successfully!", tweak);
-			}
-			else{
-				IALLogErr(@"(potentially) failed to install %@!", tweak);
-				if(!end) return 1;
-			}
-
 			if(end){
 				// resolve any lingering things
 				// (e.g., conflicts, partial installs due to dependencies, etc)
-				NSTask *task3 = [[NSTask alloc] init];
-				[task3 setLaunchPath:@"/usr/bin/apt-get"];
-				[task3 setArguments:@[
-					@"install",
-					@"-fy",
-					@"--allow-unauthenticated"
-				]];
-				[task3 launch];
-				[task3 waitUntilExit];
+				const char *args[] = {
+					"/usr/bin/apt-get",
+					"install",
+					"-fy",
+					"--allow-unauthenticated",
+					NULL
+				};
+				task(args);
 
 				// ensure everything that can be configured is
-				NSTask *task4 = [[NSTask alloc] init];
-				[task4 setLaunchPath:@"/usr/bin/dpkg"];
-				[task4 setArguments:@[@"--configure", @"-a"]];
-				[task4 launch];
-				[task4 waitUntilExit];
+				const char *args2[] = {
+					"/usr/bin/dpkg",
+					"--configure",
+					"-a",
+					NULL
+				};
+				task(args2);
 
 				IALLog(@"apt fixed and dpkg configured (just in case).");
 			}
