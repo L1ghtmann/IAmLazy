@@ -91,7 +91,10 @@
 	_contributors = @{
 		// translators
 		@"Uckermark" : @"German translation",
-		@"turkborough" : @"Turkish translation"
+		@"turkborough" : @"Turkish translation",
+		@"lisiyaki" : @"Japanese translation",
+		@"TheMastjdj" : @"Russian translation",
+		@"sevenpastzeero" : @"Arabic translation"
 	};
 
 }
