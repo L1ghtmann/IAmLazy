@@ -56,40 +56,30 @@
 	[_generalManager updateItemStatus:0];
 
 	[_generalManager updateItemStatus:0.5];
-	[self extractArchive:target withCompletion:^(BOOL done){
-		[_generalManager updateItemStatus:1];
+	[self extractArchive:target];
+	[_generalManager updateItemStatus:1];
 
-		BOOL compatible = YES;
-		if([backupName hasSuffix:@"u.tar.gz"]){
-			compatible = [self verifyBootstrapForBackup:target];
-		}
+	BOOL compatible = YES;
+	if([backupName hasSuffix:@"u.tar.gz"]){
+		compatible = [self verifyBootstrapForBackup:target];
+	}
 
-		if(compatible){
-			[_generalManager updateItemStatus:1.5];
-			[self updateAPT];
-			[_generalManager updateItemStatus:2];
+	if(compatible){
+		[_generalManager updateItemStatus:1.5];
+		[self updateAPT];
+		[_generalManager updateItemStatus:2];
 
-			[_generalManager updateItemStatus:2.5];
-			[self installDebs];
-			[_generalManager updateItemStatus:3];
-		}
+		[_generalManager updateItemStatus:2.5];
+		[self installDebs];
+		[_generalManager updateItemStatus:3];
+	}
 
-		[_generalManager cleanupTmp];
-		completed(compatible);
-	}];
+	[_generalManager cleanupTmp];
+	completed(compatible);
 }
 
--(void)extractArchive:(NSString *)backupPath withCompletion:(void (^)(BOOL))completed{
-	// extract tarball (and avoid stalling the main thread so UI can update)
-	// need completion block here to keep the main thread from proceeding before the
-	// libarchive op and corresponding stuff here has completed. This completion block
-	// goes all the way up to the initialization method in order to keep everything synchronous
-	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-		extract_archive([backupPath fileSystemRepresentation]);
-		dispatch_sync(dispatch_get_main_queue(), ^{
-			completed(YES);
-		});
-	});
+-(void)extractArchive:(NSString *)backupPath{
+	extract_archive([backupPath fileSystemRepresentation]);
 }
 
 -(BOOL)verifyBootstrapForBackup:(NSString *)targetBackup{

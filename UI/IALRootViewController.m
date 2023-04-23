@@ -378,16 +378,18 @@
 	_startTime = [NSDate date];
 
 	[_manager makeBackupWithFilter:filter andCompletion:^(BOOL completed){
-		[app setIdleTimerDisabled:NO]; // re-enable idle timer regardless of completion status
-		if(completed){
-			_endTime = [NSDate date];
+		dispatch_async(dispatch_get_main_queue(), ^(void){
+			[app setIdleTimerDisabled:NO]; // re-enable idle timer regardless of completion status
+			if(completed){
+				_endTime = [NSDate date];
 
-			dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-				[self dismissViewControllerAnimated:YES completion:^{
-					[self popPostBackup];
-				}];
-			});
-		}
+				dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+					[self dismissViewControllerAnimated:YES completion:^{
+						[self popPostBackup];
+					}];
+				});
+			}
+		});
 	}];
 }
 
@@ -513,14 +515,16 @@
 	[app setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
 
 	[_manager restoreFromBackup:backup withCompletion:^(BOOL completed){
-		[app setIdleTimerDisabled:NO]; // re-enable idle timer regardless of completion status
-		if(completed){
-			dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-				[self dismissViewControllerAnimated:YES completion:^{
-					[self popPostRestore];
-				}];
-			});
-		}
+		dispatch_async(dispatch_get_main_queue(), ^(void){
+			[app setIdleTimerDisabled:NO]; // re-enable idle timer regardless of completion status
+			if(completed){
+				dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+					[self dismissViewControllerAnimated:YES completion:^{
+						[self popPostRestore];
+					}];
+				});
+			}
+		});
 	}];
 }
 

@@ -41,11 +41,15 @@
 -(void)makeBackupWithFilter:(BOOL)filter andCompletion:(void (^)(BOOL))completed{
 	if(!_backupManager){
 		_backupManager = [[IALBackupManager alloc] init];
+		[_backupManager setGeneralManager:self];
 	}
-	[_backupManager setGeneralManager:self];
-	[_backupManager makeBackupWithFilter:filter andCompletion:^(BOOL done){
-		completed(done);
-	}];
+
+	// about to do some heavy lifting ....
+	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+		[_backupManager makeBackupWithFilter:filter andCompletion:^(BOOL done){
+			completed(done);
+		}];
+	});
 }
 
 -(void)restoreFromBackup:(NSString *)backupName withCompletion:(void (^)(BOOL))completed{
@@ -58,11 +62,15 @@
 
 	if(!_restoreManager){
 		_restoreManager = [[IALRestoreManager alloc] init];
+		[_restoreManager setGeneralManager:self];
 	}
-	[_restoreManager setGeneralManager:self];
-	[_restoreManager restoreFromBackup:backupName withCompletion:^(BOOL done){
-		completed(done);
-	}];
+
+	// about to do some heavy-ish lifting ....
+	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+		[_restoreManager restoreFromBackup:backupName withCompletion:^(BOOL done){
+			completed(done);
+		}];
+	});
 }
 
 -(void)ensureBackupDirExists{
@@ -184,13 +192,17 @@
 }
 
 -(void)updateItemStatus:(CGFloat)status{
-	NSString *statusStr = [NSString stringWithFormat:@"%f", status];
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemStatus" object:statusStr];
+	dispatch_async(dispatch_get_main_queue(), ^(void){
+		NSString *statusStr = [NSString stringWithFormat:@"%f", status];
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemStatus" object:statusStr];
+	});
 }
 
 -(void)updateItemProgress:(CGFloat)status{
-	NSString *statusStr = [NSString stringWithFormat:@"%f", status];
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:statusStr];
+	dispatch_async(dispatch_get_main_queue(), ^(void){
+		NSString *statusStr = [NSString stringWithFormat:@"%f", status];
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:statusStr];
+	});
 }
 
 -(BOOL)hasConnection{
@@ -205,26 +217,28 @@
 #pragma mark Popups
 
 -(void)displayErrorWithMessage:(NSString *)msg{
-	UIAlertController *alert = [UIAlertController
-								alertControllerWithTitle:[NSString stringWithFormat:@"IAmLazy %@:", localize(@"error")]
-								message:msg
-								preferredStyle:UIAlertControllerStyleAlert];
+	dispatch_async(dispatch_get_main_queue(), ^(void){
+		UIAlertController *alert = [UIAlertController
+									alertControllerWithTitle:[NSString stringWithFormat:@"IAmLazy %@:", localize(@"error")]
+									message:msg
+									preferredStyle:UIAlertControllerStyleAlert];
 
-	UIAlertAction *okay = [UIAlertAction
-							actionWithTitle:localize(@"ok")
-							style:UIAlertActionStyleDefault
-							handler:^(UIAlertAction *action){
-								[_rootVC dismissViewControllerAnimated:YES completion:nil];
-							}];
+		UIAlertAction *okay = [UIAlertAction
+								actionWithTitle:localize(@"ok")
+								style:UIAlertActionStyleDefault
+								handler:^(UIAlertAction *action){
+									[_rootVC dismissViewControllerAnimated:YES completion:nil];
+								}];
 
-	[alert addAction:okay];
+		[alert addAction:okay];
 
-	// dismiss progress view controller and display error alert
-	[_rootVC dismissViewControllerAnimated:YES completion:^{
-		[_rootVC presentViewController:alert animated:YES completion:nil];
-	}];
+		// dismiss progress view controller and display error alert
+		[_rootVC dismissViewControllerAnimated:YES completion:^{
+			[_rootVC presentViewController:alert animated:YES completion:nil];
+		}];
 
-	IALLogErr(@"%@", [msg stringByReplacingOccurrencesOfString:@"\n" withString:@" "]);
+		IALLogErr(@"%@", [msg stringByReplacingOccurrencesOfString:@"\n" withString:@" "]);
+	});
 }
 
 @end

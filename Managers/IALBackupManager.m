@@ -54,7 +54,7 @@
 	[_generalManager updateItemStatus:1];
 
 	[_generalManager updateItemStatus:1.5];
-	[self buildDebs];
+	if(![self buildDebs]) return;
 	[_generalManager updateItemStatus:2];
 
 	// specify the bootstrap it was created on
@@ -62,10 +62,10 @@
 
 	// make archive of packages
 	[_generalManager updateItemStatus:2.5];
-	[self makeTarballWithCompletion:^(BOOL done){
-		[_generalManager updateItemStatus:3];
-		completed(done);
-	}];
+	[self makeTarball];
+	[_generalManager updateItemStatus:3];
+
+	completed(YES);
 }
 
 -(NSArray<NSString *> *)getControlFiles{
@@ -449,7 +449,7 @@
 	[_generalManager executeCommandAsRoot:@"cpDFiles"];
 }
 
--(void)buildDebs{
+-(BOOL)buildDebs{
 	NSUInteger total = [_packages count];
 	CGFloat progressPerPart = (1.0/total);
 	CGFloat progress = 0.0;
@@ -461,28 +461,30 @@
 		[_generalManager updateItemProgress:progress];
 	}
 
-	[self verifyDebs];
+	return [self verifyDebs];
 }
 
--(void)verifyDebs{
+-(BOOL)verifyDebs{
 	NSError *readError = nil;
 	NSArray *tmp = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:&readError];
 	if(readError){
 		NSString *msg = [NSString stringWithFormat:@"%@ %@! %@: %@", localize(@"gen_err_4"), tmpDir, localize(@"info"), readError.localizedDescription];
 		[_generalManager displayErrorWithMessage:msg];
-		return;
+		return NO;
 	}
 	else if(![tmp count]){
 		NSString *msg = [NSString stringWithFormat:@"%@ %@!", tmpDir, localize(@"backup_err_4")];
 		[_generalManager displayErrorWithMessage:msg];
-		return;
+		return NO;
 	}
 
 	NSArray *debs = [tmp filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"SELF ENDSWITH '.deb'"]];
 	if(![debs count]){
 		[_generalManager displayErrorWithMessage:localize(@"backup_err_7")];
-		return;
+		return NO;
 	}
+
+	return YES;
 }
 
 -(void)makeBootstrapFile{
@@ -496,7 +498,7 @@
 	[fileManager createFileAtPath:file contents:nil attributes:nil];
 }
 
--(void)makeTarballWithCompletion:(void (^)(BOOL))completed{
+-(void)makeTarball{
 	// craft new backup name and append the gzip tar extension
 	NSString *backupName;
 	NSString *new = [self craftNewBackupName];
@@ -504,19 +506,11 @@
 	else backupName = [new stringByAppendingPathExtension:@"tar.gz"];
 	NSString *backupPath = [backupDir stringByAppendingPathComponent:backupName];
 
-	// make tarball (and avoid stalling the main thread so UI can update)
-	// need completion block here to keep the main thread from proceeding before the
-	// libarchive op and corresponding stuff here has completed. This completion block
-	// goes all the way up to the initialization method in order to keep everything synchronous
-	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-		write_archive([backupPath fileSystemRepresentation]);
-		dispatch_sync(dispatch_get_main_queue(), ^{
-			[self verifyFileAtPath:backupPath];
+	write_archive([backupPath fileSystemRepresentation]);
 
-			[_generalManager cleanupTmp];
-			completed(YES);
-		});
-	});
+	[self verifyFileAtPath:backupPath];
+
+	[_generalManager cleanupTmp];
 }
 
 -(NSString *)craftNewBackupName{
