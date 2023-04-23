@@ -5,10 +5,10 @@
 //	Created by Lightmann during COVID-19
 //
 
-#import <SafariServices/SFSafariViewController.h>
 #import "../Managers/IALGeneralManager.h"
 #import <AudioToolbox/AudioToolbox.h>
 #import "IALProgressViewController.h"
+#import "IALCreditsViewController.h"
 #import "IALBackupsViewController.h"
 #import "IALRootViewController.h"
 #import "../Common.h"
@@ -165,25 +165,25 @@
 	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [me setBackgroundColor:[UIColor systemGray6Color]];
 	else [me setBackgroundColor:[UIColor whiteColor]];
 
-	// src
-	UIButton *src = [UIButton buttonWithType:UIButtonTypeSystem];
-	[_panelOneContainer addSubview:src];
+	// credits
+	UIButton *credits = [UIButton buttonWithType:UIButtonTypeSystem];
+	[_panelOneContainer addSubview:credits];
 
-	[src setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[src.widthAnchor constraintEqualToConstant:(kWidth/2)] setActive:YES];
-	[[src.heightAnchor constraintEqualToConstant:45] setActive:YES];
-	[[src.leadingAnchor constraintEqualToAnchor:_panelOneContainer.leadingAnchor constant:25] setActive:YES];
-	[[src.centerYAnchor constraintEqualToAnchor:_panelOneContainer.centerYAnchor constant:27.5] setActive:YES];
+	[credits setTranslatesAutoresizingMaskIntoConstraints:NO];
+	[[credits.widthAnchor constraintEqualToConstant:(kWidth/2)] setActive:YES];
+	[[credits.heightAnchor constraintEqualToConstant:45] setActive:YES];
+	[[credits.leadingAnchor constraintEqualToAnchor:_panelOneContainer.leadingAnchor constant:25] setActive:YES];
+	[[credits.centerYAnchor constraintEqualToAnchor:_panelOneContainer.centerYAnchor constant:27.5] setActive:YES];
 
-	[src setTag:0];
-	[src setClipsToBounds:YES];
-	[src.layer setCornerRadius:10];
-	[src setTitle:localize(@"source") forState:UIControlStateNormal];
-	[src.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:0.40]];
-	[src setTintColor:[self IALBlue]];
-	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [src setBackgroundColor:[UIColor systemGray6Color]];
-	else [src setBackgroundColor:[UIColor whiteColor]];
-	[src addTarget:self action:@selector(subButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+	[credits setTag:0];
+	[credits setClipsToBounds:YES];
+	[credits.layer setCornerRadius:10];
+	[credits setTitle:localize(@"credits") forState:UIControlStateNormal];
+	[credits.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:0.40]];
+	[credits setTintColor:[self IALBlue]];
+	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [credits setBackgroundColor:[UIColor systemGray6Color]];
+	else [credits setBackgroundColor:[UIColor whiteColor]];
+	[credits addTarget:self action:@selector(subButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
 
 	// backups
 	UIButton *backups = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -305,9 +305,8 @@
 
 	switch(sender.tag){
 		case 0: {
-			NSURL *url = [NSURL URLWithString:@"https://github.com/L1ghtmann/IAmLazy"];
-			SFSafariViewController *safariViewController = [[SFSafariViewController alloc] initWithURL:url];
-			[self presentViewController:safariViewController animated:YES completion:nil];
+			IALCreditsViewController *creditsViewController = [[IALCreditsViewController alloc] init];
+			[self presentViewController:creditsViewController animated:YES completion:nil];
 			break;
 		}
 		case 1: {
