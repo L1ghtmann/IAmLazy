@@ -52,7 +52,7 @@
 	// check for internet connection
 	// used for dep resolution of standard backups w/ missing deps
 	if(![self hasConnection]){
-		[self displayErrorWithMessage:[NSString stringWithFormat:@"%@.\n\n%@.", localize(@"gen_err_1"), localize(@"gen_err_2")]];
+		[self displayErrorWithMessage:[NSString stringWithFormat:@"%@\n\n%@", localize(@"gen_err_1"), localize(@"gen_err_2")]];
 		return;
 	}
 

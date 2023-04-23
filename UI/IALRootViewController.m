@@ -347,7 +347,7 @@
 -(void)selectedBackupWithFilter:(BOOL)filter{
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy"
-								message:[localize(@"storage_msg") stringByAppendingString:@":"]
+								message:localize(@"storage_msg")
 								preferredStyle:UIAlertControllerStyleActionSheet];
 
 	UIAlertAction *confirm = [UIAlertAction
@@ -414,7 +414,7 @@
 		// post list of available backups
 		UIAlertController *alert = [UIAlertController
 									alertControllerWithTitle:@"IAmLazy"
-									message:[localize(@"selection_msg") stringByAppendingString:@":"]
+									message:localize(@"selection_msg")
 									preferredStyle:UIAlertControllerStyleAlert];
 
 		// make each available backup its own action
@@ -461,7 +461,7 @@
 								if([backup hasSuffix:@"u.tar.gz"]){
 									// get *extra* confirmation before proceeding
 									UIAlertController *subalert = [UIAlertController
-																alertControllerWithTitle:[localize(@"note") stringByAppendingString:@":"]
+																alertControllerWithTitle:localize(@"note")
 																message:[NSString stringWithFormat:@"%@\n\n%@:", localize(@"bootstrap_warning"), localize(@"bootstrap_confirmation")]
 																preferredStyle:UIAlertControllerStyleActionSheet];
 
@@ -569,7 +569,7 @@
 
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy"
-								message:[localize(@"post_restore") stringByAppendingString:@":"]
+								message:localize(@"post_restore")
 								preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *respring = [UIAlertAction

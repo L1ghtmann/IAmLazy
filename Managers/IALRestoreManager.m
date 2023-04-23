@@ -19,7 +19,7 @@
 	// check for backup dir
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if(![fileManager fileExistsAtPath:backupDir]){
-		[_generalManager displayErrorWithMessage:[localize(@"restore_err_1") stringByAppendingString:@"!"]];
+		[_generalManager displayErrorWithMessage:localize(@"restore_err_1")];
 		return;
 	}
 
@@ -27,7 +27,7 @@
 
 	// check for backups
 	if(![[_generalManager getBackups] count]){
-		[_generalManager displayErrorWithMessage:[localize(@"restore_err_2") stringByAppendingString:@"!"]];
+		[_generalManager displayErrorWithMessage:localize(@"restore_err_2")];
 		return;
 	}
 

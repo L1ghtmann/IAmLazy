@@ -25,14 +25,14 @@
 
 	_controlFiles = [self getControlFiles];
 	if(![_controlFiles count]){
-		[_generalManager displayErrorWithMessage:[localize(@"backup_err_1") stringByAppendingString:@"!"]];
+		[_generalManager displayErrorWithMessage:localize(@"backup_err_1")];
 		return;
 	}
 
 	if(!_filtered) _packages = [self getAllPackages];
 	else _packages = [self getUserPackages];
 	if(![_packages count]){
-		[_generalManager displayErrorWithMessage:[localize(@"backup_err_2") stringByAppendingString:@"!"]];
+		[_generalManager displayErrorWithMessage:localize(@"backup_err_2")];
 		return;
 	}
 
@@ -480,7 +480,7 @@
 
 	NSArray *debs = [tmp filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"SELF ENDSWITH '.deb'"]];
 	if(![debs count]){
-		[_generalManager displayErrorWithMessage:[localize(@"backup_err_7") stringByAppendingString:@"."]];
+		[_generalManager displayErrorWithMessage:localize(@"backup_err_7")];
 		return;
 	}
 }
