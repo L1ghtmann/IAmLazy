@@ -94,7 +94,9 @@
 		@"turkborough" : @"Turkish translation",
 		@"lisiyaki" : @"Japanese translation",
 		@"TheMastjdj" : @"Russian translation",
-		@"sevenpastzeero" : @"Arabic translation"
+		@"sevenpastzeero" : @"Arabic translation",
+		@"Alejandro Katz" : @"Spanish translation",
+		@"gujiaming2022" : @"Simplified Chinese translation"
 	};
 
 }

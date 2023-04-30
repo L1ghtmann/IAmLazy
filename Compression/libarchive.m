@@ -127,7 +127,7 @@ void write_archive(const char *outname){
 		archive_entry_free(entry);
 
 		progress+=progress_per_part;
-		dispatch_sync(dispatch_get_main_queue(), ^{
+		dispatch_async(dispatch_get_main_queue(), ^{
 			// Note: file is .m because we need to use NSNotificationCenter
 			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
 		});
@@ -225,7 +225,7 @@ void extract_archive(const char *filename){
 		}
 		else{
 			progress+=progress_per_part;
-			dispatch_sync(dispatch_get_main_queue(), ^{
+			dispatch_async(dispatch_get_main_queue(), ^{
 				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
 			});
 		}
