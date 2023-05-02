@@ -39,6 +39,15 @@
 #pragma mark Functionality
 
 -(void)makeBackupWithFilter:(BOOL)filter andCompletion:(void (^)(BOOL))completed{
+	if(filter){
+		// check for internet connection
+		// used for determining bootstrap packages to filter
+		if(![self hasConnection]){
+			[self displayErrorWithMessage:[NSString stringWithFormat:@"%@\n\n%@", localize(@"gen_err_1"), localize(@"gen_err_7")]];
+			return;
+		}
+	}
+
 	if(!_backupManager){
 		_backupManager = [[IALBackupManager alloc] init];
 		[_backupManager setGeneralManager:self];
@@ -54,7 +63,7 @@
 
 -(void)restoreFromBackup:(NSString *)backupName withCompletion:(void (^)(BOOL))completed{
 	// check for internet connection
-	// used for dep resolution of standard backups w/ missing deps
+	// used (potentially) for dependency resolution of standard backup packages
 	if(![self hasConnection]){
 		[self displayErrorWithMessage:[NSString stringWithFormat:@"%@\n\n%@", localize(@"gen_err_1"), localize(@"gen_err_2")]];
 		return;

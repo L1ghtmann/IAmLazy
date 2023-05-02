@@ -162,92 +162,121 @@
 	return packages;
 }
 
--(NSArray<NSString *> *)getReposToFilter{
-	// modern ios jbs have two bootstraps:
-	// elucubratus and procursus
-	// they are incompatible with eachother
-	// and as such we need to filter
-	// any exclusive packages to ensure
-	// the restore won't bork the jb
-	// (this applies only to stn/user backups)
-	NSArray *reposToFilter = @[
-		@"apt.bingner.com",
-		@"apt.procurs.us",
-		@"repo.theodyssey.dev"
-	];
-	return reposToFilter;
+-(void)canisterCheckPackages:(NSArray<NSString *> *)packages withCallback:(void (^)(BOOL success, NSArray *data))callback{
+	if(![packages count]){
+		IALLogErr(@"Packages array passed to Canister check is empty!");
+		callback(NO, nil);
+	}
+
+	// Canister multi package GET
+	NSString *ids = [[packages componentsJoinedByString:@","] stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+	NSString *reqStr = [@"https://api.canister.me/v2/jailbreak/package/multi?ids=" stringByAppendingString:ids];
+	NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
+	[request setURL:[NSURL URLWithString:reqStr]];
+	[request setHTTPMethod:@"GET"];
+
+	NSURLSession *session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]];
+	[[session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+		NSInteger responseCode = [(NSHTTPURLResponse *)response statusCode];
+		if(responseCode != 200){
+			IALLogErr(@"%@; HTTP status code: %li", [error localizedDescription], responseCode);
+			callback(NO, nil);
+		}
+
+		// expected GET response is a JSON dict
+		NSError *jsonErr = nil;
+		NSDictionary *json = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonErr];
+		if(!jsonErr){
+			// 'data' object expected as array of dicts
+			id multiData = [json objectForKey:@"data"];
+			if(multiData && [multiData isKindOfClass:[NSArray class]]){
+				multiData = (NSArray *)multiData;
+
+				// array for the package ids we will ignore
+				NSMutableArray *filter = [NSMutableArray new];
+				for(int i = 0; i < [multiData count]; i++){
+					id pkgInfo = multiData[i]; // one dict per package queried
+					if(pkgInfo && [pkgInfo isKindOfClass:[NSDictionary class]]){
+						pkgInfo = (NSDictionary *)pkgInfo;
+
+						id pkg = [pkgInfo objectForKey:@"package"]; // package id
+						if(pkg && [pkg isKindOfClass:[NSString class]]){
+							pkg = (NSString *)pkg;
+
+							id repoInfo = [pkgInfo objectForKey:@"repository"]; // package origin info
+							if(repoInfo && [repoInfo isKindOfClass:[NSDictionary class]]){
+								repoInfo = (NSDictionary *)repoInfo;
+
+								id isBootstrap = [repoInfo objectForKey:@"isBootstrap"];
+								if(isBootstrap && [isBootstrap isKindOfClass:[NSNumber class]]){
+									if([isBootstrap boolValue]){
+										// bootstrap-vended package
+										// these can cause issues if
+										// installed on incompatible jbs
+										[filter addObject:pkg];
+									}
+								}
+								else{
+									IALLogErr(@"Canister's %@'s repository's 'isBootstrap' was of unexpected type!", pkg);
+									callback(NO, nil);
+								}
+							}
+							else{
+								IALLogErr(@"Canister's %@'s 'repository' was of unexpected type!", pkg);
+								callback(NO, nil);
+							}
+						}
+						else{
+							IALLogErr(@"Canister's 'package' data object was of unexpected type!");
+							callback(NO, nil);
+						}
+					}
+					else{
+						IALLogErr(@"Canister's data's components were of unexpected type!");
+						callback(NO, nil);
+					}
+				}
+				callback(YES, filter);
+			}
+			else{
+				IALLogErr(@"Canister 'data' object was of unexpected type!");
+				callback(NO, nil);
+			}
+		}
+		else{
+			IALLogErr(@"Canister's response was of unexpected type! Serialization error: %@", [jsonErr localizedDescription]);
+			callback(NO, nil);
+		}
+	}] resume];
 }
 
 -(NSArray<NSString *> *)getUserPackages{
-	// get repo apt lists
-	NSError *readError = nil;
-	NSString *aptListsDir = @"/var/lib/apt/lists/";
-	NSArray *aptLists = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:aptListsDir error:&readError];
-	if(readError){
-		NSString *msg = [NSString stringWithFormat:@"%@ %@! %@: %@", localize(@"gen_err_4"), aptListsDir, localize(@"info"),readError.localizedDescription];
-		[_generalManager displayErrorWithMessage:msg];
-		return [NSArray new];
-	}
-	else if(![aptLists count]){
-		NSString *msg = [NSString stringWithFormat:@"%@ %@?!", aptListsDir, localize(@"backup_err_4")];
-		[_generalManager displayErrorWithMessage:msg];
-		return [NSArray new];
-	}
-
-	// ensure bootstrap repos' package files are up-to-date
 	[_generalManager updateItemProgress:0.8];
-	[_generalManager updateAPT];
-	[_generalManager updateItemProgress:0.9];
+
+	dispatch_semaphore_t sem = dispatch_semaphore_create(0);
 
 	// get packages to ignore
-	NSMutableArray *packagesToIgnore = [NSMutableArray new];
-	NSCharacterSet *newlineChars = [NSCharacterSet newlineCharacterSet];
-	NSPredicate *predicate2 = [NSPredicate predicateWithFormat:@"SELF ENDSWITH '_Packages'"];
-	NSPredicate *predicate3 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH 'Package:'"];
-	for(NSString *repo in [self getReposToFilter]){
-		NSPredicate *predicate1 = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH %@", repo];
-		NSPredicate *thePredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[predicate1, predicate2]];
-		NSArray *pkgLists = [aptLists filteredArrayUsingPredicate:thePredicate];
-		if(![pkgLists count]){
-			continue;
+	__block NSMutableArray *packages = [[self getAllPackages] mutableCopy];
+	[self canisterCheckPackages:packages withCallback:^(BOOL success, NSArray *filter){
+		if(success && [filter count]){
+			// remove packages that we want to ignore from list
+			[packages removeObjectsInArray:filter];
+		}
+		else{
+			// return and bail out
+			packages = [NSMutableArray new];
 		}
 
-		// count should be one for pkgLists
-		for(NSString *list in pkgLists){
-			NSString *listPath = [aptListsDir stringByAppendingPathComponent:list];
-			NSString *content = [NSString stringWithContentsOfFile:listPath encoding:NSUTF8StringEncoding error:&readError];
-			if(readError){
-				NSString *msg = [NSString stringWithFormat:@"%@ %@! %@: %@", localize(@"gen_err_4"), listPath, localize(@"info"), readError.localizedDescription];
-				[_generalManager displayErrorWithMessage:msg];
-				return [NSArray new];
-			}
+		// we're good to go
+		dispatch_semaphore_signal(sem);
+	}];
 
-			NSArray *lines = [content componentsSeparatedByCharactersInSet:newlineChars];
-			if(![lines count]){
-				NSString *msg = [NSString stringWithFormat:@"%@ %@?!", listPath, localize(@"backup_err_4")];
-				[_generalManager displayErrorWithMessage:msg];
-				return [NSArray new];
-			}
+	// wait for block to return before proceeding
+	dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
 
-			NSArray *packages = [lines filteredArrayUsingPredicate:predicate3];
-			NSArray *packagesWithNoDups = [[NSOrderedSet orderedSetWithArray:packages] array]; // removes dups and retains order
-			for(NSString *line in packagesWithNoDups){
-				if(![line length]){
-					continue;
-				}
+	[_generalManager updateItemProgress:0.9];
 
-				NSString *cleanLine = [line stringByReplacingOccurrencesOfString:@"Package: " withString:@""];
-				if([cleanLine length]){
-					[packagesToIgnore addObject:cleanLine];
-				}
-			}
-		}
-	}
-
-	// grab all installed packages and remove the ones we want to ignore
-	NSMutableArray *userPackages = [[self getAllPackages] mutableCopy];
-	[userPackages removeObjectsInArray:packagesToIgnore];
-	return userPackages;
+	return packages;
 }
 
 -(void)gatherFilesForPackages{
