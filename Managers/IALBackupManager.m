@@ -25,14 +25,14 @@
 
 	_controlFiles = [self getControlFiles];
 	if(![_controlFiles count]){
-		[_generalManager displayErrorWithMessage:localize(@"backup_err_1")];
+		[_generalManager displayErrorWithMessage:localize(@"Failed to generate controls for installed packages!")];
 		return;
 	}
 
 	if(!_filtered) _packages = [self getAllPackages];
 	else _packages = [self getUserPackages];
 	if(![_packages count]){
-		[_generalManager displayErrorWithMessage:localize(@"backup_err_2")];
+		[_generalManager displayErrorWithMessage:localize(@"Failed to generate list of packages!")];
 		return;
 	}
 
@@ -43,7 +43,11 @@
 		NSError *writeError = nil;
 		[fileManager createDirectoryAtPath:tmpDir withIntermediateDirectories:YES attributes:nil error:&writeError];
 		if(writeError){
-			NSString *msg = [NSString stringWithFormat:@"%@ %@.\n\n%@: %@", localize(@"gen_err_3"), tmpDir, localize(@"info"), writeError.localizedDescription];
+			NSString *msg = [NSString stringWithFormat:[[localize(@"Failed to create %@!")
+															stringByAppendingString:@"\n\n"]
+															stringByAppendingString:localize(@"Info: %@")],
+															tmpDir,
+															writeError.localizedDescription];
 			[_generalManager displayErrorWithMessage:msg];
 			return;
 		}
@@ -76,14 +80,18 @@
 	NSString *dpkgStatus = @"/var/lib/dpkg/status";
 	NSString *contents = [NSString stringWithContentsOfFile:dpkgStatus encoding:NSUTF8StringEncoding error:&readError];
 	if(readError){
-		NSString *msg = [NSString stringWithFormat:@"%@ %@! %@: %@", localize(@"gen_err_4"), dpkgStatus, localize(@"info"), readError.localizedDescription];
+		NSString *msg = [NSString stringWithFormat:[[localize(@"Failed to get contents of %@!")
+														stringByAppendingString:@" "]
+														stringByAppendingString:localize(@"Info: %@")],
+														dpkgStatus,
+														readError.localizedDescription];
 		[_generalManager displayErrorWithMessage:msg];
 		return [NSArray new];
 	}
 
 	NSArray *lines = [contents componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
 	if(![lines count]){
-		NSString *msg = [NSString stringWithFormat:@"%@ %@?!", dpkgStatus, localize(@"backup_err_3")];
+		NSString *msg = [NSString stringWithFormat:localize(@"%@ is blank?!"), dpkgStatus];
 		[_generalManager displayErrorWithMessage:msg];
 		return [NSArray new];
 	}
@@ -438,7 +446,7 @@
 	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH %@", pkg];
 	NSArray *relevantControls = [_controlFiles filteredArrayUsingPredicate:thePredicate];
 	if(![relevantControls count]){
-		NSString *msg = [NSString stringWithFormat:@"%@ %@?!", localize(@"backup_err_5"), package];
+		NSString *msg = [NSString stringWithFormat:localize(@"There appear to be no controls for %@?!"), package];
 		[_generalManager displayErrorWithMessage:msg];
 		return;
 	}
@@ -446,7 +454,10 @@
 	NSString *theOne = [relevantControls firstObject];
 	NSString *noStatusLine = [theOne stringByReplacingOccurrencesOfString:@"Status: install ok installed\n" withString:@""]; // dpkg adds this at installation
 	if(![noStatusLine length]){
-		NSString *msg = [NSString stringWithFormat:@"%@ %@ %@?!", localize(@"backup_err_6"), package, localize(@"backup_err_3")];
+		NSString *msg = [NSString stringWithFormat:[[localize(@"The control for")
+														stringByAppendingString:@" "]
+														stringByAppendingString:localize(@"%@ is blank?!")],
+														package];
 		[_generalManager displayErrorWithMessage:msg];
 		return;
 	}
@@ -461,7 +472,11 @@
 		NSError *writeError = nil;
 		[fileManager createDirectoryAtPath:debian withIntermediateDirectories:YES attributes:nil error:&writeError];
 		if(writeError){
-			NSString *msg = [NSString stringWithFormat:@"%@ %@! %@: %@", localize(@"gen_err_3"), debian, localize(@"info"), writeError.localizedDescription];
+			NSString *msg = [NSString stringWithFormat:[[localize(@"Failed to create %@!")
+															stringByAppendingString:@" "]
+															stringByAppendingString:localize(@"Info: %@")],
+															debian,
+															writeError.localizedDescription];
 			[_generalManager displayErrorWithMessage:msg];
 			return;
 		}
@@ -497,19 +512,23 @@
 	NSError *readError = nil;
 	NSArray *tmp = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:tmpDir error:&readError];
 	if(readError){
-		NSString *msg = [NSString stringWithFormat:@"%@ %@! %@: %@", localize(@"gen_err_4"), tmpDir, localize(@"info"), readError.localizedDescription];
+		NSString *msg = [NSString stringWithFormat:[[localize(@"Failed to get contents of %@!")
+														stringByAppendingString:@" "]
+														stringByAppendingString:localize(@"Info: %@")],
+														tmpDir,
+														readError.localizedDescription];
 		[_generalManager displayErrorWithMessage:msg];
 		return NO;
 	}
 	else if(![tmp count]){
-		NSString *msg = [NSString stringWithFormat:@"%@ %@!", tmpDir, localize(@"backup_err_4")];
+		NSString *msg = [NSString stringWithFormat:localize(@"%@ has no contents!"), tmpDir];
 		[_generalManager displayErrorWithMessage:msg];
 		return NO;
 	}
 
 	NSArray *debs = [tmp filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"SELF ENDSWITH '.deb'"]];
 	if(![debs count]){
-		[_generalManager displayErrorWithMessage:localize(@"backup_err_7")];
+		[_generalManager displayErrorWithMessage:localize(@"Failed to build debs! Not sure how we got here honestly.")];
 		return NO;
 	}
 

@@ -43,7 +43,7 @@
 }
 
 -(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section{
-	return localize(@"backups");
+	return localize(@"Backups");
 }
 
 -(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UITableViewHeaderFooterView *)header forSection:(NSInteger)section{
@@ -112,17 +112,17 @@
 			NSError *deleteError = nil;
 			[fileManager removeItemAtPath:filePath error:&deleteError];
 			if(deleteError){
-				NSString *msg = [NSString stringWithFormat:@"%@ %@ %@!\n\n%@: %@", localize(@"del_err_1"),
-																					backupName,
-																					localize(@"del_err_2"),
-																					localize(@"info"),
-																					deleteError.localizedDescription];
+				NSString *msg = [NSString stringWithFormat:[[localize(@"An error occured and %@ was not deleted!")
+																stringByAppendingString:@"\n\n"]
+																stringByAppendingString:localize(@"Info: %@")],
+																backupName,
+																deleteError.localizedDescription];
 				[self displayErrorWithMessage:msg];
 				return;
 			}
 		}
 		else{
-			NSString *msg = [NSString stringWithFormat:@"%@ %@?!", filePath, localize(@"rm_err_1")];
+			NSString *msg = [NSString stringWithFormat:localize(@"%@ cannot be deleted?!"), filePath];
 			[self displayErrorWithMessage:msg];
 			return;
 		}
@@ -171,11 +171,11 @@
 	NSError *writeError = nil;
 	[[NSFileManager defaultManager] copyItemAtURL:url toURL:backupDirURL error:&writeError];
 	if(writeError){
-		NSString *msg = [NSString stringWithFormat:@"%@ %@ %@!\n\n%@: %@", localize(@"del_err_1"),
-																			[url absoluteString],
-																			localize(@"import_err_1"),
-																			localize(@"info"),
-																			writeError.localizedDescription];
+		NSString *msg = [NSString stringWithFormat:[[localize(@"An error occured and %@ could not be imported!")
+														stringByAppendingString:@"\n\n"]
+														stringByAppendingString:localize(@"Info: %@")],
+														[url absoluteString],
+														writeError.localizedDescription];
 		[self displayErrorWithMessage:msg];
 		return;
 	}
@@ -187,12 +187,12 @@
 
 -(void)displayErrorWithMessage:(NSString *)msg{
 	UIAlertController *alert = [UIAlertController
-								alertControllerWithTitle:[NSString stringWithFormat:@"IAmLazy %@:", localize(@"error")]
+								alertControllerWithTitle:localize(@"IAmLazy Error:")
 								message:msg
 								preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *okay = [UIAlertAction
-							actionWithTitle:localize(@"ok")
+							actionWithTitle:localize(@"Okay")
 							style:UIAlertActionStyleDefault
 							handler:nil];
 
