@@ -20,4 +20,5 @@ SUBPROJECTS += AndSoAreYou
 include $(THEOS_MAKE_PATH)/aggregate.mk
 
 before-package::
-	$(ECHO_NOTHING)find "$(THEOS_STAGING_DIR)/Applications/IAmLazy.app/Strings/" -mindepth 1 ! -name "*.lproj" ! -name "Localizable.strings" -delete$(ECHO_END)
+	$(ECHO_NOTHING)mv $(wildcard $(THEOS_STAGING_DIR)/Applications/IAmLazy.app/Strings/*.lproj) "$(THEOS_STAGING_DIR)/Applications/IAmLazy.app/"$(ECHO_END)
+	$(ECHO_NOTHING)rm -r "$(THEOS_STAGING_DIR)/Applications/IAmLazy.app/Strings/"$(ECHO_END)
