@@ -46,6 +46,7 @@
 			[self displayErrorWithMessage:[[localize(@"Your device does not appear to be connected to the internet")
 											stringByAppendingString:@"\n\n"]
 											stringByAppendingString:localize(@"A network connection is required for standard backups to determine if a given package is bootstrap-vended or not")]];
+			completed(NO);
 			return;
 		}
 	}
@@ -70,6 +71,7 @@
 		[self displayErrorWithMessage:[[localize(@"Your device does not appear to be connected to the internet")
 										stringByAppendingString:@"\n\n"]
 										stringByAppendingString:localize(@"A network connection is required for restores so packages can be downloaded if need be")]];
+		completed(NO);
 		return;
 	}
 

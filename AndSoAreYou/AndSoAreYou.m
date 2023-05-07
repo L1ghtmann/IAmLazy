@@ -280,6 +280,7 @@ int main(int argc, char *argv[]){
 			}
 			else{
 				IALLogErr(@"%@.deb failed to build!", tweak);
+				return 1;
 			}
 		}
 		else if(strcmp(argv[1], "installDeb") == 0){

@@ -21,6 +21,7 @@
 	if(![fileManager fileExistsAtPath:backupDir]){
 		[_generalManager displayErrorWithMessage:localize(@"The backup dir does not exist!")];
 		completed(NO);
+		return;
 	}
 
 	[_generalManager updateItemProgress:0.2];
@@ -29,6 +30,7 @@
 	if(![[_generalManager getBackups] count]){
 		[_generalManager displayErrorWithMessage:localize(@"No backups were found!")];
 		completed(NO);
+		return;
 	}
 
 	[_generalManager updateItemProgress:0.4];
@@ -39,6 +41,7 @@
 		NSString *msg = [NSString stringWithFormat:localize(@"The target backup -- %@ -- could not be found!"), backupName];
 		[_generalManager displayErrorWithMessage:msg];
 		completed(NO);
+		return;
 	}
 
 	[_generalManager updateItemProgress:0.6];
@@ -50,13 +53,19 @@
 
 	[_generalManager updateItemProgress:0.8];
 
-	if(![_generalManager ensureBackupDirExists]) completed(NO);
+	if(![_generalManager ensureBackupDirExists]){
+		completed(NO);
+		return;
+	}
 
 	[_generalManager updateItemProgress:1];
 	[_generalManager updateItemStatus:0];
 
 	[_generalManager updateItemStatus:0.5];
-	if(![self extractArchive:target]) completed(NO);
+	if(![self extractArchive:target]){
+		completed(NO);
+		return;
+	}
 	[_generalManager updateItemStatus:1];
 
 	BOOL compatible = YES;
@@ -70,7 +79,10 @@
 		[_generalManager updateItemStatus:2];
 
 		[_generalManager updateItemStatus:2.5];
-		if(![self installDebs]) completed(NO);
+		if(![self installDebs]){
+			completed(NO);
+			return;
+		}
 		[_generalManager updateItemStatus:3];
 	}
 

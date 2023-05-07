@@ -19,7 +19,10 @@
 		[_generalManager cleanupTmp];
 	}
 
-	if(![_generalManager ensureBackupDirExists]) completed(NO);
+	if(![_generalManager ensureBackupDirExists]){
+		completed(NO);
+		return;
+	}
 
 	_filtered = filter;
 	[_generalManager updateItemStatus:-0.5];
@@ -28,6 +31,7 @@
 	if(![_controlFiles count]){
 		[_generalManager displayErrorWithMessage:localize(@"Failed to generate controls for installed packages!")];
 		completed(NO);
+		return;
 	}
 
 	if(!_filtered) _packages = [self getAllPackages];
@@ -35,6 +39,7 @@
 	if(![_packages count]){
 		[_generalManager displayErrorWithMessage:localize(@"Failed to generate list of packages!")];
 		completed(NO);
+		return;
 	}
 
 	[_generalManager updateItemStatus:0];
@@ -51,15 +56,22 @@
 															writeError.localizedDescription];
 			[_generalManager displayErrorWithMessage:msg];
 			completed(NO);
+			return;
 		}
 	}
 
 	[_generalManager updateItemStatus:0.5];
-	if(![self gatherFilesForPackages]) completed(NO);
+	if(![self gatherFilesForPackages]){
+		completed(NO);
+		return;
+	}
 	[_generalManager updateItemStatus:1];
 
 	[_generalManager updateItemStatus:1.5];
-	if(![self buildDebs]) completed(NO);
+	if(![self buildDebs]){
+		completed(NO);
+		return;
+	}
 	[_generalManager updateItemStatus:2];
 
 	// specify the bootstrap it was created on
@@ -67,7 +79,10 @@
 
 	// make archive of packages
 	[_generalManager updateItemStatus:2.5];
-	if(![self makeTarball]) completed(NO);
+	if(![self makeTarball]){
+		completed(NO);
+		return;
+	}
 	[_generalManager updateItemStatus:3];
 
 	completed(YES);
@@ -175,6 +190,7 @@
 	if(![packages count]){
 		IALLogErr(@"Packages array passed to Canister check is empty!");
 		callback(NO, nil);
+		return;
 	}
 
 	// Canister multi package GET
@@ -190,6 +206,7 @@
 		if(responseCode != 200){
 			IALLogErr(@"%@; HTTP status code: %li", [error localizedDescription], responseCode);
 			callback(NO, nil);
+			return;
 		}
 
 		// expected GET response is a JSON dict
@@ -228,21 +245,25 @@
 								else{
 									IALLogErr(@"Canister's %@'s repository's 'isBootstrap' was of unexpected type!", pkg);
 									callback(NO, nil);
+									return;
 								}
 							}
 							else{
 								IALLogErr(@"Canister's %@'s 'repository' was of unexpected type!", pkg);
 								callback(NO, nil);
+								return;
 							}
 						}
 						else{
 							IALLogErr(@"Canister's 'package' data object was of unexpected type!");
 							callback(NO, nil);
+							return;
 						}
 					}
 					else{
 						IALLogErr(@"Canister's data's components were of unexpected type!");
 						callback(NO, nil);
+						return;
 					}
 				}
 				callback(YES, filter);
@@ -250,11 +271,13 @@
 			else{
 				IALLogErr(@"Canister 'data' object was of unexpected type!");
 				callback(NO, nil);
+				return;
 			}
 		}
 		else{
 			IALLogErr(@"Canister's response was of unexpected type! Serialization error: %@", [jsonErr localizedDescription]);
 			callback(NO, nil);
+			return;
 		}
 	}] resume];
 }
