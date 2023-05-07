@@ -26,14 +26,14 @@
 	_controlFiles = [self getControlFiles];
 	if(![_controlFiles count]){
 		[_generalManager displayErrorWithMessage:localize(@"Failed to generate controls for installed packages!")];
-		return;
+		completed(NO);
 	}
 
 	if(!_filtered) _packages = [self getAllPackages];
 	else _packages = [self getUserPackages];
 	if(![_packages count]){
 		[_generalManager displayErrorWithMessage:localize(@"Failed to generate list of packages!")];
-		return;
+		completed(NO);
 	}
 
 	[_generalManager updateItemStatus:0];
@@ -49,16 +49,16 @@
 															tmpDir,
 															writeError.localizedDescription];
 			[_generalManager displayErrorWithMessage:msg];
-			return;
+			completed(NO);
 		}
 	}
 
 	[_generalManager updateItemStatus:0.5];
-	[self gatherFilesForPackages];
+	if(![self gatherFilesForPackages]) completed(NO);
 	[_generalManager updateItemStatus:1];
 
 	[_generalManager updateItemStatus:1.5];
-	if(![self buildDebs]) return;
+	if(![self buildDebs]) completed(NO);
 	[_generalManager updateItemStatus:2];
 
 	// specify the bootstrap it was created on
@@ -66,7 +66,7 @@
 
 	// make archive of packages
 	[_generalManager updateItemStatus:2.5];
-	[self makeTarball];
+	if(![self makeTarball]) completed(NO);
 	[_generalManager updateItemStatus:3];
 
 	completed(YES);
@@ -287,7 +287,7 @@
 	return packages;
 }
 
--(void)gatherFilesForPackages{
+-(BOOL)gatherFilesForPackages{
 	NSString *dpkgInfoDir = @"/var/lib/dpkg/info/";
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	NSCharacterSet *newlineChars = [NSCharacterSet newlineCharacterSet];
@@ -303,15 +303,16 @@
 		NSString *path = [[dpkgInfoDir stringByAppendingPathComponent:package] stringByAppendingPathExtension:@"list"];
 		NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&error];
 		if(error){
+			// TODO: Localize!
 			IALLogErr(@"Failed to get contents of %@! Info: %@", path, error.localizedDescription);
-			error = nil;
-			continue;
+			return NO;
 		}
 
 		NSArray *lines = [contents componentsSeparatedByCharactersInSet:newlineChars];
 		if(![lines count]){
+			// TODO: Localize!
 			IALLogErr(@"%@ has no content?!", path);
-			continue;
+			return NO;
 		}
 
 		// determine unique generic files and directories
@@ -324,9 +325,9 @@
 
 			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:line error:&error];
 			if(error){
+				// TODO: Localize!
 				IALLogErr(@"Failed to get attributes for %@! Info: %@", line, error.localizedDescription);
-				error = nil;
-				continue;
+				return NO;
 			}
 
 			// for categorization below
@@ -364,7 +365,7 @@
 		}
 
 		// put the files we want to copy into lists for easier writing
-		NSString *gFilePaths = [[genericFiles valueForKey:@"description"] componentsJoinedByString:@"\n"];
+		NSString *gFilePaths = [genericFiles componentsJoinedByString:@"\n"];
 		if(![gFilePaths length]){
 			IALLog(@"%@ has no generic files!", package);
 		}
@@ -372,9 +373,9 @@
 		// this is nice because it overwrites the file's content, unlike the write method from NSFileManager
 		[gFilePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&error];
 		if(error){
+			// TODO: Localize!
 			IALLogErr(@"Failed to write generic files to %@ for %@! Info: %@", filesToCopy, package, error.localizedDescription);
-			error = nil;
-			continue;
+			return NO;
 		}
 
 		// make dir to hold stuff for the tweak
@@ -382,16 +383,18 @@
 		if(![fileManager fileExistsAtPath:tweakDir]){
 			[fileManager createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&error];
 			if(error){
+				// TODO: Localize!
 				IALLogErr(@"Failed to create %@! Info: %@", tweakDir, error.localizedDescription);
-				error = nil;
-				continue;
+				return NO;
 			}
 		}
 
 		progress+=progressPerPart;
 		[_generalManager updateItemProgress:progress];
 
-		[self makeSubDirectories:directories inDirectory:tweakDir];
+		if(![self makeSubDirectories:directories inDirectory:tweakDir]){
+			return NO;
+		}
 
 		progress+=progressPerPart;
 		[_generalManager updateItemProgress:progress];
@@ -401,7 +404,9 @@
 		progress+=progressPerPart;
 		[_generalManager updateItemProgress:progress];
 
-		[self makeControlForPackage:package inDirectory:tweakDir];
+		if(![self makeControlForPackage:package inDirectory:tweakDir]){
+			return NO;
+		}
 
 		progress+=progressPerPart;
 		[_generalManager updateItemProgress:progress];
@@ -413,13 +418,12 @@
 	}
 
 	// remove list file now that we're done w it
-	[fileManager removeItemAtPath:filesToCopy error:&error];
-	if(error){
-		IALLogErr(@"Failed to delete %@! Info: %@", filesToCopy, error.localizedDescription);
-	}
+	[fileManager removeItemAtPath:filesToCopy error:nil];
+
+	return YES;
 }
 
--(void)makeSubDirectories:(NSArray<NSString *> *)directories inDirectory:(NSString *)tweakDir{
+-(BOOL)makeSubDirectories:(NSArray<NSString *> *)directories inDirectory:(NSString *)tweakDir{
 	NSError *writeError = nil;
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	for(NSString *dir in directories){
@@ -427,12 +431,13 @@
 		if(![fileManager fileExistsAtPath:path]){
 			[fileManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
+				// TODO: Localize!
 				IALLogErr(@"Failed to create %@! Info: %@", path, writeError.localizedDescription);
-				writeError = nil;
-				continue;
+				return NO;
 			}
 		}
 	}
+	return YES;
 }
 
 -(void)copyGenericFiles{
@@ -440,7 +445,7 @@
 	[_generalManager executeCommandAsRoot:@"cpGFiles"];
 }
 
--(void)makeControlForPackage:(NSString *)package inDirectory:(NSString *)tweakDir{
+-(BOOL)makeControlForPackage:(NSString *)package inDirectory:(NSString *)tweakDir{
 	// get info for package
 	NSString *pkg = [@"Package: " stringByAppendingString:package];
 	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH %@", pkg];
@@ -448,7 +453,7 @@
 	if(![relevantControls count]){
 		NSString *msg = [NSString stringWithFormat:localize(@"There appear to be no controls for %@?!"), package];
 		[_generalManager displayErrorWithMessage:msg];
-		return;
+		return NO;
 	}
 
 	NSString *theOne = [relevantControls firstObject];
@@ -459,7 +464,7 @@
 														stringByAppendingString:localize(@"%@ is blank?!")],
 														package];
 		[_generalManager displayErrorWithMessage:msg];
-		return;
+		return NO;
 	}
 
 	// ensure final newline (deb will fail to build if missing)
@@ -478,7 +483,7 @@
 															debian,
 															writeError.localizedDescription];
 			[_generalManager displayErrorWithMessage:msg];
-			return;
+			return NO;
 		}
 	}
 
@@ -486,6 +491,8 @@
 	NSData *data = [info dataUsingEncoding:NSUTF8StringEncoding];
 	NSString *control = [debian stringByAppendingPathComponent:@"control"];
 	[fileManager createFileAtPath:control contents:data attributes:nil];
+
+	return YES;
 }
 
 -(void)copyDEBIANFiles{
@@ -546,7 +553,7 @@
 	[fileManager createFileAtPath:file contents:nil attributes:nil];
 }
 
--(void)makeTarball{
+-(BOOL)makeTarball{
 	// craft new backup name and append the gzip tar extension
 	NSString *backupName;
 	NSString *new = [self craftNewBackupName];
@@ -554,11 +561,11 @@
 	else backupName = [new stringByAppendingPathExtension:@"tar.gz"];
 	NSString *backupPath = [backupDir stringByAppendingPathComponent:backupName];
 
-	write_archive([backupPath fileSystemRepresentation]);
-
-	[self verifyFileAtPath:backupPath];
-
+	BOOL status = write_archive([backupPath fileSystemRepresentation]);
+	BOOL status2 = [self verifyFileAtPath:backupPath];
 	[_generalManager cleanupTmp];
+	if(!status2) return status2;
+	else return status;
 }
 
 -(NSString *)craftNewBackupName{
@@ -580,12 +587,13 @@
 	return [NSString stringWithFormat:@"IAL-%@_%lu", [formatter stringFromDate:[NSDate date]], (latestBackup + 1)];
 }
 
--(void)verifyFileAtPath:(NSString *)filePath{
+-(BOOL)verifyFileAtPath:(NSString *)filePath{
 	if(![[NSFileManager defaultManager] fileExistsAtPath:filePath]){
 		NSString *msg = [NSString stringWithFormat:@"%@ DNE!", filePath];
 		[_generalManager displayErrorWithMessage:msg];
-		return;
+		return NO;
 	}
+	return YES;
 }
 
 @end

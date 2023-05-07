@@ -37,7 +37,7 @@ int get_file_count(){
 	return file_count;
 }
 
-void write_archive(const char *outname){
+bool write_archive(const char *outname){
 	struct archive *a;
 	struct archive_entry *entry;
 	struct stat st;
@@ -47,32 +47,32 @@ void write_archive(const char *outname){
 
 	int file_count = get_file_count();
 	if(file_count == 0){
-		return;
+		return false;
 	}
 
 	struct dirent *ent;
 	DIR *directory = opendir("/tmp/me.lightmann.iamlazy/");
 	if(!directory){
-		return;
+		return false;
 	}
 
 	char **files = malloc(file_count * sizeof(char *));
 	if(!files){
 		closedir(directory);
-		return;
+		return false;
 	}
 
 	int count = 0;
 	size_t IAL = strlen("me.lightmann.iamlazy/");
 	while((ent = readdir(directory))){
 		if(count > file_count){
-			break;
+			return false;
 		}
 
 		// if entry is a regular file
 		if(ent->d_type == DT_REG){
 			size_t FILE = strlen(ent->d_name);
-			if((SIZE_MAX - (IAL + 1)) < FILE){
+			if(FILE > (SIZE_MAX - (IAL + 1))){
 				continue;
 			}
 
@@ -93,7 +93,7 @@ void write_archive(const char *outname){
 	int ret = chdir("/tmp/");
 	if(ret != 0){
 		free(files);
-		return;
+		return false;
 	}
 
 	a = archive_write_new();
@@ -142,6 +142,7 @@ void write_archive(const char *outname){
 	free(files);
 	archive_write_close(a);
 	archive_write_free(a);
+	return true;
 }
 
 int copy_data(struct archive *ar, struct archive *aw){
@@ -167,7 +168,7 @@ int copy_data(struct archive *ar, struct archive *aw){
 	}
 }
 
-void extract_archive(const char *filename){
+bool extract_archive(const char *filename){
 	struct archive *a;
 	struct archive *ext;
 	struct archive_entry *entry;
@@ -183,7 +184,7 @@ void extract_archive(const char *filename){
 	// extract location
 	int ret = chdir("/tmp/");
 	if(ret != 0){
-		return;
+		return false;
 	}
 
 	// item count read
@@ -191,7 +192,7 @@ void extract_archive(const char *filename){
 	archive_read_support_format_tar(a);
 	archive_read_support_filter_gzip(a);
 	if((r = archive_read_open_filename(a, filename, 10240))){
-		return;
+		return false;
 	}
 
 	// get item count
@@ -214,7 +215,7 @@ void extract_archive(const char *filename){
 	archive_write_disk_set_options(ext, flags);
 	archive_write_disk_set_standard_lookup(ext);
 	if((r = archive_read_open_filename(a, filename, 10240))){
-		return;
+		return false;
 	}
 
 	// unpack
@@ -233,7 +234,7 @@ void extract_archive(const char *filename){
 			IALLogErr(@"%s", archive_error_string(a));
 		}
 		if(r < ARCHIVE_WARN){
-			return;
+			return false;
 		}
 
 		r = archive_write_header(ext, entry);
@@ -246,7 +247,7 @@ void extract_archive(const char *filename){
 				IALLogErr(@"%s", archive_error_string(ext));
 			}
 			if(r < ARCHIVE_WARN){
-				return;
+				return false;
 			}
 		}
 
@@ -255,11 +256,12 @@ void extract_archive(const char *filename){
 			IALLogErr(@"%s", archive_error_string(ext));
 		}
 		if(r < ARCHIVE_WARN){
-			return;
+			return false;
 		}
 	}
 	archive_read_close(a);
 	archive_read_free(a);
 	archive_write_close(ext);
 	archive_write_free(ext);
+	return true;
 }
