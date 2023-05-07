@@ -19,7 +19,8 @@
 		[_generalManager cleanupTmp];
 	}
 
-	[_generalManager ensureBackupDirExists];
+	if(![_generalManager ensureBackupDirExists]) completed(NO);
+
 	_filtered = filter;
 	[_generalManager updateItemStatus:-0.5];
 

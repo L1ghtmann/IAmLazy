@@ -20,7 +20,7 @@
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if(![fileManager fileExistsAtPath:backupDir]){
 		[_generalManager displayErrorWithMessage:localize(@"The backup dir does not exist!")];
-		return;
+		completed(NO);
 	}
 
 	[_generalManager updateItemProgress:0.2];
@@ -28,7 +28,7 @@
 	// check for backups
 	if(![[_generalManager getBackups] count]){
 		[_generalManager displayErrorWithMessage:localize(@"No backups were found!")];
-		return;
+		completed(NO);
 	}
 
 	[_generalManager updateItemProgress:0.4];
@@ -38,7 +38,7 @@
 	if(![fileManager fileExistsAtPath:target]){
 		NSString *msg = [NSString stringWithFormat:localize(@"The target backup -- %@ -- could not be found!"), backupName];
 		[_generalManager displayErrorWithMessage:msg];
-		return;
+		completed(NO);
 	}
 
 	[_generalManager updateItemProgress:0.6];
@@ -50,13 +50,13 @@
 
 	[_generalManager updateItemProgress:0.8];
 
-	[_generalManager ensureBackupDirExists];
+	if(![_generalManager ensureBackupDirExists]) completed(NO);
 
 	[_generalManager updateItemProgress:1];
 	[_generalManager updateItemStatus:0];
 
 	[_generalManager updateItemStatus:0.5];
-	[self extractArchive:target];
+	if(![self extractArchive:target]) completed(NO);
 	[_generalManager updateItemStatus:1];
 
 	BOOL compatible = YES;
@@ -70,7 +70,7 @@
 		[_generalManager updateItemStatus:2];
 
 		[_generalManager updateItemStatus:2.5];
-		[self installDebs];
+		if(![self installDebs]) completed(NO);
 		[_generalManager updateItemStatus:3];
 	}
 
@@ -78,8 +78,8 @@
 	completed(compatible);
 }
 
--(void)extractArchive:(NSString *)backupPath{
-	extract_archive([backupPath fileSystemRepresentation]);
+-(BOOL)extractArchive:(NSString *)backupPath{
+	return extract_archive([backupPath fileSystemRepresentation]);
 }
 
 -(BOOL)verifyBootstrapForBackup:(NSString *)targetBackup{
@@ -120,7 +120,7 @@
 	[_generalManager updateItemProgress:1];
 }
 
--(void)installDebs{
+-(BOOL)installDebs{
 	// get debs from tmpDir
 	NSError *readError = nil;
 	NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -132,12 +132,12 @@
 														tmpDir,
 														readError.localizedDescription];
 		[_generalManager displayErrorWithMessage:msg];
-		return;
+		return NO;
 	}
 	else if(![tmpDirContents count]){
 		NSString *msg = [NSString stringWithFormat:localize(@"%@ is empty?!"), tmpDir];
 		[_generalManager displayErrorWithMessage:msg];
-		return;
+		return NO;
 	}
 
 	NSMutableArray *debs = [NSMutableArray new];
@@ -146,8 +146,8 @@
 	for(NSString *item in tmpDirContents){
 		BOOL valid = ![[item stringByTrimmingCharactersInSet:validChars] length];
 		if(valid){
-			NSString *path = [tmpDir stringByAppendingPathComponent:item];
 			if([[item pathExtension] isEqualToString:@"deb"]){
+				NSString *path = [tmpDir stringByAppendingPathComponent:item];
 				[debs addObject:path];
 			}
 		}
@@ -155,7 +155,7 @@
 	if(![debs count]){
 		NSString *msg = [NSString stringWithFormat:localize(@"%@ has no debs!"), tmpDir];
 		[_generalManager displayErrorWithMessage:msg];
-		return;
+		return NO;
 	}
 
 	NSUInteger total = [debs count];
@@ -168,6 +168,8 @@
 		progress+=progressPerPart;
 		[_generalManager updateItemProgress:progress];
 	}
+
+	return YES;
 }
 
 @end

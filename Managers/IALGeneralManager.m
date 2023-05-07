@@ -86,7 +86,7 @@
 	});
 }
 
--(void)ensureBackupDirExists{
+-(BOOL)ensureBackupDirExists{
 	// ensure ~/Documents/ exists
 	NSError *writeError = nil;
 	NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -100,7 +100,7 @@
 															documentsDir,
 															writeError.localizedDescription];
 			[self displayErrorWithMessage:msg];
-			return;
+			return NO;
 		}
 	}
 
@@ -111,7 +111,7 @@
 														stringByAppendingString:localize(@"Please ensure that the directory's owner is mobile and not root.")],
 														documentsDir];
 		[self displayErrorWithMessage:msg];
-		return;
+		return NO;
 	}
 
 	// make backup dir if it doesn't exist already
@@ -124,9 +124,11 @@
 															backupDir,
 															writeError.localizedDescription];
 			[self displayErrorWithMessage:msg];
-			return;
+			return NO;
 		}
 	}
+
+	return YES;
 }
 
 -(void)ensureUsableDpkgLock{
@@ -194,9 +196,9 @@
 
 	NSSortDescriptor *backupVerCompare = [NSSortDescriptor sortDescriptorWithKey:nil ascending:NO comparator:^NSComparisonResult(NSString *str1, NSString *str2){
 		NSCharacterSet *nonNumericChars = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
-
 		NSMutableArray *str1Numbers = [[str1 componentsSeparatedByCharactersInSet:nonNumericChars] mutableCopy];
 		NSMutableArray *str2Numbers = [[str2 componentsSeparatedByCharactersInSet:nonNumericChars] mutableCopy];
+
 		[str1Numbers removeObject:@""];
 		[str2Numbers removeObject:@""];
 

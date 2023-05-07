@@ -10,7 +10,7 @@
 +(instancetype)sharedManager;
 -(void)makeBackupWithFilter:(BOOL)filter andCompletion:(void (^)(BOOL))completed;
 -(void)restoreFromBackup:(NSString *)backupName withCompletion:(void (^)(BOOL))completed;
--(void)ensureBackupDirExists;
+-(BOOL)ensureBackupDirExists;
 -(void)cleanupTmp;
 -(void)updateAPT;
 -(NSArray<NSString *> *)getBackups;

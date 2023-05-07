@@ -21,6 +21,7 @@ NSString *getCurrentPackage(){
 		return @"err";
 	}
 	else if(![tmpDirFiles count]){
+		IALLogErr(@"%@ is empty?!", tmpDir);
 		return @"err";
 	}
 
@@ -51,6 +52,9 @@ NSString *getCurrentPackage(){
 	}
 
 	NSArray *dates = [dirsAndCreationDates allKeys];
+	if(![dates count]){
+		return @"err";
+	}
 	NSSortDescriptor *compare = [NSSortDescriptor sortDescriptorWithKey:nil ascending:NO selector:@selector(compare:)];
 	NSArray *sortedDates = [dates sortedArrayUsingDescriptors:@[compare]];
 	return [dirsAndCreationDates objectForKey:[sortedDates firstObject]];
@@ -114,7 +118,7 @@ int main(int argc, char *argv[]){
 			};
 			task(args2);
 
-			IALLog(@"dpkg should be fixed!");
+			IALLog(@"dpkg should be fixed.");
 		}
 		else if(strcmp(argv[1], "cleanTmp") == 0){
 			NSError *deleteError = nil;
@@ -133,7 +137,7 @@ int main(int argc, char *argv[]){
 			};
 			task(args);
 
-			IALLog(@"apt sources up-to-date!");
+			IALLog(@"apt sources up-to-date.");
 		}
 		else if(strcmp(argv[1], "cpGFiles") == 0){
 			// recreate directory structure and copy files
@@ -170,8 +174,7 @@ int main(int argc, char *argv[]){
 				[fileManager createDirectoryAtPath:newPath withIntermediateDirectories:YES attributes:nil error:&error];
 				if(error){
 					IALLogErr(@"Failed to create %@! Info: %@", newPath, error.localizedDescription);
-					error = nil;
-					continue;
+					return 1;
 				}
 
 				// 're-enable' tweaks that've been 'disabled' with iCleaner Pro
@@ -264,8 +267,8 @@ int main(int argc, char *argv[]){
 			};
 			task(args);
 
-			NSError *deleteError = nil;
 			// delete dir with files now that deb has been built
+			NSError *deleteError = nil;
 			NSFileManager *fileManager = [NSFileManager defaultManager];
 			[fileManager removeItemAtPath:tweak error:&deleteError];
 			if(deleteError){
@@ -316,20 +319,21 @@ int main(int argc, char *argv[]){
 				end = YES;
 			}
 
-			NSString *deb = [debs firstObject];
 			// there's an issue on u0 where the IAL
 			// app may be killed (w/o a crash log)
 			// this leaves the AndSoAreYou child process
 			// running, but we don't want that so we check
 			// to see if the IAL process is alive and, if
 			// not, finish the current package and return
-			// TODO: figure out and fix
+			// TODO: figure out and fix(?)
 			BOOL alive = !kill(ppid, 0);
 			if(!alive){
 				IALLogErr(@"IAL process was killed. Returning.");
 				return 1;
 			}
 
+			NSString *deb = [debs firstObject];
+			IALLog(@"Attempting install of %@", deb);
 			const char *args[] = {
 				"/usr/bin/dpkg",
 				"-i",
@@ -346,6 +350,8 @@ int main(int argc, char *argv[]){
 			}
 
 			if(end){
+				IALLog(@"Done installing packages.");
+
 				// resolve any lingering things
 				// (e.g., conflicts, partial installs due to dependencies, etc)
 				const char *args[] = {
