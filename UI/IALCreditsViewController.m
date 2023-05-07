@@ -82,6 +82,7 @@
 		// readme credits
 		@"Apple" : @"Reachability project",
 		@"aesign_" : @"Design inspiration (re: Electra)",
+		@"Canister" : @"Bootstrap package identification",
 		@"libarchive" : @"Base libarchive methods",
 		@"ScrawlingAfterlife" : @"Icon artwork"
 	};
