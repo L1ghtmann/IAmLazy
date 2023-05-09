@@ -320,13 +320,18 @@ int main(int argc, char *argv[]){
 				end = YES;
 			}
 
-			// there's an issue on u0 where the IAL
-			// app may be killed (w/o a crash log)
-			// this leaves the AndSoAreYou child process
-			// running, but we don't want that so we check
-			// to see if the IAL process is alive and, if
-			// not, finish the current package and return
-			// TODO: figure out and fix(?)
+			// There seems to be an issue with uicache on u0 where
+			// it will kill the IAL process (w/o a crash log):
+			//	- uicache requests "container lookup" >
+			//	- lsd parses bundle info and regsiters something >
+			//	- frontboard gets notification of newly "installed" app >
+			//	- springboard terminates process via runningboardd in
+			//		order to "uninstall" (i.e., replace) the container
+			//
+			// Have found this occurs occasionally when called from a postinst
+			// and will leave the AndSoAreYou child process running.
+			// We don't want that, so check to see if the IAL process is
+			// alive and, if not, finish the current package and return
 			BOOL alive = !kill(ppid, 0);
 			if(!alive){
 				IALLogErr(@"IAL process was killed. Returning.");
