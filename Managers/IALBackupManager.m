@@ -327,15 +327,19 @@
 		NSString *path = [[dpkgInfoDir stringByAppendingPathComponent:package] stringByAppendingPathExtension:@"list"];
 		NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&error];
 		if(error){
-			// TODO: Localize!
-			IALLogErr(@"Failed to get contents of %@! Info: %@", path, error.localizedDescription);
+			NSString *msg = [NSString stringWithFormat:[[localize(@"Failed to get contents of %@!")
+															stringByAppendingString:@" "]
+															stringByAppendingString:localize(@"Info: %@")],
+															path,
+															error.localizedDescription];
+			[_generalManager displayErrorWithMessage:msg];
 			return NO;
 		}
 
 		NSArray *lines = [contents componentsSeparatedByCharactersInSet:newlineChars];
 		if(![lines count]){
-			// TODO: Localize!
-			IALLogErr(@"%@ has no content?!", path);
+			NSString *msg = [NSString stringWithFormat:localize(@"%@ has no contents!"), path];
+			[_generalManager displayErrorWithMessage:msg];
 			return NO;
 		}
 
@@ -349,8 +353,12 @@
 
 			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:line error:&error];
 			if(error){
-				// TODO: Localize!
-				IALLogErr(@"Failed to get attributes for %@! Info: %@", line, error.localizedDescription);
+				NSString *msg = [NSString stringWithFormat:[[localize(@"Failed to get attributes for %@!")
+																stringByAppendingString:@" "]
+																stringByAppendingString:localize(@"Info: %@")],
+																line,
+																error.localizedDescription];
+				[_generalManager displayErrorWithMessage:msg];
 				return NO;
 			}
 
@@ -397,8 +405,13 @@
 		// this is nice because it overwrites the file's content, unlike the write method from NSFileManager
 		[gFilePaths writeToFile:filesToCopy atomically:YES encoding:NSUTF8StringEncoding error:&error];
 		if(error){
-			// TODO: Localize!
-			IALLogErr(@"Failed to write generic files to %@ for %@! Info: %@", filesToCopy, package, error.localizedDescription);
+			NSString *msg = [NSString stringWithFormat:[[localize(@"Failed to write generic files to %@ for %@!")
+															stringByAppendingString:@" "]
+															stringByAppendingString:localize(@"Info: %@")],
+															filesToCopy,
+															package,
+															error.localizedDescription];
+			[_generalManager displayErrorWithMessage:msg];
 			return NO;
 		}
 
@@ -407,8 +420,12 @@
 		if(![fileManager fileExistsAtPath:tweakDir]){
 			[fileManager createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&error];
 			if(error){
-				// TODO: Localize!
-				IALLogErr(@"Failed to create %@! Info: %@", tweakDir, error.localizedDescription);
+				NSString *msg = [NSString stringWithFormat:[[localize(@"Failed to create %@!")
+																stringByAppendingString:@" "]
+																stringByAppendingString:localize(@"Info: %@")],
+																tweakDir,
+																error.localizedDescription];
+				[_generalManager displayErrorWithMessage:msg];
 				return NO;
 			}
 		}
@@ -455,8 +472,12 @@
 		if(![fileManager fileExistsAtPath:path]){
 			[fileManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&writeError];
 			if(writeError){
-				// TODO: Localize!
-				IALLogErr(@"Failed to create %@! Info: %@", path, writeError.localizedDescription);
+				NSString *msg = [NSString stringWithFormat:[[localize(@"Failed to create %@!")
+																stringByAppendingString:@" "]
+																stringByAppendingString:localize(@"Info: %@")],
+																path,
+																writeError.localizedDescription];
+				[_generalManager displayErrorWithMessage:msg];
 				return NO;
 			}
 		}
