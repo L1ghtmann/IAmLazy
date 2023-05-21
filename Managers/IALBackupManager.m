@@ -193,8 +193,14 @@
 		return;
 	}
 
+	// Define proper HTTP enconding spec
+	// https://github.com/daltoniam/swifthttp/issues/178
+	NSMutableCharacterSet *set = [NSMutableCharacterSet new];
+	[set formUnionWithCharacterSet:[NSCharacterSet URLQueryAllowedCharacterSet]];
+	[set removeCharactersInString:@"[].:/?&=;+!@#$()',*\""]; // HTTP disallowed
+
 	// Canister multi package GET
-	NSString *ids = [[packages componentsJoinedByString:@","] stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+	NSString *ids = [[packages componentsJoinedByString:@","] stringByAddingPercentEncodingWithAllowedCharacters:set];
 	NSString *reqStr = [@"https://api.canister.me/v2/jailbreak/package/multi?ids=" stringByAppendingString:ids];
 	NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
 	[request setURL:[NSURL URLWithString:reqStr]];
