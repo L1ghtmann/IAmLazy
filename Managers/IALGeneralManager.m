@@ -157,7 +157,7 @@
 
 			if(![self executeCommandAsRoot:@"unlockDpkg"]){
 				// TODO: localize
-				[self displayErrorWithMessage:localize(@"Failed unlock dpkg!")];
+				[self displayErrorWithMessage:localize(@"Failed to free dpkg lock!")];
 			}
 		}
 	}
@@ -168,7 +168,7 @@
 	BOOL ret = [self executeCommandAsRoot:@"cleanTmp"];
 	if(!ret){
 		// TODO: localize
-		NSString *msg = [NSString stringWithFormat:localize(@"Failed cleanup %@!"), tmpDir];
+		NSString *msg = [NSString stringWithFormat:localize(@"Failed to cleanup %@!"), tmpDir];
 		[self displayErrorWithMessage:msg];
 	}
 	return ret;
@@ -179,7 +179,7 @@
 	BOOL ret = [self executeCommandAsRoot:@"updateAPT"];
 	if(!ret){
 		// TODO: localize
-		[self displayErrorWithMessage:localize(@"Failed update APT sources!")];
+		[self displayErrorWithMessage:localize(@"Failed to update APT sources!")];
 	}
 	return ret;
 }

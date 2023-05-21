@@ -188,7 +188,8 @@
 		BOOL ret = [_generalManager executeCommandAsRoot:@"installDeb"];
 		if(!ret){
 			// TODO: localize
-			[_generalManager displayErrorWithMessage:localize(@"Failed to install debs!")];
+			NSString *msg = [NSString stringWithFormat:localize(@"Failed to install %@!"), debs[i]];
+			[_generalManager displayErrorWithMessage:msg];
 			return NO;
 		}
 
