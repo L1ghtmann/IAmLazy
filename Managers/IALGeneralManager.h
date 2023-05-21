@@ -11,10 +11,10 @@
 -(void)makeBackupWithFilter:(BOOL)filter andCompletion:(void (^)(BOOL))completed;
 -(void)restoreFromBackup:(NSString *)backupName withCompletion:(void (^)(BOOL))completed;
 -(BOOL)ensureBackupDirExists;
--(void)cleanupTmp;
--(void)updateAPT;
+-(BOOL)cleanupTmp;
+-(BOOL)updateAPT;
 -(NSArray<NSString *> *)getBackups;
--(void)executeCommandAsRoot:(NSString *)cmd;
+-(BOOL)executeCommandAsRoot:(NSString *)cmd;
 -(void)updateItemStatus:(CGFloat)status;
 -(void)updateItemProgress:(CGFloat)status;
 -(void)displayErrorWithMessage:(NSString *)msg;

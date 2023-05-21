@@ -107,7 +107,11 @@ int main(int argc, char *argv[]){
 				NULL,
 				NULL
 			};
-			task(args);
+			int ret = task(args);
+			if(ret != 0){
+				IALLogErr(@"unlockDpkg failed: %d", ret);
+				return 1;
+			}
 
 			// configure any unconfigured packages
 			const char *args2[] = {
@@ -116,8 +120,11 @@ int main(int argc, char *argv[]){
 				"-a",
 				NULL
 			};
-			task(args2);
-
+			ret = task(args2);
+			if(ret != 0){
+				IALLogErr(@"unlockDpkg failed: %d", ret);
+				return 1;
+			}
 			IALLog(@"dpkg should be fixed.");
 		}
 		else if(strcmp(argv[1], "cleanTmp") == 0){
@@ -135,8 +142,11 @@ int main(int argc, char *argv[]){
 				"--allow-insecure-repositories",
 				NULL
 			};
-			task(args);
-
+			int ret = task(args);
+			if(ret != 0){
+				IALLogErr(@"updateApt failed: %d", ret);
+				return 1;
+			}
 			IALLog(@"apt sources up-to-date.");
 		}
 		else if(strcmp(argv[1], "cpGFiles") == 0){
@@ -262,10 +272,14 @@ int main(int argc, char *argv[]){
 				"-b",
 				"-Zgzip",
 				"-z9",
-				[tweak UTF8String],
+				[tweak fileSystemRepresentation],
 				NULL
 			};
-			task(args);
+			int ret = task(args);
+			if(ret != 0){
+				IALLogErr(@"buildDeb failed: %d for: %@", ret, current);
+				return 1;
+			}
 
 			// delete dir with files now that deb has been built
 			NSError *deleteError = nil;
@@ -275,13 +289,11 @@ int main(int argc, char *argv[]){
 				IALLogErr(@"Failed to delete %@! Info: %@", tweak, deleteError.localizedDescription);
 			}
 
-			if([fileManager fileExistsAtPath:[tweak stringByAppendingPathExtension:@"deb"]]){
-				IALLog(@"%@.deb created successfully!", tweak);
-			}
-			else{
+			if(![fileManager fileExistsAtPath:[tweak stringByAppendingPathExtension:@"deb"]]){
 				IALLogErr(@"%@.deb failed to build!", tweak);
 				return 1;
 			}
+			IALLog(@"%@.deb created successfully!", tweak);
 		}
 		else if(strcmp(argv[1], "installDeb") == 0){
 			// get debs from tmpDir
@@ -343,10 +355,15 @@ int main(int argc, char *argv[]){
 			const char *args[] = {
 				"/usr/bin/dpkg",
 				"-i",
-				[deb UTF8String],
+				[deb fileSystemRepresentation],
 				NULL
 			};
-			task(args);
+			int ret = task(args);
+			if(ret != 0){
+				IALLogErr(@"installDeb failed: %d for: %@", ret, deb);
+				return 1;
+			}
+			IALLog(@"Installed %@", deb);
 
 			// delete deb now that it's been installed
 			[fileManager removeItemAtPath:deb error:&error];
@@ -367,7 +384,11 @@ int main(int argc, char *argv[]){
 					"--allow-unauthenticated",
 					NULL
 				};
-				task(args);
+				int ret = task(args);
+				if(ret != 0){
+					IALLogErr(@"installDeb failed: %d for apt fixup.", ret);
+					return 1;
+				}
 
 				// ensure everything that can be configured is
 				const char *args2[] = {
@@ -376,8 +397,11 @@ int main(int argc, char *argv[]){
 					"-a",
 					NULL
 				};
-				task(args2);
-
+				ret = task(args2);
+				if(ret != 0){
+					IALLogErr(@"installDeb failed: %d for dpkg configure.", ret);
+					return 1;
+				}
 				IALLog(@"apt fixed and dpkg configured (just in case).");
 			}
 		}

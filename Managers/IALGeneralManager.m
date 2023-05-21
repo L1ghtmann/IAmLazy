@@ -6,6 +6,7 @@
 //
 
 #import "../Reachability/Reachability.h"
+#import <AudioToolbox/AudioServices.h>
 #import "IALGeneralManager.h"
 #import "IALRestoreManager.h"
 #import "IALBackupManager.h"
@@ -154,19 +155,33 @@
 		if([[contentsString componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]] count] > 0){
 			IALLog(@"dpkg appears to have been interrupted. Fixing now...");
 
-			[self executeCommandAsRoot:@"unlockDpkg"];
+			if(![self executeCommandAsRoot:@"unlockDpkg"]){
+				// TODO: localize
+				[self displayErrorWithMessage:localize(@"Failed unlock dpkg!")];
+			}
 		}
 	}
 }
 
--(void)cleanupTmp{
+-(BOOL)cleanupTmp{
 	// has to be done as root since some files have root ownership
-	[self executeCommandAsRoot:@"cleanTmp"];
+	BOOL ret = [self executeCommandAsRoot:@"cleanTmp"];
+	if(!ret){
+		// TODO: localize
+		NSString *msg = [NSString stringWithFormat:localize(@"Failed cleanup %@!"), tmpDir];
+		[self displayErrorWithMessage:msg];
+	}
+	return ret;
 }
 
--(void)updateAPT{
-	// updating apt's repos requires root
-	[self executeCommandAsRoot:@"updateAPT"];
+-(BOOL)updateAPT{
+	// updating apt sources requires root
+	BOOL ret = [self executeCommandAsRoot:@"updateAPT"];
+	if(!ret){
+		// TODO: localize
+		[self displayErrorWithMessage:localize(@"Failed update APT sources!")];
+	}
+	return ret;
 }
 
 -(NSArray<NSString *> *)getBackups{
@@ -213,7 +228,7 @@
 	return [newSortedBackups arrayByAddingObjectsFromArray:legacySortedBackups];
 }
 
--(void)executeCommandAsRoot:(NSString *)cmd{
+-(BOOL)executeCommandAsRoot:(NSString *)cmd{
 	NSCharacterSet *alphaChars = [NSCharacterSet alphanumericCharacterSet];
 	BOOL valid = ![[cmd stringByTrimmingCharactersInSet:alphaChars] length];
 	if(valid){
@@ -223,8 +238,14 @@
 			NULL,
 			NULL
 		};
-		task(args);
+		int ret = task(args);
+		if(ret != 0){
+			IALLogErr(@"%@ failed: %d", cmd, ret);
+			return NO;
+		}
+		return YES;
 	}
+	return NO;
 }
 
 -(void)updateItemStatus:(CGFloat)status{
@@ -274,6 +295,8 @@
 		}];
 
 		IALLogErr(@"%@", [msg stringByReplacingOccurrencesOfString:@"\n" withString:@" "]);
+
+		AudioServicesPlaySystemSound(1107); // error
 	});
 }
 

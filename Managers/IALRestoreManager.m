@@ -48,7 +48,10 @@
 
 	// check for old tmp files
 	if([fileManager fileExistsAtPath:tmpDir]){
-		[_generalManager cleanupTmp];
+		if(![_generalManager cleanupTmp]){
+			completed(NO);
+			return;
+		}
 	}
 
 	[_generalManager updateItemProgress:0.8];
@@ -75,7 +78,10 @@
 
 	if(compatible){
 		[_generalManager updateItemStatus:1.5];
-		[self updateAPT];
+		if(![self updateAPT]){
+			completed(NO);
+			return;
+		}
 		[_generalManager updateItemStatus:2];
 
 		[_generalManager updateItemStatus:2.5];
@@ -86,7 +92,10 @@
 		[_generalManager updateItemStatus:3];
 	}
 
-	[_generalManager cleanupTmp];
+	if(![_generalManager cleanupTmp]){
+		completed(NO);
+		return;
+	}
 	completed(compatible);
 }
 
@@ -125,11 +134,12 @@
 	return check;
 }
 
--(void)updateAPT{
+-(BOOL)updateAPT{
 	// ensure bootstrap repos' package files are up-to-date
 	[_generalManager updateItemProgress:0];
-	[_generalManager updateAPT];
+	BOOL ret = [_generalManager updateAPT];
 	[_generalManager updateItemProgress:1];
+	return ret;
 }
 
 -(BOOL)installDebs{
@@ -175,7 +185,12 @@
 	CGFloat progress = 0.0;
 	for(int i = 0; i < total; i++){
 		// installing via apt/dpkg requires root
-		[_generalManager executeCommandAsRoot:@"installDeb"];
+		BOOL ret = [_generalManager executeCommandAsRoot:@"installDeb"];
+		if(!ret){
+			// TODO: localize
+			[_generalManager displayErrorWithMessage:localize(@"Failed to install debs!")];
+			return NO;
+		}
 
 		progress+=progressPerPart;
 		[_generalManager updateItemProgress:progress];

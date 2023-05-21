@@ -6,7 +6,7 @@
 //
 
 #import "../Managers/IALGeneralManager.h"
-#import <AudioToolbox/AudioToolbox.h>
+#import <AudioToolbox/AudioServices.h>
 #import "IALProgressViewController.h"
 #import "IALCreditsViewController.h"
 #import "IALBackupsViewController.h"
@@ -533,7 +533,7 @@
 #pragma mark Popups
 
 -(void)popPostBackup{
-	AudioServicesPlaySystemSound(4095); // vibration
+	AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
 
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy"
@@ -571,7 +571,7 @@
 }
 
 -(void)popPostRestore{
-	AudioServicesPlaySystemSound(4095);
+	AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
 
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy"

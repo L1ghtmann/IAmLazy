@@ -16,7 +16,10 @@
 	// check for old tmp files
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if([fileManager fileExistsAtPath:tmpDir]){
-		[_generalManager cleanupTmp];
+		if(![_generalManager cleanupTmp]){
+			completed(NO);
+			return;
+		}
 	}
 
 	if(![_generalManager ensureBackupDirExists]){
@@ -446,7 +449,9 @@
 		progress+=progressPerPart;
 		[_generalManager updateItemProgress:progress];
 
-		[self copyGenericFiles];
+		if(![self copyGenericFiles]){
+			return NO;
+		}
 
 		progress+=progressPerPart;
 		[_generalManager updateItemProgress:progress];
@@ -458,7 +463,9 @@
 		progress+=progressPerPart;
 		[_generalManager updateItemProgress:progress];
 
-		[self copyDEBIANFiles];
+		if(![self copyDEBIANFiles]){
+			return NO;
+		}
 
 		progress+=progressPerPart;
 		[_generalManager updateItemProgress:progress];
@@ -491,9 +498,14 @@
 	return YES;
 }
 
--(void)copyGenericFiles{
+-(BOOL)copyGenericFiles{
 	// have to run as root in order to retain file attributes (ownership, etc)
-	[_generalManager executeCommandAsRoot:@"cpGFiles"];
+	BOOL ret = [_generalManager executeCommandAsRoot:@"cpGFiles"];
+	if(!ret){
+		// TODO: localize
+		[_generalManager displayErrorWithMessage:localize(@"Failed copy generic files!")];
+	}
+	return ret;
 }
 
 -(BOOL)makeControlForPackage:(NSString *)package inDirectory:(NSString *)tweakDir{
@@ -546,9 +558,14 @@
 	return YES;
 }
 
--(void)copyDEBIANFiles{
+-(BOOL)copyDEBIANFiles{
 	// have to copy as root in order to retain file attributes (ownership, etc)
-	[_generalManager executeCommandAsRoot:@"cpDFiles"];
+	BOOL ret = [_generalManager executeCommandAsRoot:@"cpDFiles"];
+	if(!ret){
+		// TODO: localize
+		[_generalManager displayErrorWithMessage:localize(@"Failed copy DEBIAN files!")];
+	}
+	return ret;
 }
 
 -(BOOL)buildDebs{
@@ -557,7 +574,12 @@
 	CGFloat progress = 0.0;
 	for(int i = 0; i < total; i++){
 		// have to run as root in order to retain file attributes (ownership, etc)
-		[_generalManager executeCommandAsRoot:@"buildDeb"];
+		BOOL ret = [_generalManager executeCommandAsRoot:@"buildDeb"];
+		if(!ret){
+			// TODO: localize
+			[_generalManager displayErrorWithMessage:localize(@"Failed to build debs!")];
+			return NO;
+		}
 
 		progress+=progressPerPart;
 		[_generalManager updateItemProgress:progress];
