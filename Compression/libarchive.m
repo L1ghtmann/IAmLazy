@@ -90,8 +90,7 @@ bool write_archive(const char *outname){
 
 	// change CWD to avoid
 	// including it in archive
-	int ret = chdir("/tmp/");
-	if(ret != 0){
+	if(chdir("/tmp/") != 0){
 		free(files);
 		return false;
 	}
@@ -182,8 +181,7 @@ bool extract_archive(const char *filename){
 	flags |= ARCHIVE_EXTRACT_FFLAGS;
 
 	// extract location
-	int ret = chdir("/tmp/");
-	if(ret != 0){
+	if(chdir("/tmp/") != 0){
 		return false;
 	}
 

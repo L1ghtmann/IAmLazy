@@ -584,8 +584,6 @@
 								handler:^(UIAlertAction *action){
 									const char *args[] = {
 										"/usr/bin/sbreload",
-										NULL,
-										NULL,
 										NULL
 									};
 									task(args);

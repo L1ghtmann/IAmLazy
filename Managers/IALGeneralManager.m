@@ -235,7 +235,6 @@
 		const char *args[] = {
 			"/usr/libexec/iamlazy/AndSoAreYou",
 			[cmd UTF8String],
-			NULL,
 			NULL
 		};
 		int ret = task(args);

@@ -104,11 +104,10 @@ int main(int argc, char *argv[]){
 			const char *args[] = {
 				"/usr/bin/killall",
 				"dpkg",
-				NULL,
 				NULL
 			};
-			int ret = task(args);
-			if(ret != 0){
+			ret = task(args);
+			if(ret < 0){
 				IALLogErr(@"unlockDpkg failed: %d", ret);
 				return 1;
 			}
@@ -121,7 +120,7 @@ int main(int argc, char *argv[]){
 				NULL
 			};
 			ret = task(args2);
-			if(ret != 0){
+			if(ret < 0){
 				IALLogErr(@"unlockDpkg failed: %d", ret);
 				return 1;
 			}
@@ -140,10 +139,11 @@ int main(int argc, char *argv[]){
 				"/usr/bin/apt",
 				"update",
 				"--allow-insecure-repositories",
+				"--allow-unauthenticated",
 				NULL
 			};
-			int ret = task(args);
-			if(ret != 0){
+			ret = task(args);
+			if(ret < 0){
 				IALLogErr(@"updateApt failed: %d", ret);
 				return 1;
 			}
@@ -232,7 +232,7 @@ int main(int argc, char *argv[]){
 			NSArray *debainFiles = [dpkgInfo filteredArrayUsingPredicate:thePredicate];
 			if(![debainFiles count]){
 				IALLog(@"%@ has no DEBIAN files.", tweakName);
-				return 1;
+				return 0;
 			}
 
 			NSString *debian = [[tmpDir stringByAppendingPathComponent:tweakName] stringByAppendingPathComponent:@"DEBIAN/"];
@@ -275,8 +275,8 @@ int main(int argc, char *argv[]){
 				[tweak fileSystemRepresentation],
 				NULL
 			};
-			int ret = task(args);
-			if(ret != 0){
+			ret = task(args);
+			if(ret < 0){
 				IALLogErr(@"buildDeb failed: %d for: %@", ret, current);
 				return 1;
 			}
@@ -347,7 +347,7 @@ int main(int argc, char *argv[]){
 			BOOL alive = !kill(ppid, 0);
 			if(!alive){
 				IALLogErr(@"IAL process was killed. Returning.");
-				return 1;
+				return 0;
 			}
 
 			NSString *deb = [debs firstObject];
@@ -358,8 +358,8 @@ int main(int argc, char *argv[]){
 				[deb fileSystemRepresentation],
 				NULL
 			};
-			int ret = task(args);
-			if(ret != 0){
+			ret = task(args);
+			if(ret < 0){
 				IALLogErr(@"installDeb failed: %d for: %@", ret, deb);
 				return 1;
 			}
@@ -381,11 +381,12 @@ int main(int argc, char *argv[]){
 					"/usr/bin/apt-get",
 					"install",
 					"-fy",
+					"--allow-insecure-repositories",
 					"--allow-unauthenticated",
 					NULL
 				};
-				int ret = task(args);
-				if(ret != 0){
+				ret = task(args);
+				if(ret < 0){
 					IALLogErr(@"installDeb failed: %d for apt fixup.", ret);
 					return 1;
 				}
@@ -398,7 +399,7 @@ int main(int argc, char *argv[]){
 					NULL
 				};
 				ret = task(args2);
-				if(ret != 0){
+				if(ret < 0){
 					IALLogErr(@"installDeb failed: %d for dpkg configure.", ret);
 					return 1;
 				}
