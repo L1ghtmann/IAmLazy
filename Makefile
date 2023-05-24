@@ -7,7 +7,7 @@ include $(THEOS)/makefiles/common.mk
 
 APPLICATION_NAME = IAmLazy
 
-IAmLazy_FILES = $(wildcard *.m) Compression/libarchive.m $(wildcard Managers/*.m) Reachability/Reachability.m $(wildcard UI/*.m) Task.c
+IAmLazy_FILES = Task.c $(wildcard *.m) $(filter-out $(wildcard AndSoAreYou/*.m), $(wildcard **/*.m))
 IAmLazy_FRAMEWORKS = UIKit
 IAmLazy_LIBRARIES = archive
 IAmLazy_CFLAGS = -fobjc-arc -Wno-unguarded-availability-new # since can't use @available on Linux
