@@ -502,7 +502,6 @@
 	// have to run as root in order to retain file attributes (ownership, etc)
 	BOOL ret = [_generalManager executeCommandAsRoot:@"cpGFiles"];
 	if(!ret){
-		// TODO: localize
 		[_generalManager displayErrorWithMessage:localize(@"Failed to copy generic files!")];
 	}
 	return ret;
@@ -562,7 +561,6 @@
 	// have to copy as root in order to retain file attributes (ownership, etc)
 	BOOL ret = [_generalManager executeCommandAsRoot:@"cpDFiles"];
 	if(!ret){
-		// TODO: localize
 		[_generalManager displayErrorWithMessage:localize(@"Failed to copy DEBIAN files!")];
 	}
 	return ret;
@@ -576,7 +574,6 @@
 		// have to run as root in order to retain file attributes (ownership, etc)
 		BOOL ret = [_generalManager executeCommandAsRoot:@"buildDeb"];
 		if(!ret){
-			// TODO: localize
 			NSString *msg = [NSString stringWithFormat:localize(@"Failed to build deb for %@!"), _packages[i]];
 			[_generalManager displayErrorWithMessage:msg];
 			return NO;

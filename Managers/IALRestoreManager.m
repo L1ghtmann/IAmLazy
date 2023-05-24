@@ -187,7 +187,6 @@
 		// installing via apt/dpkg requires root
 		BOOL ret = [_generalManager executeCommandAsRoot:@"installDeb"];
 		if(!ret){
-			// TODO: localize
 			NSString *msg = [NSString stringWithFormat:localize(@"Failed to install %@!"), debs[i]];
 			[_generalManager displayErrorWithMessage:msg];
 			return NO;

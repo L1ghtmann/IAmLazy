@@ -156,7 +156,6 @@
 			IALLog(@"dpkg appears to have been interrupted. Fixing now...");
 
 			if(![self executeCommandAsRoot:@"unlockDpkg"]){
-				// TODO: localize
 				[self displayErrorWithMessage:localize(@"Failed to free dpkg lock!")];
 			}
 		}
@@ -167,7 +166,6 @@
 	// has to be done as root since some files have root ownership
 	BOOL ret = [self executeCommandAsRoot:@"cleanTmp"];
 	if(!ret){
-		// TODO: localize
 		NSString *msg = [NSString stringWithFormat:localize(@"Failed to cleanup %@!"), tmpDir];
 		[self displayErrorWithMessage:msg];
 	}
@@ -178,7 +176,6 @@
 	// updating apt sources requires root
 	BOOL ret = [self executeCommandAsRoot:@"updateAPT"];
 	if(!ret){
-		// TODO: localize
 		[self displayErrorWithMessage:localize(@"Failed to update APT sources!")];
 	}
 	return ret;
