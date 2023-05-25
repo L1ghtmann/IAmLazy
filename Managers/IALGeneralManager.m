@@ -247,14 +247,22 @@
 -(void)updateItemStatus:(CGFloat)status{
 	dispatch_async(dispatch_get_main_queue(), ^(void){
 		NSString *statusStr = [NSString stringWithFormat:@"%f", status];
+	#if !(CLI)
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemStatus" object:statusStr];
+	#else
+		puts([statusStr UTF8String]);
+	#endif
 	});
 }
 
 -(void)updateItemProgress:(CGFloat)status{
 	dispatch_async(dispatch_get_main_queue(), ^(void){
 		NSString *statusStr = [NSString stringWithFormat:@"%f", status];
+	#if !(CLI)
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:statusStr];
+	#else
+		puts([statusStr UTF8String]);
+	#endif
 	});
 }
 
@@ -271,6 +279,7 @@
 
 -(void)displayErrorWithMessage:(NSString *)msg{
 	dispatch_async(dispatch_get_main_queue(), ^(void){
+	#if !(CLI)
 		UIAlertController *alert = [UIAlertController
 									alertControllerWithTitle:[NSString stringWithFormat:localize(@"IAmLazy Error:")]
 									message:msg
@@ -290,9 +299,15 @@
 			[_rootVC presentViewController:alert animated:YES completion:nil];
 		}];
 
-		IALLogErr(@"%@", [msg stringByReplacingOccurrencesOfString:@"\n" withString:@" "]);
-
 		AudioServicesPlaySystemSound(1107); // error
+	#else
+		NSString *txt = [[localize(@"IAmLazy Error:")
+							stringByAppendingString:@" "]
+							stringByAppendingString:msg];
+		puts([txt UTF8String]);
+	#endif
+
+		IALLogErr(@"%@", [msg stringByReplacingOccurrencesOfString:@"\n" withString:@" "]);
 	});
 }
 

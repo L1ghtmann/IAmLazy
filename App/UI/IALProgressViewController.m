@@ -6,7 +6,7 @@
 //
 
 #import "IALProgressViewController.h"
-#import "../Common.h"
+#import "../../Common.h"
 
 #define titleSize (30 * scaleFactor)
 #define backgroundSize (55 * scaleFactor)

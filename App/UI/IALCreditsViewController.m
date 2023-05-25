@@ -7,7 +7,7 @@
 
 #import <SafariServices/SFSafariViewController.h>
 #import "IALCreditsViewController.h"
-#import "../Common.h"
+#import "../../Common.h"
 
 @implementation IALCreditsViewController
 
