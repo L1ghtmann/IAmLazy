@@ -58,7 +58,6 @@ int main(int argc, char **argv){
 				case 2:
 				case 3: {
 					__block NSString *input = nil;
-					__block NSInteger count = 0;
 					__block NSInteger len = 0;
 					do {
 						print(@"Please select a backup type:");
@@ -66,9 +65,8 @@ int main(int argc, char **argv){
 						print(@"  [1] developer");
 
 						input = [getInput() stringByReplacingOccurrencesOfString:@" " withString:@""];
-						count = [[input componentsSeparatedByString:@" "] count];
 						len = [input length];
-						if(count == 1 && len == 1 && [input intValue] <= 1){
+						if(len == 1 && [input intValue] <= 1){
 							break;
 						}
 					} while(true);
@@ -81,16 +79,15 @@ int main(int argc, char **argv){
 						print(@"  [1] Confirm");
 
 						input = [getInput() stringByReplacingOccurrencesOfString:@" " withString:@""];
-						count = [[input componentsSeparatedByString:@" "] count];
 						len = [input length];
-						if(count == 1 && len == 1 && [input intValue] <= 1){
+						if(len == 1 && [input intValue] <= 1){
 							break;
 						}
-
-						if(![input boolValue]){
-							return 0;
-						}
 					} while(true);
+
+					if(![input boolValue]){
+						return 0;
+					}
 
 					IALGeneralManager *gManager = [[IALGeneralManager alloc] sharedManagerForPurpose:0];
 					dispatch_semaphore_t sema = dispatch_semaphore_create(0);
@@ -102,6 +99,9 @@ int main(int argc, char **argv){
 							print(msg);
 							dispatch_semaphore_signal(sema);
 						}
+						else{
+							exit(1);
+						}
 					}];
 					dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
 					break;
@@ -110,7 +110,6 @@ int main(int argc, char **argv){
 				case 4:
 				case 5: {
 					__block NSString *input = nil;
-					__block NSInteger count = 0;
 					__block NSInteger len = 0;
 					do {
 						print(@"Please select a restore type:");
@@ -118,15 +117,19 @@ int main(int argc, char **argv){
 						print(@"  [1] specific");
 
 						input = [getInput() stringByReplacingOccurrencesOfString:@" " withString:@""];
-						count = [[input componentsSeparatedByString:@" "] count];
 						len = [input length];
-						if(count == 1 && len == 1 && [input intValue] <= 1){
+						if(len == 1 && [input intValue] <= 1){
 							break;
 						}
 					} while(true);
 
 					IALGeneralManager *gManager = [[IALGeneralManager alloc] sharedManagerForPurpose:1];
 					NSArray *backups = [gManager getBackups];
+					NSUInteger count = [backups count];
+					if(!count){
+						print(@"No backups were found.");
+						return 1;
+					}
 					NSString *backup = nil;
 					if(![input boolValue]){
 						backup = [backups firstObject];
@@ -134,38 +137,40 @@ int main(int argc, char **argv){
 					else{
 						do {
 							print(@"Choose the backup you'd like to restore from:");
-							for(int i = 0; i < [backups count]; i++){
+							for(int i = 0; i < count; i++){
 								NSString *msg = [NSString stringWithFormat:@"[%d] %@", i, backups[i]];
 								print(msg);
 							}
 							input = [getInput() stringByReplacingOccurrencesOfString:@" " withString:@""];
-							count = [[input componentsSeparatedByString:@" "] count];
 							len = [input length];
-							if(count == 1 && len >= 1 && len <= [[NSString stringWithFormat:@"%lu", [backups count]] length] && [input intValue] < [backups count]){
+							if(len >= 1 && len <= [[NSString stringWithFormat:@"%lu", count] length] && [input intValue] < count){
 								break;
 							}
 						} while(true);
 
 						backup = backups[[input intValue]];
+					}
 
-						if([backup hasSuffix:@"u.tar.gz"]){
-							print(@"You have chosen to restore from a developer backup. This backup includes bootstrap packages.");
-							do {
-								print(@"Please confirm that you understand this and still wish to proceed with the restore");
-								print(@"  [0] No");
-								print(@"  [1] Yes");
+					if(![backup length]){
+						print(@"Chosen backup is nil?");
+						return 1;
+					}
+					else if([backup hasSuffix:@"u.tar.gz"]){
+						print(@"You have chosen to restore from a developer backup. This backup includes bootstrap packages.");
+						do {
+							print(@"Please confirm that you understand this and still wish to proceed with the restore");
+							print(@"  [0] No");
+							print(@"  [1] Yes");
 
-								input = [getInput() stringByReplacingOccurrencesOfString:@" " withString:@""];
-								count = [[input componentsSeparatedByString:@" "] count];
-								len = [input length];
-								if(count == 1 && len == 1 && [input intValue] <= 1){
-									break;
-								}
-							} while(true);
-
-							if(![input boolValue]){
-								return 0;
+							input = [getInput() stringByReplacingOccurrencesOfString:@" " withString:@""];
+							len = [input length];
+							if(len == 1 && [input intValue] <= 1){
+								break;
 							}
+						} while(true);
+
+						if(![input boolValue]){
+							return 0;
 						}
 					}
 
@@ -176,9 +181,8 @@ int main(int argc, char **argv){
 						print(@"  [1] Yes");
 
 						input = [getInput() stringByReplacingOccurrencesOfString:@" " withString:@""];
-						count = [[input componentsSeparatedByString:@" "] count];
 						len = [input length];
-						if(count == 1 && len == 1 && [input intValue] <= 1){
+						if(len == 1 && [input intValue] <= 1){
 							break;
 						}
 					} while(true);
@@ -197,9 +201,8 @@ int main(int argc, char **argv){
 								print(@"  [2] None");
 
 								input = [getInput() stringByReplacingOccurrencesOfString:@" " withString:@""];
-								count = [[input componentsSeparatedByString:@" "] count];
 								len = [input length];
-								if(count == 1 && len == 1 && [input intValue] <= 2){
+								if(len == 1 && [input intValue] <= 2){
 									break;
 								}
 							} while(true);
@@ -229,6 +232,9 @@ int main(int argc, char **argv){
 
 							dispatch_semaphore_signal(sema);
 						}
+						else{
+							exit(1);
+						}
 					}];
 					dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
 					break;
@@ -244,7 +250,8 @@ int main(int argc, char **argv){
 						}
 					}
 					else{
-						print(@"No backups were found!");
+						print(@"No backups were found.");
+						return 1;
 					}
 					break;
 				}
