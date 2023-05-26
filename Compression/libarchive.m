@@ -126,10 +126,14 @@ bool write_archive(const char *outname){
 		archive_entry_free(entry);
 
 		progress+=progress_per_part;
-		dispatch_async(dispatch_get_main_queue(), ^{
-			// Note: file is .m because we need to use NSNotificationCenter
+		#if !(CLI)
+			dispatch_async(dispatch_get_main_queue(), ^{
+				// Note: file is .m because we need to use NSNotificationCenter
+				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+			});
+		#else
 			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
-		});
+		#endif
 
 		// delete debs as we
 		// go to save space
@@ -224,9 +228,13 @@ bool extract_archive(const char *filename){
 		}
 		else{
 			progress+=progress_per_part;
-			dispatch_async(dispatch_get_main_queue(), ^{
+			#if !(CLI)
+				dispatch_async(dispatch_get_main_queue(), ^{
+					[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
+				});
+			#else
 				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
-			});
+			#endif
 		}
 		if(r < ARCHIVE_OK){
 			IALLogErr(@"%s", archive_error_string(a));

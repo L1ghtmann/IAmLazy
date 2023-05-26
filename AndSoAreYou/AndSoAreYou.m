@@ -65,14 +65,19 @@ int proc_pidpath(int pid, void *buffer, uint32_t buffersize); // libproc.h
 int main(int argc, char *argv[]){
 	@autoreleasepool{
 		if(argc != 2){
-			printf("Nah.\n");
+			puts("Nah.");
 			return 1;
 		}
 
 		// get attributes of IAmLazy
 		struct stat iamlazy;
-		if(lstat("/Applications/IAmLazy.app/IAmLazy", &iamlazy) != 0){
-			printf("Wut?\n");
+		#if !(CLI)
+			const char bin[] = "/Applications/IAmLazy.app/IAmLazy";
+		#else
+			const char bin[] = "/usr/local/bin/ial";
+		#endif
+		if(lstat(bin, &iamlazy) != 0){
+			puts("Wut?");
 			return 1;
 		}
 
@@ -92,7 +97,7 @@ int main(int argc, char *argv[]){
 		// st_dev - Identifies the device containing the file
 		// https://www.gnu.org/software/libc/manual/html_node/Attribute-Meanings.html
 		if(ret < 0 || (parent.st_dev != iamlazy.st_dev || parent.st_ino != iamlazy.st_ino)){
-			printf("Oh HELL nah!\n");
+			puts("Oh HELL nah!");
 			return 1;
 		}
 
@@ -407,7 +412,7 @@ int main(int argc, char *argv[]){
 			}
 		}
 		else{
-			printf("Houston, we have a problem: an invalid argument was provided!\n");
+			puts("Houston, we have a problem: an invalid argument was provided!");
 			return 1;
 		}
 

@@ -314,28 +314,38 @@
 -(void)updateItemStatus:(NSNotification *)notification{
 	CGFloat item = [(NSString *)notification.object floatValue];
 	NSInteger itemInt = ceil(item);
-	BOOL isInteger = item == itemInt;
+	#if !(CLI)
+		BOOL isInteger = item == itemInt;
 
-	// Note: colorWithRed:green:blue:alpha: seems to use sRGB, not Adobe RGB (https://stackoverflow.com/a/40052756)
-	// a helpful link -- https://www.easyrgb.com/en/convert.php#inputFORM
-	if(isInteger){
-		[UIView animateWithDuration:0.5 animations:^{
-			[_itemStatusIcons[itemInt] setBackgroundColor:[UIColor colorWithRed:0.04716 green:0.73722 blue:0.09512 alpha:1.00000]];
-			[_itemStatusText[itemInt] setText:localize(@"Completed")];
-		}];
-	}
-	else{
-		[UIView animateWithDuration:0.5 animations:^{
-			[_itemStatusIcons[itemInt] setBackgroundColor:[UIColor colorWithRed:1.00000 green:0.67260 blue:0.21379 alpha:1.00000]];
-			[_itemStatusText[itemInt] setText:localize(@"In-progress")];
-		}];
-	}
+		// Note: colorWithRed:green:blue:alpha: seems to use sRGB, not Adobe RGB (https://stackoverflow.com/a/40052756)
+		// a helpful link -- https://www.easyrgb.com/en/convert.php#inputFORM
+		if(isInteger){
+			[UIView animateWithDuration:0.5 animations:^{
+				[_itemStatusIcons[itemInt] setBackgroundColor:[UIColor colorWithRed:0.04716 green:0.73722 blue:0.09512 alpha:1.00000]];
+				[_itemStatusText[itemInt] setText:localize(@"Completed")];
+			}];
+		}
+		else{
+			[UIView animateWithDuration:0.5 animations:^{
+				[_itemStatusIcons[itemInt] setBackgroundColor:[UIColor colorWithRed:1.00000 green:0.67260 blue:0.21379 alpha:1.00000]];
+				[_itemStatusText[itemInt] setText:localize(@"In-progress")];
+			}];
+		}
+	#else
+		NSString *msg = [@"[!] " stringByAppendingString:_itemDescriptions[itemInt]];
+		puts([msg UTF8String]);
+	#endif
 }
 
 -(void)updateItemProgress:(NSNotification *)notification{
 	CGFloat progress = [(NSString *)notification.object floatValue];
-	[_circleFill setStrokeEnd:progress];
-	[_circleFill didChangeValueForKey:@"strokeEnd"];
+	#if !(CLI)
+		[_circleFill setStrokeEnd:progress];
+		[_circleFill didChangeValueForKey:@"strokeEnd"];
+	#else
+		NSString *msg = [NSString stringWithFormat:@"%.02f%%", (progress * 100)];
+		puts([msg UTF8String]);
+	#endif
 }
 
 -(UIColor *)IALDarkGray{

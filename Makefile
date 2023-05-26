@@ -20,7 +20,7 @@ include $(THEOS_MAKE_PATH)/application.mk
 else
 TOOL_NAME = ial
 
-ial_FILES = Task.c $(filter-out $(wildcard AndSoAreYou/*.m App/*.m), $(wildcard **/*.m))
+ial_FILES = Task.c $(filter-out $(wildcard AndSoAreYou/*.m App/*.m), $(wildcard **/*.m)) App/UI/IALProgressViewController.m
 ial_LIBRARIES = archive
 ial_CFLAGS = -fobjc-arc -D CLI="$(CLI)"
 ial_CODESIGN_FLAGS = -SCLI/entitlements.plist

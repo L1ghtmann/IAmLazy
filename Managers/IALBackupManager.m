@@ -164,7 +164,7 @@
 		// get package name
 		NSString *packageLine = [[lines filteredArrayUsingPredicate:thePredicate1] firstObject];
 		NSString *package = [packageLine stringByReplacingOccurrencesOfString:@"Package: " withString:@""];
-		if(![package length] || [package isEqualToString:@"me.lightmann.iamlazy"]){
+		if(![package length] || [package isEqualToString:@"me.lightmann.iamlazy"] || [package isEqualToString:@"me.lightmann.iamlazy-cli"]){
 			// filter out IAmLazy since it'll be installed by the user anyway
 			continue;
 		}

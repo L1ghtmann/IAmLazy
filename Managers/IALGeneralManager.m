@@ -13,9 +13,28 @@
 #import "../Common.h"
 #import "../Task.h"
 
+#if CLI
+#import "../App/UI/IALProgressViewController.h"
+#endif
+
 @implementation IALGeneralManager
 
 #pragma mark Setup
+
+#if CLI
+-(instancetype)sharedManagerForPurpose:(NSInteger)purpose{
+	static dispatch_once_t p = 0;
+	__strong static IALGeneralManager *sharedManager = nil;
+	dispatch_once(&p, ^{
+		sharedManager = [self init];
+		#pragma clang diagnostic push
+		#pragma clang diagnostic ignored "-Wunused-value"
+			[[NSClassFromString(@"IALProgressViewController") alloc] initWithPurpose:purpose withFilter:_backupManager.filtered];
+		#pragma clang diagnostic pop
+	});
+	return sharedManager;
+}
+#endif
 
 +(instancetype)sharedManager{
 	static dispatch_once_t p = 0;
@@ -245,25 +264,25 @@
 }
 
 -(void)updateItemStatus:(CGFloat)status{
-	dispatch_async(dispatch_get_main_queue(), ^(void){
-		NSString *statusStr = [NSString stringWithFormat:@"%f", status];
+	NSString *statusStr = [NSString stringWithFormat:@"%f", status];
 	#if !(CLI)
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemStatus" object:statusStr];
+		dispatch_async(dispatch_get_main_queue(), ^(void){
+			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemStatus" object:statusStr];
+		});
 	#else
-		puts([statusStr UTF8String]);
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemStatus" object:statusStr];
 	#endif
-	});
 }
 
 -(void)updateItemProgress:(CGFloat)status{
-	dispatch_async(dispatch_get_main_queue(), ^(void){
-		NSString *statusStr = [NSString stringWithFormat:@"%f", status];
+	NSString *statusStr = [NSString stringWithFormat:@"%f", status];
 	#if !(CLI)
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:statusStr];
+		dispatch_async(dispatch_get_main_queue(), ^(void){
+			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:statusStr];
+		});
 	#else
-		puts([statusStr UTF8String]);
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:statusStr];
 	#endif
-	});
 }
 
 -(BOOL)hasConnection{
@@ -278,37 +297,35 @@
 #pragma mark Popups
 
 -(void)displayErrorWithMessage:(NSString *)msg{
-	dispatch_async(dispatch_get_main_queue(), ^(void){
 	#if !(CLI)
-		UIAlertController *alert = [UIAlertController
-									alertControllerWithTitle:[NSString stringWithFormat:localize(@"IAmLazy Error:")]
-									message:msg
-									preferredStyle:UIAlertControllerStyleAlert];
+		dispatch_async(dispatch_get_main_queue(), ^(void){
+			UIAlertController *alert = [UIAlertController
+										alertControllerWithTitle:[NSString stringWithFormat:localize(@"IAmLazy Error:")]
+										message:msg
+										preferredStyle:UIAlertControllerStyleAlert];
 
-		UIAlertAction *okay = [UIAlertAction
-								actionWithTitle:localize(@"Okay")
-								style:UIAlertActionStyleDefault
-								handler:^(UIAlertAction *action){
-									[_rootVC dismissViewControllerAnimated:YES completion:nil];
-								}];
+			UIAlertAction *okay = [UIAlertAction
+									actionWithTitle:localize(@"Okay")
+									style:UIAlertActionStyleDefault
+									handler:^(UIAlertAction *action){
+										[_rootVC dismissViewControllerAnimated:YES completion:nil];
+									}];
 
-		[alert addAction:okay];
+			[alert addAction:okay];
 
-		// dismiss progress view controller and display error alert
-		[_rootVC dismissViewControllerAnimated:YES completion:^{
-			[_rootVC presentViewController:alert animated:YES completion:nil];
-		}];
+			// dismiss progress view controller and display error alert
+			[_rootVC dismissViewControllerAnimated:YES completion:^{
+				[_rootVC presentViewController:alert animated:YES completion:nil];
+			}];
 
-		AudioServicesPlaySystemSound(1107); // error
+			AudioServicesPlaySystemSound(1107); // error
+
+			IALLogErr(@"%@", [msg stringByReplacingOccurrencesOfString:@"\n" withString:@" "]);
+		});
 	#else
-		NSString *txt = [[localize(@"IAmLazy Error:")
-							stringByAppendingString:@" "]
-							stringByAppendingString:msg];
-		puts([txt UTF8String]);
-	#endif
-
 		IALLogErr(@"%@", [msg stringByReplacingOccurrencesOfString:@"\n" withString:@" "]);
-	});
+		exit(1);
+	#endif
 }
 
 @end

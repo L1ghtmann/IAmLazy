@@ -7,6 +7,9 @@
     IALBackupManager *_backupManager;
 }
 @property (nonatomic, retain) UIViewController *rootVC;
+#if CLI
+-(instancetype)sharedManagerForPurpose:(NSInteger)purpose;
+#endif
 +(instancetype)sharedManager;
 -(void)makeBackupWithFilter:(BOOL)filter andCompletion:(void (^)(BOOL))completed;
 -(void)restoreFromBackup:(NSString *)backupName withCompletion:(void (^)(BOOL))completed;
