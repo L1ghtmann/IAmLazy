@@ -11,11 +11,11 @@
 #include <libarchive/archive.h>
 #include <dispatch/queue.h>
 #include <sys/fcntl.h>
+#include "../../Log.h"
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
 #include <limits.h>
-#include "../Log.h"
 
 int get_file_count(){
 	int file_count = 0;
@@ -66,6 +66,7 @@ bool write_archive(const char *outname){
 	size_t IAL = strlen("me.lightmann.iamlazy/");
 	while((ent = readdir(directory))){
 		if(count > file_count){
+			free(files);
 			return false;
 		}
 

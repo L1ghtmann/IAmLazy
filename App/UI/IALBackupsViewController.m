@@ -21,7 +21,7 @@
 	self = [super initWithStyle:UITableViewStyleGrouped];
 
 	if(self){
-		_manager = [NSClassFromString(@"IALGeneralManager") sharedManager];
+		_manager = [IALGeneralManager sharedManager];
 	}
 
 	return self;
@@ -150,12 +150,15 @@
 
 -(void)importBackup{
 	UIDocumentPickerViewController *importer;
-	if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"14")){
-		importer = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[UTTypeGZIP] asCopy:YES];
-	}
-	else{
-		importer = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"org.gnu.gnu-zip-archive"] inMode:UIDocumentPickerModeImport];
-	}
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wunguarded-availability-new"
+		if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"14")){
+			importer = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[UTTypeGZIP] asCopy:YES];
+		}
+		else{
+			importer = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"org.gnu.gnu-zip-archive"] inMode:UIDocumentPickerModeImport];
+		}
+	#pragma clang diagnostic pop
 	[importer setDelegate:self];
 
 	[self presentViewController:importer animated:YES completion:nil];

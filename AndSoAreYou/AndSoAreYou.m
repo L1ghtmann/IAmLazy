@@ -13,51 +13,53 @@
 // have this so we don't have
 // to r/w filenames from a file
 NSString *getCurrentPackage(){
-	NSError *readError = nil;
-	NSFileManager *fileManager = [NSFileManager defaultManager];
-	NSArray *tmpDirFiles = [fileManager contentsOfDirectoryAtPath:tmpDir error:&readError];
-	if(readError){
-		IALLogErr(@"Failed to get contents of %@! Info: %@", tmpDir, readError.localizedDescription);
-		return @"err";
-	}
-	else if(![tmpDirFiles count]){
-		IALLogErr(@"%@ is empty?!", tmpDir);
-		return @"err";
-	}
+	@autoreleasepool{
+		NSError *readError = nil;
+		NSFileManager *fileManager = [NSFileManager defaultManager];
+		NSArray *tmpDirFiles = [fileManager contentsOfDirectoryAtPath:tmpDir error:&readError];
+		if(readError){
+			IALLogErr(@"Failed to get contents of %@! Info: %@", tmpDir, readError.localizedDescription);
+			return @"err";
+		}
+		else if(![tmpDirFiles count]){
+			IALLogErr(@"%@ is empty?!", tmpDir);
+			return @"err";
+		}
 
-	NSMutableDictionary *dirsAndCreationDates = [NSMutableDictionary new];
-	NSMutableCharacterSet *validChars = [NSMutableCharacterSet alphanumericCharacterSet];
-	[validChars addCharactersInString:@"+-."];
-	NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
-	[formatter setDateFormat:@"HH:mm:ss.SSS"];
-	for(NSString *file in tmpDirFiles){
-		BOOL valid = ![[file stringByTrimmingCharactersInSet:validChars] length];
-		if(valid){
-			NSString *filePath = [tmpDir stringByAppendingPathComponent:file];
+		NSMutableDictionary *dirsAndCreationDates = [NSMutableDictionary new];
+		NSMutableCharacterSet *validChars = [NSMutableCharacterSet alphanumericCharacterSet];
+		[validChars addCharactersInString:@"+-."];
+		NSDateFormatter *formatter =  [[NSDateFormatter alloc] init];
+		[formatter setDateFormat:@"HH:mm:ss.SSS"];
+		for(NSString *file in tmpDirFiles){
+			BOOL valid = ![[file stringByTrimmingCharactersInSet:validChars] length];
+			if(valid){
+				NSString *filePath = [tmpDir stringByAppendingPathComponent:file];
 
-			BOOL isDir = NO;
-			if([fileManager fileExistsAtPath:filePath isDirectory:&isDir] && isDir){
-				NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:filePath error:&readError];
-				if(readError){
-					IALLogErr(@"Failed to get attributes of %@! Info: %@", filePath, readError.localizedDescription);
-					readError = nil;
-					continue;
+				BOOL isDir = NO;
+				if([fileManager fileExistsAtPath:filePath isDirectory:&isDir] && isDir){
+					NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:filePath error:&readError];
+					if(readError){
+						IALLogErr(@"Failed to get attributes of %@! Info: %@", filePath, readError.localizedDescription);
+						readError = nil;
+						continue;
+					}
+
+					NSDate *creationDate = [fileAttributes fileCreationDate];
+					NSString *dateString = [formatter stringFromDate:creationDate];
+					[dirsAndCreationDates setValue:file forKey:dateString];
 				}
-
-				NSDate *creationDate = [fileAttributes fileCreationDate];
-				NSString *dateString = [formatter stringFromDate:creationDate];
-				[dirsAndCreationDates setValue:file forKey:dateString];
 			}
 		}
-	}
 
-	NSArray *dates = [dirsAndCreationDates allKeys];
-	if(![dates count]){
-		return @"err";
+		NSArray *dates = [dirsAndCreationDates allKeys];
+		if(![dates count]){
+			return @"err";
+		}
+		NSSortDescriptor *compare = [NSSortDescriptor sortDescriptorWithKey:nil ascending:NO selector:@selector(compare:)];
+		NSArray *sortedDates = [dates sortedArrayUsingDescriptors:@[compare]];
+		return [dirsAndCreationDates objectForKey:[sortedDates firstObject]];
 	}
-	NSSortDescriptor *compare = [NSSortDescriptor sortDescriptorWithKey:nil ascending:NO selector:@selector(compare:)];
-	NSArray *sortedDates = [dates sortedArrayUsingDescriptors:@[compare]];
-	return [dirsAndCreationDates objectForKey:[sortedDates firstObject]];
 }
 
 int proc_pidpath(int pid, void *buffer, uint32_t buffersize); // libproc.h
@@ -155,7 +157,12 @@ int main(int argc, char *argv[]){
 			IALLog(@"apt sources up-to-date.");
 		}
 		else if(strcmp(argv[1], "cpGFiles") == 0){
-			// recreate directory structure and copy files
+			NSString *current = getCurrentPackage();
+			if(![current length] || [current isEqualToString:@"err"]){
+				IALLogErr(@"getCurrentPackage() failed.");
+				return 1;
+			}
+
 			NSError *error = nil;
 			NSString *filesToCopy = [tmpDir stringByAppendingPathComponent:@".filesToCopy"];
 			NSString *toCopy = [NSString stringWithContentsOfFile:filesToCopy encoding:NSUTF8StringEncoding error:&error];
@@ -167,12 +174,6 @@ int main(int argc, char *argv[]){
 			NSArray *files = [toCopy componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
 			if(![files count]){
 				IALLogErr(@"%@ has no contents?!", filesToCopy);
-				return 1;
-			}
-
-			NSString *current = getCurrentPackage();
-			if(![current length] || [current isEqualToString:@"err"]){
-				IALLogErr(@"getCurrentPackage() failed.");
 				return 1;
 			}
 
@@ -208,6 +209,12 @@ int main(int argc, char *argv[]){
 			}
 		}
 		else if(strcmp(argv[1], "cpDFiles") == 0){
+			NSString *tweakName = getCurrentPackage();
+			if(![tweakName length] || [tweakName isEqualToString:@"err"]){
+				IALLogErr(@"getCurrentPackage() failed.");
+				return 1;
+			}
+
 			// get DEBIAN files (e.g., maintainer scripts)
 			NSError *error = nil;
 			NSString *dpkgInfoDir = @"/var/lib/dpkg/info/";
@@ -219,12 +226,6 @@ int main(int argc, char *argv[]){
 			}
 			else if(![dpkgInfo count]){
 				IALLogErr(@"%@ is empty?!", dpkgInfoDir);
-				return 1;
-			}
-
-			NSString *tweakName = getCurrentPackage();
-			if(![tweakName length] || [tweakName isEqualToString:@"err"]){
-				IALLogErr(@"getCurrentPackage() failed.");
 				return 1;
 			}
 
@@ -386,7 +387,6 @@ int main(int argc, char *argv[]){
 					"/usr/bin/apt-get",
 					"install",
 					"-fy",
-					"--allow-insecure-repositories",
 					"--allow-unauthenticated",
 					NULL
 				};
@@ -409,6 +409,8 @@ int main(int argc, char *argv[]){
 					return 1;
 				}
 				IALLog(@"apt fixed and dpkg configured (just in case).");
+
+				sleep(1);
 			}
 		}
 		else{

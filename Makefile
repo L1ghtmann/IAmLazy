@@ -9,10 +9,10 @@ include $(THEOS)/makefiles/common.mk
 ifneq ($(CLI),1)
 APPLICATION_NAME = IAmLazy
 
-IAmLazy_FILES = Task.c $(filter-out $(wildcard AndSoAreYou/*.m CLI/*.m), $(wildcard **/*.m)) $(wildcard App/**/*.m)
+IAmLazy_FILES = Task.c $(wildcard Shared/**/*.m) $(wildcard App/*.m App/**/*.m)
 IAmLazy_FRAMEWORKS = UIKit
 IAmLazy_LIBRARIES = archive
-IAmLazy_CFLAGS = -fobjc-arc -Wno-unguarded-availability-new -D CLI="$(CLI)"
+IAmLazy_CFLAGS = -fobjc-arc -D CLI="$(CLI)"
 IAmLazy_CODESIGN_FLAGS = -SApp/entitlements.plist
 IAmLazy_RESOURCE_DIRS = App/Resources
 
@@ -20,7 +20,7 @@ include $(THEOS_MAKE_PATH)/application.mk
 else
 TOOL_NAME = ial
 
-ial_FILES = Task.c $(filter-out $(wildcard AndSoAreYou/*.m App/*.m), $(wildcard **/*.m)) App/UI/IALProgressViewController.m
+ial_FILES = Task.c $(wildcard Shared/**/*.m) $(wildcard CLI/*.m) App/UI/IALProgressViewController.m
 ial_LIBRARIES = archive
 ial_CFLAGS = -fobjc-arc -D CLI="$(CLI)"
 ial_CODESIGN_FLAGS = -SCLI/entitlements.plist

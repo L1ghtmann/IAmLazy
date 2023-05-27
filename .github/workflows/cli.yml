@@ -1,0 +1,25 @@
+name: CLI
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+
+      - name: Build Package
+        uses: L1ghtmann/theos-build@main
+        with:
+          extra_args: CLI=1
+
+      - name: Attach Package To Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          export TAG="${GITHUB_REF#refs/tags/}"
+          gh release create "$TAG" --draft --title "Draft Release"
+          gh release upload "$TAG" packages/*.deb

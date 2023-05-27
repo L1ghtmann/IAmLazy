@@ -22,7 +22,7 @@
 	self = [super init];
 
 	if(self){
-		_manager = [NSClassFromString(@"IALGeneralManager") sharedManager];
+		_manager = [IALGeneralManager sharedManager];
 		[_manager setRootVC:self];
 	}
 
@@ -401,15 +401,13 @@
 -(void)restoreLatestBackup:(BOOL)latest{
 	NSArray *backups = [_manager getBackups];
 	if(![backups count]){
+		[_manager displayErrorWithMessage:localize(@"No backups were found!")];
 		return;
 	}
 
 	// get desired backup
-	NSString *extension = @"tar.gz";
-	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH %@", extension];
-	NSArray *desiredBackups = [backups filteredArrayUsingPredicate:thePredicate];
 	if(latest){
-		NSString *backup = [desiredBackups firstObject];
+		NSString *backup = [backups firstObject];
 		[self confirmRestoreFromBackup:backup];
 	}
 	else{
@@ -420,7 +418,7 @@
 									preferredStyle:UIAlertControllerStyleAlert];
 
 		// make each available backup its own action
-		for(NSString *backup in desiredBackups){
+		for(NSString *backup in backups){
 			UIAlertAction *action = [UIAlertAction
 										actionWithTitle:backup
 										style:UIAlertActionStyleDefault

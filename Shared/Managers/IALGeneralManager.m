@@ -10,11 +10,11 @@
 #import "IALGeneralManager.h"
 #import "IALRestoreManager.h"
 #import "IALBackupManager.h"
-#import "../Common.h"
-#import "../Task.h"
+#import "../../Common.h"
+#import "../../Task.h"
 
 #if CLI
-#import "../App/UI/IALProgressViewController.h"
+#import "../../App/UI/IALProgressViewController.h"
 #endif
 
 @implementation IALGeneralManager
@@ -29,7 +29,7 @@
 		sharedManager = [self init];
 		#pragma clang diagnostic push
 		#pragma clang diagnostic ignored "-Wunused-value"
-			[[NSClassFromString(@"IALProgressViewController") alloc] initWithPurpose:purpose withFilter:_backupManager.filtered];
+			[[IALProgressViewController alloc] initWithPurpose:purpose withFilter:_backupManager.filtered];
 		#pragma clang diagnostic pop
 	});
 	return sharedManager;

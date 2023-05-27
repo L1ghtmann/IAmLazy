@@ -5,34 +5,40 @@
 #define print(str) puts([str UTF8String])
 
 NSArray *getOpts(){
-	NSArray *opts = @[
-		@"-h",
-		@"--help",
-		@"-b",
-		@"--backup",
-		@"-r",
-		@"--restore",
-		@"-l",
-		@"--list"
-	];
-	return opts;
+	@autoreleasepool{
+		NSArray *opts = @[
+			@"-h",
+			@"--help",
+			@"-b",
+			@"--backup",
+			@"-r",
+			@"--restore",
+			@"-l",
+			@"--list"
+		];
+		return opts;
+	}
 }
 
 NSString *getHelp(){
-	NSString *msg = @"\
+	@autoreleasepool{
+		NSString *msg = @"\
 Usage: ial [options]\n\
 Options:\n\
   [-b|--backup]       Create a backup\n\
   [-r|--restore]      Restore from a backup\n\
   [-l|--list]         List available backups\n\
   [-h|--help]         Display this page";
-	return msg;
+		return msg;
+	}
 }
 
 // https://stackoverflow.com/a/25753918
 NSString *getInput(){
 	@autoreleasepool{
-		return [[[NSString alloc] initWithData:[[NSFileHandle fileHandleWithStandardInput] availableData] encoding:NSUTF8StringEncoding] stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]];
+		NSString *input = [[NSString alloc] initWithData:[[NSFileHandle fileHandleWithStandardInput] availableData] encoding:NSUTF8StringEncoding];
+		NSString *cleanInput = [input stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]];
+		return [cleanInput stringByReplacingOccurrencesOfString:@" " withString:@""];
 	}
 }
 
@@ -42,6 +48,7 @@ int main(int argc, char **argv){
 		NSArray *opts = getOpts();
 		if(argc != 2 || ![opts containsObject:@(argv[1])]){
 			print(getHelp());
+			return 0;
 		}
 
 		// the work
@@ -51,7 +58,7 @@ int main(int argc, char **argv){
 				case 0:
 				case 1: {
 					print(getHelp());
-					break;
+					return 0;
 				}
 				// backup
 				case 2:
@@ -63,7 +70,7 @@ int main(int argc, char **argv){
 						print(@"  [0] standard");
 						print(@"  [1] developer");
 
-						input = [getInput() stringByReplacingOccurrencesOfString:@" " withString:@""];
+						input = getInput();
 						len = [input length];
 						if(len == 1 && [input intValue] <= 1){
 							break;
@@ -77,7 +84,7 @@ int main(int argc, char **argv){
 						print(@"  [0] Cancel");
 						print(@"  [1] Confirm");
 
-						input = [getInput() stringByReplacingOccurrencesOfString:@" " withString:@""];
+						input = getInput();
 						len = [input length];
 						if(len == 1 && [input intValue] <= 1){
 							break;
@@ -88,7 +95,7 @@ int main(int argc, char **argv){
 						return 0;
 					}
 
-					IALGeneralManager *gManager = [[NSClassFromString(@"IALGeneralManager") alloc] sharedManagerForPurpose:0];
+					IALGeneralManager *gManager = [[IALGeneralManager alloc] sharedManagerForPurpose:0];
 					dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 					NSDate *startTime = [NSDate date];
 					[gManager makeBackupWithFilter:filter andCompletion:^(BOOL completed){
@@ -115,14 +122,14 @@ int main(int argc, char **argv){
 						print(@"  [0] latest");
 						print(@"  [1] specific");
 
-						input = [getInput() stringByReplacingOccurrencesOfString:@" " withString:@""];
+						input = getInput();
 						len = [input length];
 						if(len == 1 && [input intValue] <= 1){
 							break;
 						}
 					} while(true);
 
-					IALGeneralManager *gManager = [[NSClassFromString(@"IALGeneralManager") alloc] sharedManagerForPurpose:1];
+					IALGeneralManager *gManager = [[IALGeneralManager alloc] sharedManagerForPurpose:1];
 					NSArray *backups = [gManager getBackups];
 					NSUInteger count = [backups count];
 					if(!count){
@@ -140,7 +147,7 @@ int main(int argc, char **argv){
 								NSString *msg = [NSString stringWithFormat:@"[%d] %@", i, backups[i]];
 								print(msg);
 							}
-							input = [getInput() stringByReplacingOccurrencesOfString:@" " withString:@""];
+							input = getInput();
 							len = [input length];
 							if(len >= 1 && len <= [[NSString stringWithFormat:@"%lu", count] length] && [input intValue] < count){
 								break;
@@ -161,7 +168,7 @@ int main(int argc, char **argv){
 							print(@"  [0] No");
 							print(@"  [1] Yes");
 
-							input = [getInput() stringByReplacingOccurrencesOfString:@" " withString:@""];
+							input = getInput();
 							len = [input length];
 							if(len == 1 && [input intValue] <= 1){
 								break;
@@ -179,7 +186,7 @@ int main(int argc, char **argv){
 						print(@"  [0] No");
 						print(@"  [1] Yes");
 
-						input = [getInput() stringByReplacingOccurrencesOfString:@" " withString:@""];
+						input = getInput();
 						len = [input length];
 						if(len == 1 && [input intValue] <= 1){
 							break;
@@ -199,7 +206,7 @@ int main(int argc, char **argv){
 								print(@"  [1] UICache & Respring");
 								print(@"  [2] None");
 
-								input = [getInput() stringByReplacingOccurrencesOfString:@" " withString:@""];
+								input = getInput();
 								len = [input length];
 								if(len == 1 && [input intValue] <= 2){
 									break;
@@ -241,7 +248,7 @@ int main(int argc, char **argv){
 				// list
 				case 6:
 				case 7: {
-					IALGeneralManager *gManager = [NSClassFromString(@"IALGeneralManager") sharedManager];
+					IALGeneralManager *gManager = [IALGeneralManager sharedManager];
 					NSArray *backups = [gManager getBackups];
 					if([backups count]){
 						for(NSString *backup in backups){
