@@ -1,5 +1,4 @@
-#import "../Managers/IALGeneralManager.h"
-#import <Foundation/Foundation.h>
+#import "../Shared/Managers/IALGeneralManager.h"
 #import "../Common.h"
 #import "../Task.h"
 
@@ -89,7 +88,7 @@ int main(int argc, char **argv){
 						return 0;
 					}
 
-					IALGeneralManager *gManager = [[IALGeneralManager alloc] sharedManagerForPurpose:0];
+					IALGeneralManager *gManager = [[NSClassFromString(@"IALGeneralManager") alloc] sharedManagerForPurpose:0];
 					dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 					NSDate *startTime = [NSDate date];
 					[gManager makeBackupWithFilter:filter andCompletion:^(BOOL completed){
@@ -123,7 +122,7 @@ int main(int argc, char **argv){
 						}
 					} while(true);
 
-					IALGeneralManager *gManager = [[IALGeneralManager alloc] sharedManagerForPurpose:1];
+					IALGeneralManager *gManager = [[NSClassFromString(@"IALGeneralManager") alloc] sharedManagerForPurpose:1];
 					NSArray *backups = [gManager getBackups];
 					NSUInteger count = [backups count];
 					if(!count){
@@ -242,7 +241,7 @@ int main(int argc, char **argv){
 				// list
 				case 6:
 				case 7: {
-					IALGeneralManager *gManager = [IALGeneralManager sharedManager];
+					IALGeneralManager *gManager = [NSClassFromString(@"IALGeneralManager") sharedManager];
 					NSArray *backups = [gManager getBackups];
 					if([backups count]){
 						for(NSString *backup in backups){

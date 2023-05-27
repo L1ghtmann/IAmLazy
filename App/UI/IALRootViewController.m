@@ -5,7 +5,7 @@
 //	Created by Lightmann during COVID-19
 //
 
-#import "../../Managers/IALGeneralManager.h"
+#import "../../Shared/Managers/IALGeneralManager.h"
 #import <AudioToolbox/AudioServices.h>
 #import "IALProgressViewController.h"
 #import "IALCreditsViewController.h"
@@ -22,7 +22,7 @@
 	self = [super init];
 
 	if(self){
-		_manager = [IALGeneralManager sharedManager];
+		_manager = [NSClassFromString(@"IALGeneralManager") sharedManager];
 		[_manager setRootVC:self];
 	}
 

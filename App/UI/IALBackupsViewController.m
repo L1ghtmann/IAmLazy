@@ -5,8 +5,8 @@
 //	Created by Lightmann during COVID-19
 //
 
+#import "../../Shared/Managers/IALGeneralManager.h"
 #import <UniformTypeIdentifiers/UTCoreTypes.h>
-#import "../../Managers/IALGeneralManager.h"
 #import <AudioToolbox/AudioServices.h>
 #import "IALBackupsViewController.h"
 #import "../../Common.h"
@@ -21,7 +21,7 @@
 	self = [super initWithStyle:UITableViewStyleGrouped];
 
 	if(self){
-		_manager = [IALGeneralManager sharedManager];
+		_manager = [NSClassFromString(@"IALGeneralManager") sharedManager];
 	}
 
 	return self;

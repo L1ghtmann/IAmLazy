@@ -38,6 +38,7 @@ ifneq ($(CLI),1)
 	$(ECHO_NOTHING)mv $(wildcard $(THEOS_STAGING_DIR)/Applications/IAmLazy.app/Strings/*.lproj) "$(THEOS_STAGING_DIR)/Applications/IAmLazy.app/"$(ECHO_END)
 	$(ECHO_NOTHING)rm -r "$(THEOS_STAGING_DIR)/Applications/IAmLazy.app/Strings/"$(ECHO_END)
 else
-	$(ECHO_NOTHING)sed -i 's/me.lightmann.iamlazy/me.lightmann.iamlazy-cli/' $(THEOS_STAGING_DIR)/DEBIAN/control$(ECHO_END)
-	$(ECHO_NOTHING)sed -i 's/IAmLazy/IAmLazy CLI/' $(THEOS_STAGING_DIR)/DEBIAN/control$(ECHO_END)
+	$(ECHO_NOTHING)sed -i 's/Conflicts: me.lightmann.iamlazy-cli/Conflicts: me.lightmann.iamlazy/' $(THEOS_STAGING_DIR)/DEBIAN/control$(ECHO_END)
+	$(ECHO_NOTHING)sed -i 's/Package: me.lightmann.iamlazy/Package: me.lightmann.iamlazy-cli/' $(THEOS_STAGING_DIR)/DEBIAN/control$(ECHO_END)
+	$(ECHO_NOTHING)sed -i 's/Name: IAmLazy/Name: IAmLazy CLI/' $(THEOS_STAGING_DIR)/DEBIAN/control$(ECHO_END)
 endif
