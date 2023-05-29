@@ -62,7 +62,13 @@ NSString *getCurrentPackage(){
 	}
 }
 
-int proc_pidpath(int pid, void *buffer, uint32_t buffersize); // libproc.h
+// libproc.h
+int proc_listpids(uint32_t type, uint32_t typeinfo, void *buffer, int buffersize);
+int proc_pidpath(int pid, void * buffer, uint32_t  buffersize);
+
+// proc_info.h
+#define PROC_ALL_PIDS				1
+#define PROC_PIDPATHINFO_MAXSIZE	(4*MAXPATHLEN)
 
 int main(int argc, char *argv[]){
 	@autoreleasepool{
@@ -108,15 +114,22 @@ int main(int argc, char *argv[]){
 
 		if(strcmp(argv[1], "unlockDpkg") == 0){
 			// kill dpkg to free the lock
-			const char *args[] = {
-				"/usr/bin/killall",
-				"dpkg",
-				NULL
-			};
-			ret = task(args);
-			if(ret < 0){
-				IALLogErr(@"unlockDpkg failed: %d", ret);
-				return 1;
+			// https://stackoverflow.com/q/3018054
+			int pNum = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
+			pid_t pids[pNum];
+			proc_listpids(PROC_ALL_PIDS, 0, pids, sizeof(pids));
+			for(int i = 0; i < pNum; i++){
+				pid_t pid = pids[i];
+				if(!pid) continue;
+				char pathBuf[PROC_PIDPATHINFO_MAXSIZE];
+				proc_pidpath(pid, pathBuf, sizeof(pathBuf));
+				if(strlen(pathBuf) > 0 && strcmp(pathBuf, "/usr/bin/dpkg") == 0){
+					int ret = kill(pid, SIGTERM);
+					if(ret < 0){
+						IALLogErr(@"unlockDpkg failed: %d", ret);
+						return 1;
+					}
+				}
 			}
 
 			// configure any unconfigured packages
