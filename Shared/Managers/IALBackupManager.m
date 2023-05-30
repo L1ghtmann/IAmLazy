@@ -362,13 +362,9 @@
 
 			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:line error:&error];
 			if(error){
-				NSString *msg = [NSString stringWithFormat:[[localize(@"Failed to get attributes for %@!")
-																stringByAppendingString:@" "]
-																stringByAppendingString:localize(@"Info: %@")],
-																line,
-																error.localizedDescription];
-				[_generalManager displayErrorWithMessage:msg];
-				return NO;
+				IALLogErr(@"Failed to get attributes for %@! Info: %@", line, error.localizedDescription);
+				error = nil;
+				continue;
 			}
 
 			// for categorization below
