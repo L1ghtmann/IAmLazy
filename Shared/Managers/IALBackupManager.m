@@ -204,7 +204,7 @@
 
 	// Canister multi package GET
 	NSString *ids = [[packages componentsJoinedByString:@","] stringByAddingPercentEncodingWithAllowedCharacters:set];
-	NSString *reqStr = [@"https://api.canister.me/v2/jailbreak/package/multi?ids=" stringByAppendingString:ids];
+	NSString *reqStr = [@"https://api.canister.me/v2/jailbreak/package/multi?priority=bootstrap&ids=" stringByAppendingString:ids];
 	NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
 	[request setURL:[NSURL URLWithString:reqStr]];
 	[request setHTTPMethod:@"GET"];
