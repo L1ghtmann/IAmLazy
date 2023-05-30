@@ -64,15 +64,13 @@ int main(int argc, char **argv){
 				case 2:
 				case 3: {
 					__block NSString *input = nil;
-					__block NSInteger len = 0;
 					do {
 						print(@"Please select a backup type:");
 						print(@"  [0] standard");
 						print(@"  [1] developer");
 
 						input = getInput();
-						len = [input length];
-						if(len == 1 && [input intValue] <= 1){
+						if([input length] == 1 && [input intValue] <= 1){
 							break;
 						}
 					} while(true);
@@ -85,8 +83,7 @@ int main(int argc, char **argv){
 						print(@"  [1] Confirm");
 
 						input = getInput();
-						len = [input length];
-						if(len == 1 && [input intValue] <= 1){
+						if([input length] == 1 && [input intValue] <= 1){
 							break;
 						}
 					} while(true);
@@ -116,15 +113,13 @@ int main(int argc, char **argv){
 				case 4:
 				case 5: {
 					__block NSString *input = nil;
-					__block NSInteger len = 0;
 					do {
 						print(@"Please select a restore type:");
 						print(@"  [0] latest");
 						print(@"  [1] specific");
 
 						input = getInput();
-						len = [input length];
-						if(len == 1 && [input intValue] <= 1){
+						if([input length] == 1 && [input intValue] <= 1){
 							break;
 						}
 					} while(true);
@@ -148,7 +143,7 @@ int main(int argc, char **argv){
 								print(msg);
 							}
 							input = getInput();
-							len = [input length];
+							NSInteger len = [input length];
 							if(len >= 1 && len <= [[NSString stringWithFormat:@"%lu", count] length] && [input intValue] < count){
 								break;
 							}
@@ -169,8 +164,7 @@ int main(int argc, char **argv){
 							print(@"  [1] Yes");
 
 							input = getInput();
-							len = [input length];
-							if(len == 1 && [input intValue] <= 1){
+							if([input length] == 1 && [input intValue] <= 1){
 								break;
 							}
 						} while(true);
@@ -187,8 +181,7 @@ int main(int argc, char **argv){
 						print(@"  [1] Yes");
 
 						input = getInput();
-						len = [input length];
-						if(len == 1 && [input intValue] <= 1){
+						if([input length] == 1 && [input intValue] <= 1){
 							break;
 						}
 					} while(true);
@@ -207,8 +200,7 @@ int main(int argc, char **argv){
 								print(@"  [2] None");
 
 								input = getInput();
-								len = [input length];
-								if(len == 1 && [input intValue] <= 2){
+								if([input length] == 1 && [input intValue] <= 2){
 									break;
 								}
 							} while(true);

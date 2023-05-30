@@ -21,5 +21,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           export TAG="${GITHUB_REF#refs/tags/}"
-          gh release create "$TAG" --draft --title "Draft Release"
           gh release upload "$TAG" packages/*.deb
