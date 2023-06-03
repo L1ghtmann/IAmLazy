@@ -1,7 +1,7 @@
 Package: me.lightmann.iamlazy
 Name: IAmLazy
 Version: 2.2.0
-Depends: apt, uikittools, firmware (>= 13.0), firmware (<< 15.0)
+Depends: apt, uikittools, firmware (>= 13.0), firmware (<< 16.0)
 Conflicts: me.lightmann.iamlazy-cli
 Architecture: iphoneos-arm
 Description: Easily backup and restore your tweaks

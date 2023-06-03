@@ -581,7 +581,7 @@
 								style:UIAlertActionStyleDefault
 								handler:^(UIAlertAction *action){
 									const char *args[] = {
-										"/usr/bin/sbreload",
+										ROOT_PATH("/usr/bin/sbreload"),
 										NULL
 									};
 									task(args);
@@ -592,7 +592,7 @@
 								style:UIAlertActionStyleDefault
 								handler:^(UIAlertAction *action){
 									const char *args[] = {
-										"/usr/bin/uicache",
+										ROOT_PATH("/usr/bin/uicache"),
 										"-a",
 										"-r",
 										NULL

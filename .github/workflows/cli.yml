@@ -16,6 +16,11 @@ jobs:
         with:
           extra_args: CLI=1 FINALPACKAGE=1
 
+      - name: Build Package
+        uses: L1ghtmann/theos-build@main
+        with:
+          extra_args: ROOTLESS=1 CLI=1 FINALPACKAGE=1
+
       - name: Attach Package To Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -108,7 +108,7 @@
 	NSString *oldBootstrap = @"bingner_elucubratus"; // pre v2
 	NSString *altBootstrap = @"procursus";
 	NSFileManager *fileManager = [NSFileManager defaultManager];
-	if([fileManager fileExistsAtPath:@"/.procursus_strapped"]){
+	if([fileManager fileExistsAtPath:ROOT_PATH_NS(@"/.procursus_strapped")]){
 		bootstrap = @"procursus";
 		oldBootstrap = @"procursus";
 		altBootstrap = @"elucubratus";

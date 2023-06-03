@@ -249,7 +249,7 @@
 	BOOL valid = ![[cmd stringByTrimmingCharactersInSet:alphaChars] length];
 	if(valid){
 		const char *args[] = {
-			"/usr/libexec/iamlazy/AndSoAreYou",
+			ROOT_PATH("/usr/libexec/iamlazy/AndSoAreYou"),
 			[cmd UTF8String],
 			NULL
 		};

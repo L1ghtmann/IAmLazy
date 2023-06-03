@@ -152,6 +152,7 @@
 	UIDocumentPickerViewController *importer;
 	#pragma clang diagnostic push
 	#pragma clang diagnostic ignored "-Wunguarded-availability-new"
+	#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 		if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"14")){
 			importer = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[UTTypeGZIP] asCopy:YES];
 		}

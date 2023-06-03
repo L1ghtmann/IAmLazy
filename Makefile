@@ -1,6 +1,13 @@
 export CLI = 0
+export ROOTLESS = 0
 export ARCHS = arm64
+
+ifeq ($(ROOTLESS),1)
+export THEOS_PACKAGE_SCHEME = rootless
+export TARGET = iphone:clang:latest:15.0
+else
 export TARGET = iphone:clang:latest:13.0
+endif
 
 INSTALL_TARGET_PROCESSES = IAmLazy
 

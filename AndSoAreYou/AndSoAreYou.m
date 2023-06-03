@@ -80,9 +80,9 @@ int main(int argc, char *argv[]){
 		// get attributes of IAmLazy
 		struct stat iamlazy;
 		#if !(CLI)
-			const char bin[] = "/Applications/IAmLazy.app/IAmLazy";
+			const char bin[] = ROOT_PATH("/Applications/IAmLazy.app/IAmLazy");
 		#else
-			const char bin[] = "/usr/local/bin/ial";
+			const char bin[] = ROOT_PATH("/usr/local/bin/ial");
 		#endif
 		if(lstat(bin, &iamlazy) != 0){
 			puts("Wut?");
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]){
 				if(!pid) continue;
 				char pathBuf[PROC_PIDPATHINFO_MAXSIZE];
 				proc_pidpath(pid, pathBuf, sizeof(pathBuf));
-				if(strlen(pathBuf) > 0 && strcmp(pathBuf, "/usr/bin/dpkg") == 0){
+				if(strlen(pathBuf) > 0 && strcmp(pathBuf, ROOT_PATH("/usr/bin/dpkg")) == 0){
 					int ret = kill(pid, SIGTERM);
 					if(ret < 0){
 						IALLogErr(@"unlockDpkg failed: %d", ret);
@@ -134,7 +134,7 @@ int main(int argc, char *argv[]){
 
 			// configure any unconfigured packages
 			const char *args2[] = {
-				"/usr/bin/dpkg",
+				ROOT_PATH("/usr/bin/dpkg"),
 				"--configure",
 				"-a",
 				NULL
@@ -156,7 +156,7 @@ int main(int argc, char *argv[]){
 		}
 		else if(strcmp(argv[1], "updateAPT") == 0){
 			const char *args[] = {
-				"/usr/bin/apt",
+				ROOT_PATH("/usr/bin/apt"),
 				"update",
 				"--allow-insecure-repositories",
 				"--allow-unauthenticated",
@@ -230,7 +230,7 @@ int main(int argc, char *argv[]){
 
 			// get DEBIAN files (e.g., maintainer scripts)
 			NSError *error = nil;
-			NSString *dpkgInfoDir = @"/var/lib/dpkg/info/";
+			NSString *dpkgInfoDir = ROOT_PATH_NS(@"/var/lib/dpkg/info/");
 			NSFileManager *fileManager = [NSFileManager defaultManager];
 			NSArray *dpkgInfo = [fileManager contentsOfDirectoryAtPath:dpkgInfoDir error:&error];
 			if(error){
@@ -287,7 +287,7 @@ int main(int argc, char *argv[]){
 
 			NSString *tweak = [tmpDir stringByAppendingPathComponent:current];
 			const char *args[] = {
-				"/usr/bin/dpkg-deb",
+				ROOT_PATH("/usr/bin/dpkg-deb"),
 				"-b",
 				"-Zgzip",
 				"-z9",
@@ -372,7 +372,7 @@ int main(int argc, char *argv[]){
 			NSString *deb = [debs firstObject];
 			IALLog(@"Attempting install of %@", deb);
 			const char *args[] = {
-				"/usr/bin/dpkg",
+				ROOT_PATH("/usr/bin/dpkg"),
 				"-i",
 				[deb fileSystemRepresentation],
 				NULL
@@ -397,7 +397,7 @@ int main(int argc, char *argv[]){
 				// resolve any lingering things
 				// (e.g., conflicts, partial installs due to dependencies, etc)
 				const char *args[] = {
-					"/usr/bin/apt-get",
+					ROOT_PATH("/usr/bin/apt-get"),
 					"install",
 					"-fy",
 					"--allow-unauthenticated",
@@ -411,7 +411,7 @@ int main(int argc, char *argv[]){
 
 				// ensure everything that can be configured is
 				const char *args2[] = {
-					"/usr/bin/dpkg",
+					ROOT_PATH("/usr/bin/dpkg"),
 					"--configure",
 					"-a",
 					NULL

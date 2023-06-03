@@ -1,3 +1,4 @@
+#import <rootless.h>
 #import "Log.h"
 
 #define localize(str) NSLocalizedStringWithDefaultValue(str, nil, [NSBundle mainBundle], str, nil)
@@ -7,5 +8,5 @@
 
 #define scaleFactor (kWidth/375) // scale from iP7 size
 
-#define tmpDir @"/tmp/me.lightmann.iamlazy/"
-#define backupDir @"/var/mobile/Documents/me.lightmann.iamlazy/"
+#define tmpDir ROOT_PATH_NS(@"/tmp/me.lightmann.iamlazy/")
+#define backupDir ROOT_PATH_NS(@"/var/mobile/Documents/me.lightmann.iamlazy/")

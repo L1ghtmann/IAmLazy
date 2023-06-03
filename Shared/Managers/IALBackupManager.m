@@ -96,7 +96,7 @@
 
 	// get control files for all installed packages
 	NSError *readError = nil;
-	NSString *dpkgStatus = @"/var/lib/dpkg/status";
+	NSString *dpkgStatus = ROOT_PATH_NS(@"/var/lib/dpkg/status");
 	NSString *contents = [NSString stringWithContentsOfFile:dpkgStatus encoding:NSUTF8StringEncoding error:&readError];
 	if(readError){
 		NSString *msg = [NSString stringWithFormat:[[localize(@"Failed to get contents of %@!")
@@ -321,7 +321,7 @@
 }
 
 -(BOOL)gatherFilesForPackages{
-	NSString *dpkgInfoDir = @"/var/lib/dpkg/info/";
+	NSString *dpkgInfoDir = ROOT_PATH_NS(@"/var/lib/dpkg/info/");
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	NSCharacterSet *newlineChars = [NSCharacterSet newlineCharacterSet];
 	NSString *filesToCopy = [tmpDir stringByAppendingPathComponent:@".filesToCopy"];
@@ -612,7 +612,7 @@
 -(void)makeBootstrapFile{
 	NSString *bootstrap = @"elucubratus";
 	NSFileManager *fileManager = [NSFileManager defaultManager];
-	if([fileManager fileExistsAtPath:@"/.procursus_strapped"]){
+	if([fileManager fileExistsAtPath:ROOT_PATH_NS(@"/.procursus_strapped")]){
 		bootstrap = @"procursus";
 	}
 

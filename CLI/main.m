@@ -208,7 +208,7 @@ int main(int argc, char **argv){
 							switch([input intValue]){
 								case 0: {
 									const char *args[] = {
-										"/usr/bin/sbreload",
+										ROOT_PATH("/usr/bin/sbreload"),
 										NULL
 									};
 									task(args);
@@ -216,7 +216,7 @@ int main(int argc, char **argv){
 								}
 								case 1: {
 									const char *args[] = {
-										"/usr/bin/uicache",
+										ROOT_PATH("/usr/bin/uicache"),
 										"-a",
 										"-r",
 										NULL
