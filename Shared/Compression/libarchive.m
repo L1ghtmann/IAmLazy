@@ -22,7 +22,8 @@ int get_file_count(){
 	int file_count = 0;
 
 	struct dirent *entry;
-	DIR *directory = opendir(ROOT_PATH("/tmp/me.lightmann.iamlazy/"));
+	// DIR *directory = opendir(ROOT_PATH("/tmp/me.lightmann.iamlazy/"));
+	DIR *directory = opendir("/tmp/me.lightmann.iamlazy/");
 	if(!directory){
 		return 0;
 	}
@@ -52,7 +53,8 @@ bool write_archive(const char *outname){
 	}
 
 	struct dirent *ent;
-	DIR *directory = opendir(ROOT_PATH("/tmp/me.lightmann.iamlazy/"));
+	// DIR *directory = opendir(ROOT_PATH("/tmp/me.lightmann.iamlazy/"));
+	DIR *directory = opendir("/tmp/me.lightmann.iamlazy/");
 	if(!directory){
 		return false;
 	}
@@ -92,7 +94,8 @@ bool write_archive(const char *outname){
 
 	// change CWD to avoid
 	// including it in archive
-	if(chdir(ROOT_PATH("/tmp/")) != 0){
+	// if(chdir(ROOT_PATH("/tmp/")) != 0){
+	if(chdir("/tmp/") != 0){
 		free(files);
 		return false;
 	}
@@ -187,7 +190,8 @@ bool extract_archive(const char *filename){
 	flags |= ARCHIVE_EXTRACT_FFLAGS;
 
 	// extract location
-	if(chdir(ROOT_PATH("/tmp/")) != 0){
+	// if(chdir(ROOT_PATH("/tmp/")) != 0){
+	if(chdir("/tmp/") != 0){
 		return false;
 	}
 

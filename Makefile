@@ -1,5 +1,5 @@
 export CLI = 0
-export ROOTLESS = 0
+export ROOTLESS = 1
 export ARCHS = arm64
 
 ifeq ($(ROOTLESS),1)
@@ -19,7 +19,7 @@ APPLICATION_NAME = IAmLazy
 IAmLazy_FILES = Task.c $(wildcard Shared/**/*.m) $(wildcard App/*.m App/**/*.m)
 IAmLazy_FRAMEWORKS = UIKit
 IAmLazy_LIBRARIES = archive
-IAmLazy_CFLAGS = -fobjc-arc -D CLI="$(CLI)"
+IAmLazy_CFLAGS = -fobjc-arc
 IAmLazy_CODESIGN_FLAGS = -SApp/entitlements.plist
 IAmLazy_RESOURCE_DIRS = App/Resources
 
@@ -29,12 +29,14 @@ TOOL_NAME = ial
 
 ial_FILES = Task.c $(wildcard Shared/**/*.m) $(wildcard CLI/*.m) App/UI/IALProgressViewController.m
 ial_LIBRARIES = archive
-ial_CFLAGS = -fobjc-arc -D CLI="$(CLI)"
+ial_CFLAGS = -fobjc-arc
 ial_CODESIGN_FLAGS = -SCLI/entitlements.plist
 ial_INSTALL_PATH = /usr/local/bin
 
 include $(THEOS_MAKE_PATH)/tool.mk
 endif
+
+export ADDITIONAL_CFLAGS = -D CLI="$(CLI)" -D INSTALL_PREFIX='"$(THEOS_PACKAGE_INSTALL_PREFIX)"'
 
 SUBPROJECTS += AndSoAreYou
 

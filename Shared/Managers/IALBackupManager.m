@@ -80,6 +80,11 @@
 	// specify the bootstrap it was created on
 	if(!_filtered) [self makeBootstrapFile];
 
+	// specify rootless
+	if([@INSTALL_PREFIX length]){
+		[self makeRootlessFile];
+	}
+
 	// make archive of packages
 	[_generalManager updateItemStatus:2.5];
 	if(![self makeTarball]){
@@ -96,7 +101,7 @@
 
 	// get control files for all installed packages
 	NSError *readError = nil;
-	NSString *dpkgStatus = ROOT_PATH_NS(@"/var/lib/dpkg/status");
+	NSString *dpkgStatus = ROOT_PATH_NS_VAR(@"/var/lib/dpkg/status");
 	NSString *contents = [NSString stringWithContentsOfFile:dpkgStatus encoding:NSUTF8StringEncoding error:&readError];
 	if(readError){
 		NSString *msg = [NSString stringWithFormat:[[localize(@"Failed to get contents of %@!")
@@ -321,7 +326,7 @@
 }
 
 -(BOOL)gatherFilesForPackages{
-	NSString *dpkgInfoDir = ROOT_PATH_NS(@"/var/lib/dpkg/info/");
+	NSString *dpkgInfoDir = ROOT_PATH_NS_VAR(@"/var/lib/dpkg/info/");
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	NSCharacterSet *newlineChars = [NSCharacterSet newlineCharacterSet];
 	NSString *filesToCopy = [tmpDir stringByAppendingPathComponent:@".filesToCopy"];
@@ -612,12 +617,18 @@
 -(void)makeBootstrapFile{
 	NSString *bootstrap = @"elucubratus";
 	NSFileManager *fileManager = [NSFileManager defaultManager];
-	if([fileManager fileExistsAtPath:ROOT_PATH_NS(@"/.procursus_strapped")]){
+	if([fileManager fileExistsAtPath:ROOT_PATH_NS_VAR(@"/.procursus_strapped")]){
 		bootstrap = @"procursus";
 	}
 
 	NSString *file = [NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap];
 	[fileManager createFileAtPath:file contents:nil attributes:nil];
+}
+
+-(void)makeRootlessFile{
+	NSString *txt = @".rootless";
+	NSString *file = [tmpDir stringByAppendingPathComponent:txt];
+	[[NSFileManager defaultManager] createFileAtPath:file contents:nil attributes:nil];
 }
 
 -(BOOL)makeTarball{

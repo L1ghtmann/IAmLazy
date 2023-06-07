@@ -230,7 +230,7 @@ int main(int argc, char *argv[]){
 
 			// get DEBIAN files (e.g., maintainer scripts)
 			NSError *error = nil;
-			NSString *dpkgInfoDir = ROOT_PATH_NS(@"/var/lib/dpkg/info/");
+			NSString *dpkgInfoDir = ROOT_PATH_NS_VAR(@"/var/lib/dpkg/info/");
 			NSFileManager *fileManager = [NSFileManager defaultManager];
 			NSArray *dpkgInfo = [fileManager contentsOfDirectoryAtPath:dpkgInfoDir error:&error];
 			if(error){

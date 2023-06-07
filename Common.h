@@ -8,5 +8,6 @@
 
 #define scaleFactor (kWidth/375) // scale from iP7 size
 
-#define tmpDir ROOT_PATH_NS(@"/tmp/me.lightmann.iamlazy/")
-#define backupDir ROOT_PATH_NS(@"/var/mobile/Documents/me.lightmann.iamlazy/")
+// #define tmpDir ROOT_PATH_NS_VAR(@"/tmp/me.lightmann.iamlazy/") // has no w perms on palera1n??
+#define tmpDir @"/tmp/me.lightmann.iamlazy/"
+#define backupDir ROOT_PATH_NS_VAR(@"/var/mobile/Documents/me.lightmann.iamlazy/")

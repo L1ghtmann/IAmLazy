@@ -73,7 +73,10 @@
 
 	BOOL compatible = YES;
 	if([backupName hasSuffix:@"u.tar.gz"]){
-		compatible = [self verifyBootstrapForBackup:target];
+		compatible = [self verifyBootstrapForBackup];
+	}
+	if(compatible){
+		compatible = [self verifyTypeForBackup];
 	}
 
 	if(compatible){
@@ -103,23 +106,20 @@
 	return extract_archive([backupPath fileSystemRepresentation]);
 }
 
--(BOOL)verifyBootstrapForBackup:(NSString *)targetBackup{
+-(BOOL)verifyBootstrapForBackup{
 	NSString *bootstrap = @"elucubratus";
 	NSString *oldBootstrap = @"bingner_elucubratus"; // pre v2
 	NSString *altBootstrap = @"procursus";
 	NSFileManager *fileManager = [NSFileManager defaultManager];
-	if([fileManager fileExistsAtPath:ROOT_PATH_NS(@"/.procursus_strapped")]){
+	if([fileManager fileExistsAtPath:ROOT_PATH_NS_VAR(@"/.procursus_strapped")]){
 		bootstrap = @"procursus";
 		oldBootstrap = @"procursus";
 		altBootstrap = @"elucubratus";
 	}
 
-	BOOL check = YES;
-	if([targetBackup hasSuffix:@".tar.gz"]){
-		check = [fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap]];
-		if(!check){ // pre v2
-			check = [fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@.made_on_%@", tmpDir, oldBootstrap]];
-		}
+	BOOL check = [fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap]];
+	if(!check){ // pre v2
+		check = [fileManager fileExistsAtPath:[NSString stringWithFormat:@"%@.made_on_%@", tmpDir, oldBootstrap]];
 	}
 
 	if(!check){
@@ -132,6 +132,34 @@
 	}
 
 	return check;
+}
+
+-(BOOL)verifyTypeForBackup{
+	NSString *rootful = @"rootful";
+	NSString *rootless = @"rootless";
+	NSString *txt = [@"." stringByAppendingString:rootless];
+	NSString *file = [tmpDir stringByAppendingPathComponent:txt];
+	BOOL check = [[NSFileManager defaultManager] fileExistsAtPath:file];
+	if(!check && [@INSTALL_PREFIX length]){
+		// TODO: localize
+		NSString *msg = [NSString stringWithFormat:[[localize(@"The backup you're trying to restore from was made for %@ jailbreaks.")
+														stringByAppendingString:@"\n\n"]
+														stringByAppendingString:localize(@"Your current jailbreak is %@!")],
+														rootful,
+														rootless];
+		[_generalManager displayErrorWithMessage:msg];
+		return NO;
+	}
+	else if(check && ![@INSTALL_PREFIX length]){
+		NSString *msg = [NSString stringWithFormat:[[localize(@"The backup you're trying to restore from was made for %@ jailbreaks.")
+														stringByAppendingString:@"\n\n"]
+														stringByAppendingString:localize(@"Your current jailbreak is %@!")],
+														rootless,
+														rootful];
+		[_generalManager displayErrorWithMessage:msg];
+		return NO;
+	}
+	return YES;
 }
 
 -(BOOL)updateAPT{
