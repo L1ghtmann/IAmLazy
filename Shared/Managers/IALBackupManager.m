@@ -489,7 +489,22 @@
 														package];
 		[_generalManager displayErrorWithMessage:msg];
 	}
-	NSString *noStatusLine = [theOne stringByReplacingOccurrencesOfString:@"Status: install ok installed\n" withString:@""]; // dpkg adds this at installation
+	else if([theOne rangeOfString:@"Status: install ok"].location == NSNotFound){
+		// TODO: localize
+		NSString *msg = [NSString stringWithFormat:localize(@"%@ is not fully installed?!"), package];
+		[_generalManager displayErrorWithMessage:msg];
+		return NO;
+	}
+
+	NSError *error = nil;
+	NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"Status:\\s.*\n" options:NSRegularExpressionCaseInsensitive error:&error];
+	if(error){
+		// TODO: localize
+		NSString *msg = [NSString stringWithFormat:localize(@"Regex error: %@"), error.localizedDescription];
+		[_generalManager displayErrorWithMessage:msg];
+		return NO;
+	}
+	NSString *noStatusLine = [regex stringByReplacingMatchesInString:theOne options:0 range:NSMakeRange(0, [theOne length]) withTemplate:@""];
 	if(![noStatusLine length]){
 		NSString *msg = [NSString stringWithFormat:[[localize(@"The control for")
 														stringByAppendingString:@" "]
