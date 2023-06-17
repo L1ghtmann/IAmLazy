@@ -267,10 +267,18 @@ int main(int argc, char *argv[]){
 					continue;
 				}
 
-				[fileManager copyItemAtPath:filePath toPath:[debian stringByAppendingPathComponent:strippedName] error:&error];
+				NSString *newPath = [debian stringByAppendingPathComponent:strippedName];
+				[fileManager copyItemAtPath:filePath toPath:newPath error:&error];
 				if(error){
 					IALLogErr(@"Failed to copy %@! Info: %@", filePath, error.localizedDescription);
 					error = nil;
+					continue;
+				}
+
+				// ensure correct perms
+				if(lchmod([newPath fileSystemRepresentation], 00755) != 0){
+					IALLogErr(@"Failed to set %@ perms!", newPath);
+					return 1;
 				}
 			}
 		}
