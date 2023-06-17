@@ -144,7 +144,7 @@
 	return controls;
 }
 
--(NSArray<NSString *> *)getAllPackages{
+-(NSMutableArray<NSString *> *)getAllPackages{
 	NSMutableArray *packages = [NSMutableArray new];
 
 	// filter out packages with the 'requried' priority
@@ -296,7 +296,7 @@
 	}] resume];
 }
 
--(NSArray<NSString *> *)getUserPackages{
+-(NSMutableArray<NSString *> *)getUserPackages{
 	[_generalManager updateItemProgress:0.8];
 
 	dispatch_semaphore_t sem = dispatch_semaphore_create(0);
@@ -336,6 +336,7 @@
 	CGFloat progress = 0.0;
 
 	NSError *error = nil;
+	NSMutableArray *skip = [NSMutableArray new];
 	for(NSString *package in _packages){
 		// get installed files
 		NSString *path = [[dpkgInfoDir stringByAppendingPathComponent:package] stringByAppendingPathExtension:@"list"];
@@ -425,19 +426,14 @@
 			return NO;
 		}
 
-		// make dir to hold stuff for the tweak
+		progress+=progressPerPart;
+		[_generalManager updateItemProgress:progress];
+
 		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:package];
-		if(![fileManager fileExistsAtPath:tweakDir]){
-			[fileManager createDirectoryAtPath:tweakDir withIntermediateDirectories:YES attributes:nil error:&error];
-			if(error){
-				NSString *msg = [NSString stringWithFormat:[[localize(@"Failed to create %@!")
-																stringByAppendingString:@" "]
-																stringByAppendingString:localize(@"Info: %@")],
-																tweakDir,
-																error.localizedDescription];
-				[_generalManager displayErrorWithMessage:msg];
-				return NO;
-			}
+		if(![self makeControlForPackage:package inDirectory:tweakDir]){
+			// skip any packages that are unconfigued or half-installed
+			[skip addObject:package];
+			continue;
 		}
 
 		progress+=progressPerPart;
@@ -457,13 +453,6 @@
 		progress+=progressPerPart;
 		[_generalManager updateItemProgress:progress];
 
-		if(![self makeControlForPackage:package inDirectory:tweakDir]){
-			return NO;
-		}
-
-		progress+=progressPerPart;
-		[_generalManager updateItemProgress:progress];
-
 		if(![self copyDEBIANFiles]){
 			return NO;
 		}
@@ -475,37 +464,10 @@
 	// remove list file now that we're done w it
 	[fileManager removeItemAtPath:filesToCopy error:nil];
 
-	return YES;
-}
+	// skip borked installs
+	[_packages removeObjectsInArray:skip];
 
--(BOOL)makeSubDirectories:(NSArray<NSString *> *)directories inDirectory:(NSString *)tweakDir{
-	NSError *writeError = nil;
-	NSFileManager *fileManager = [NSFileManager defaultManager];
-	for(NSString *dir in directories){
-		NSString *path = [tweakDir stringByAppendingPathComponent:dir];
-		if(![fileManager fileExistsAtPath:path]){
-			[fileManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&writeError];
-			if(writeError){
-				NSString *msg = [NSString stringWithFormat:[[localize(@"Failed to create %@!")
-																stringByAppendingString:@" "]
-																stringByAppendingString:localize(@"Info: %@")],
-																path,
-																writeError.localizedDescription];
-				[_generalManager displayErrorWithMessage:msg];
-				return NO;
-			}
-		}
-	}
 	return YES;
-}
-
--(BOOL)copyGenericFiles{
-	// have to run as root in order to retain file attributes (ownership, etc)
-	BOOL ret = [_generalManager executeCommandAsRoot:@"cpGFiles"];
-	if(!ret){
-		[_generalManager displayErrorWithMessage:localize(@"Failed to copy generic files!")];
-	}
-	return ret;
 }
 
 -(BOOL)makeControlForPackage:(NSString *)package inDirectory:(NSString *)tweakDir{
@@ -520,6 +482,13 @@
 	}
 
 	NSString *theOne = [relevantControls firstObject];
+	if (![theOne length]){
+		NSString *msg = [NSString stringWithFormat:[[localize(@"The control for")
+														stringByAppendingString:@" "]
+														stringByAppendingString:localize(@"%@ is blank?!")],
+														package];
+		[_generalManager displayErrorWithMessage:msg];
+	}
 	NSString *noStatusLine = [theOne stringByReplacingOccurrencesOfString:@"Status: install ok installed\n" withString:@""]; // dpkg adds this at installation
 	if(![noStatusLine length]){
 		NSString *msg = [NSString stringWithFormat:[[localize(@"The control for")
@@ -556,6 +525,36 @@
 	[fileManager createFileAtPath:control contents:data attributes:nil];
 
 	return YES;
+}
+
+-(BOOL)makeSubDirectories:(NSArray<NSString *> *)directories inDirectory:(NSString *)tweakDir{
+	NSError *writeError = nil;
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	for(NSString *dir in directories){
+		NSString *path = [tweakDir stringByAppendingPathComponent:dir];
+		if(![fileManager fileExistsAtPath:path]){
+			[fileManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&writeError];
+			if(writeError){
+				NSString *msg = [NSString stringWithFormat:[[localize(@"Failed to create %@!")
+																stringByAppendingString:@" "]
+																stringByAppendingString:localize(@"Info: %@")],
+																path,
+																writeError.localizedDescription];
+				[_generalManager displayErrorWithMessage:msg];
+				return NO;
+			}
+		}
+	}
+	return YES;
+}
+
+-(BOOL)copyGenericFiles{
+	// have to run as root in order to retain file attributes (ownership, etc)
+	BOOL ret = [_generalManager executeCommandAsRoot:@"cpGFiles"];
+	if(!ret){
+		[_generalManager displayErrorWithMessage:localize(@"Failed to copy generic files!")];
+	}
+	return ret;
 }
 
 -(BOOL)copyDEBIANFiles{
@@ -641,7 +640,7 @@
 
 	BOOL status = write_archive([backupPath fileSystemRepresentation]);
 	BOOL status2 = [self verifyFileAtPath:backupPath];
-	[_generalManager cleanupTmp];
+	// [_generalManager cleanupTmp]; // for whatever reason, current setup works flawlessly for CLI but fails to build debs with contents from app (seems like $PATH issue)
 	if(!status2) return status2;
 	else return status;
 }

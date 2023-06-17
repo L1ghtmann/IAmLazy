@@ -4,7 +4,7 @@
 
 @interface IALBackupManager : NSObject {
     NSArray<NSString *> *_controlFiles;
-    NSArray<NSString *> *_packages;
+    NSMutableArray<NSString *> *_packages;
 }
 @property (nonatomic) BOOL filtered;
 @property (nonatomic, retain) IALGeneralManager *generalManager;
