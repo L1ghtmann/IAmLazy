@@ -50,6 +50,9 @@
 
 	if(self){
 		[self ensureBackupDirExists];
+		#if DEBUG
+		[self cleanLog];
+		#endif
 		[self ensureUsableDpkgLock];
 	}
 
@@ -177,6 +180,19 @@
 			if(![self executeCommandAsRoot:@"unlockDpkg"]){
 				[self displayErrorWithMessage:localize(@"Failed to free dpkg lock!")];
 			}
+		}
+	}
+}
+
+-(void)cleanLog{
+	NSString *log = @"/tmp/ial.log";
+	// NSString *log = ROOT_PATH_NS_VAR(@"/tmp/ial.log");
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	if([fileManager fileExistsAtPath:log]){
+		NSError *error = nil;
+		[fileManager removeItemAtPath:log error:&error];
+		if(error){
+			IALLogErr(@"Failed to remove %@. Error: %@", log, error.localizedDescription);
 		}
 	}
 }
