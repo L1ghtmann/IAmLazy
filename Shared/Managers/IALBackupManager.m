@@ -515,7 +515,7 @@
 	}
 
 	// ensure final newline (deb will fail to build if missing)
-	NSString *info = [noStatusLine stringByAppendingString:@"\n"];
+	NSString *info = [noStatusLine stringByAppendingString:@"\n\n"];
 
 	// make DEBIAN dir
 	NSFileManager *fileManager = [NSFileManager defaultManager];

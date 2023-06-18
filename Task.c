@@ -1,7 +1,8 @@
 #include "Task.h"
-#include <string.h>
 #include <stdio.h>
 #include <spawn.h>
+#include <string.h>
+#include <stdlib.h>
 #include <sys/wait.h>
 #include <sys/syslog.h>
 
@@ -24,6 +25,8 @@ extern char **environ;
 
 int task(const char *args[]){
 	pid_t pid;
+	// char *PATH = getenv("PATH");
+	// print(PATH, 99);
 #if DEBUG
 	posix_spawn_file_actions_t fd_actions;
 	posix_spawn_file_actions_init(&fd_actions);
