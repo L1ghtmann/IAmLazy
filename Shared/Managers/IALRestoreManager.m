@@ -141,7 +141,6 @@
 	NSString *file = [tmpDir stringByAppendingPathComponent:txt];
 	BOOL check = [[NSFileManager defaultManager] fileExistsAtPath:file];
 	if(!check && [@INSTALL_PREFIX length]){
-		// TODO: localize
 		NSString *msg = [NSString stringWithFormat:[[localize(@"The backup you're trying to restore from was made for %@ jailbreaks.")
 														stringByAppendingString:@"\n\n"]
 														stringByAppendingString:localize(@"Your current jailbreak is %@!")],

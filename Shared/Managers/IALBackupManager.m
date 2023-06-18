@@ -498,7 +498,6 @@
 		[_generalManager displayErrorWithMessage:msg];
 	}
 	else if([theOne rangeOfString:@"Status: install ok"].location == NSNotFound){
-		// TODO: localize
 		NSString *msg = [NSString stringWithFormat:localize(@"%@ is not fully installed?!"), package];
 		[_generalManager displayErrorWithMessage:msg];
 		return NO;
@@ -507,7 +506,6 @@
 	NSError *error = nil;
 	NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"Status:\\s.*\n" options:NSRegularExpressionCaseInsensitive error:&error];
 	if(error){
-		// TODO: localize
 		NSString *msg = [NSString stringWithFormat:localize(@"Regex error: %@"), error.localizedDescription];
 		[_generalManager displayErrorWithMessage:msg];
 		return NO;
