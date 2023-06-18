@@ -361,9 +361,17 @@
 		// determine unique generic files and directories
 		NSMutableArray *genericFiles = [NSMutableArray new];
 		NSMutableArray *directories = [NSMutableArray new];
-		for(NSString *line in lines){
+		for(__strong NSString *line in lines){
 			if(![line length] || [line isEqualToString:@"/."] || [[line lastPathComponent] isEqualToString:@".."] || [[line lastPathComponent] isEqualToString:@"."]){
 				continue;
+			}
+
+			// symlinks are listed as "link -> file"
+			// we want to grab the link as the file
+			// is already copied as part of the list
+			if([line containsString:@"->"]){
+				NSArray *bits = [line componentsSeparatedByString:@" "];
+				line = bits.firstObject;
 			}
 
 			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:line error:&error];
@@ -655,7 +663,7 @@
 
 	BOOL status = write_archive([backupPath fileSystemRepresentation]);
 	BOOL status2 = [self verifyFileAtPath:backupPath];
-	// [_generalManager cleanupTmp]; // for whatever reason, current setup works flawlessly for CLI but fails to build debs with contents from app (seems like $PATH issue)
+	[_generalManager cleanupTmp];
 	if(!status2) return status2;
 	else return status;
 }
