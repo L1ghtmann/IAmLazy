@@ -78,11 +78,19 @@
 	[_generalManager updateItemStatus:2];
 
 	// specify the bootstrap it was created on
-	if(!_filtered) [self makeBootstrapFile];
+	if(!_filtered){
+		if(![self makeBootstrapFile]){
+			completed(NO);
+			return;
+		}
+	}
 
 	// specify rootless
 	if([@INSTALL_PREFIX length]){
-		[self makeRootlessFile];
+		if(![self makeRootlessFile]){
+			completed(NO);
+			return;
+		}
 	}
 
 	// make archive of packages
@@ -496,6 +504,7 @@
 														stringByAppendingString:localize(@"%@ is blank?!")],
 														package];
 		[_generalManager displayErrorWithMessage:msg];
+		return NO;
 	}
 	else if([theOne rangeOfString:@"Status: install ok"].location == NSNotFound){
 		NSString *msg = [NSString stringWithFormat:localize(@"%@ is not fully installed?!"), package];
@@ -634,7 +643,7 @@
 	return YES;
 }
 
--(void)makeBootstrapFile{
+-(BOOL)makeBootstrapFile{
 	NSString *bootstrap = @"elucubratus";
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if([fileManager fileExistsAtPath:ROOT_PATH_NS_VAR(@"/.procursus_strapped")]){
@@ -642,13 +651,13 @@
 	}
 
 	NSString *file = [NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap];
-	[fileManager createFileAtPath:file contents:nil attributes:nil];
+	return [fileManager createFileAtPath:file contents:nil attributes:nil];
 }
 
--(void)makeRootlessFile{
+-(BOOL)makeRootlessFile{
 	NSString *txt = @".rootless";
 	NSString *file = [tmpDir stringByAppendingPathComponent:txt];
-	[[NSFileManager defaultManager] createFileAtPath:file contents:nil attributes:nil];
+	return [[NSFileManager defaultManager] createFileAtPath:file contents:nil attributes:nil];
 }
 
 -(BOOL)makeTarball{
