@@ -61,7 +61,7 @@
 
 #pragma mark Functionality
 
--(void)makeBackupWithFilter:(BOOL)filter andCompletion:(void (^)(BOOL))completed{
+-(void)makeBackupWithFilter:(BOOL)filter andCompletion:(void (^)(BOOL, NSString *))completed{
 	if(filter){
 		// check for internet connection
 		// used for determining bootstrap packages to filter
@@ -69,7 +69,7 @@
 			[self displayErrorWithMessage:[[localize(@"Your device does not appear to be connected to the internet")
 											stringByAppendingString:@"\n\n"]
 											stringByAppendingString:localize(@"A network connection is required for standard backups to determine if a given package is bootstrap-vended or not")]];
-			completed(NO);
+			completed(NO, nil);
 			return;
 		}
 	}
@@ -81,8 +81,8 @@
 
 	// about to do some heavy lifting ....
 	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-		[_backupManager makeBackupWithFilter:filter andCompletion:^(BOOL done){
-			completed(done);
+		[_backupManager makeBackupWithFilter:filter andCompletion:^(BOOL done, NSString *info){
+			completed(done, info);
 		}];
 	});
 }

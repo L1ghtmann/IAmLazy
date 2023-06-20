@@ -12,18 +12,18 @@
 
 @implementation IALBackupManager
 
--(void)makeBackupWithFilter:(BOOL)filter andCompletion:(void (^)(BOOL))completed{
+-(void)makeBackupWithFilter:(BOOL)filter andCompletion:(void (^)(BOOL, NSString *))completed{
 	// check for old tmp files
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if([fileManager fileExistsAtPath:tmpDir]){
 		if(![_generalManager cleanupTmp]){
-			completed(NO);
+			completed(NO, nil);
 			return;
 		}
 	}
 
 	if(![_generalManager ensureBackupDirExists]){
-		completed(NO);
+		completed(NO, nil);
 		return;
 	}
 
@@ -33,7 +33,7 @@
 	_controlFiles = [self getControlFiles];
 	if(![_controlFiles count]){
 		[_generalManager displayErrorWithMessage:localize(@"Failed to generate controls for installed packages!")];
-		completed(NO);
+		completed(NO, nil);
 		return;
 	}
 
@@ -41,7 +41,7 @@
 	else _packages = [self getUserPackages];
 	if(![_packages count]){
 		[_generalManager displayErrorWithMessage:localize(@"Failed to generate list of packages!")];
-		completed(NO);
+		completed(NO, nil);
 		return;
 	}
 
@@ -58,21 +58,21 @@
 															tmpDir,
 															writeError.localizedDescription];
 			[_generalManager displayErrorWithMessage:msg];
-			completed(NO);
+			completed(NO, nil);
 			return;
 		}
 	}
 
 	[_generalManager updateItemStatus:0.5];
 	if(![self gatherFilesForPackages]){
-		completed(NO);
+		completed(NO, nil);
 		return;
 	}
 	[_generalManager updateItemStatus:1];
 
 	[_generalManager updateItemStatus:1.5];
 	if(![self buildDebs]){
-		completed(NO);
+		completed(NO, nil);
 		return;
 	}
 	[_generalManager updateItemStatus:2];
@@ -80,7 +80,7 @@
 	// specify the bootstrap it was created on
 	if(!_filtered){
 		if(![self makeBootstrapFile]){
-			completed(NO);
+			completed(NO, nil);
 			return;
 		}
 	}
@@ -88,7 +88,7 @@
 	// specify rootless
 	if([@INSTALL_PREFIX length]){
 		if(![self makeRootlessFile]){
-			completed(NO);
+			completed(NO, nil);
 			return;
 		}
 	}
@@ -96,12 +96,17 @@
 	// make archive of packages
 	[_generalManager updateItemStatus:2.5];
 	if(![self makeTarball]){
-		completed(NO);
+		completed(NO, nil);
 		return;
 	}
 	[_generalManager updateItemStatus:3];
 
-	completed(YES);
+	if([_skip count]){
+		completed(YES, [_skip componentsJoinedByString:@",\n"]);
+	}
+	else{
+		completed(YES, nil);
+	}
 }
 
 -(NSArray<NSString *> *)getControlFiles{
@@ -226,7 +231,7 @@
 	[[session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
 		NSInteger responseCode = [(NSHTTPURLResponse *)response statusCode];
 		if(responseCode != 200){
-			IALLogErr(@"%@; HTTP status code: %li", [error localizedDescription], responseCode);
+			IALLogErr(@"%@; HTTP status code: %li", error.localizedDescription, responseCode);
 			callback(NO, nil);
 			return;
 		}
@@ -297,7 +302,7 @@
 			}
 		}
 		else{
-			IALLogErr(@"Canister's response was of unexpected type! Serialization error: %@", [jsonErr localizedDescription]);
+			IALLogErr(@"Canister's response was of unexpected type! Serialization error: %@", jsonErr.localizedDescription);
 			callback(NO, nil);
 			return;
 		}
@@ -344,7 +349,7 @@
 	CGFloat progress = 0.0;
 
 	NSError *error = nil;
-	NSMutableArray *skip = [NSMutableArray new];
+	_skip = [NSMutableArray new];
 	for(NSString *package in _packages){
 		// get installed files
 		NSString *path = [[dpkgInfoDir stringByAppendingPathComponent:package] stringByAppendingPathExtension:@"list"];
@@ -448,7 +453,7 @@
 		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:package];
 		if(![self makeControlForPackage:package inDirectory:tweakDir]){
 			// skip any packages that are unconfigued or half-installed
-			[skip addObject:package];
+			[_skip addObject:package];
 			continue;
 		}
 
@@ -481,7 +486,7 @@
 	[fileManager removeItemAtPath:filesToCopy error:nil];
 
 	// skip borked installs
-	[_packages removeObjectsInArray:skip];
+	[_packages removeObjectsInArray:_skip];
 
 	return YES;
 }
@@ -492,8 +497,11 @@
 	NSPredicate *thePredicate = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH %@", pkg];
 	NSArray *relevantControls = [_controlFiles filteredArrayUsingPredicate:thePredicate];
 	if(![relevantControls count]){
+		// Using error log as opposed to alert as borked pkgs are skipped
+		// (and the entire backup does not stop because of one package)
 		NSString *msg = [NSString stringWithFormat:localize(@"There appear to be no controls for %@?!"), package];
-		[_generalManager displayErrorWithMessage:msg];
+		// [_generalManager displayErrorWithMessage:msg];
+		IALLogErr(@"%@", msg);
 		return NO;
 	}
 
@@ -503,12 +511,14 @@
 														stringByAppendingString:@" "]
 														stringByAppendingString:localize(@"%@ is blank?!")],
 														package];
-		[_generalManager displayErrorWithMessage:msg];
+		// [_generalManager displayErrorWithMessage:msg];
+		IALLogErr(@"%@", msg);
 		return NO;
 	}
 	else if([theOne rangeOfString:@"Status: install ok"].location == NSNotFound){
 		NSString *msg = [NSString stringWithFormat:localize(@"%@ is not fully installed?!"), package];
-		[_generalManager displayErrorWithMessage:msg];
+		// [_generalManager displayErrorWithMessage:msg];
+		IALLogErr(@"%@", msg);
 		return NO;
 	}
 
@@ -516,7 +526,8 @@
 	NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"Status:\\s.*\n" options:NSRegularExpressionCaseInsensitive error:&error];
 	if(error){
 		NSString *msg = [NSString stringWithFormat:localize(@"Regex error: %@"), error.localizedDescription];
-		[_generalManager displayErrorWithMessage:msg];
+		// [_generalManager displayErrorWithMessage:msg];
+		IALLogErr(@"%@", msg);
 		return NO;
 	}
 	NSString *noStatusLine = [regex stringByReplacingMatchesInString:theOne options:0 range:NSMakeRange(0, [theOne length]) withTemplate:@""];
@@ -525,7 +536,8 @@
 														stringByAppendingString:@" "]
 														stringByAppendingString:localize(@"%@ is blank?!")],
 														package];
-		[_generalManager displayErrorWithMessage:msg];
+		// [_generalManager displayErrorWithMessage:msg];
+		IALLogErr(@"%@", msg);
 		return NO;
 	}
 
@@ -544,7 +556,8 @@
 															stringByAppendingString:localize(@"Info: %@")],
 															debian,
 															writeError.localizedDescription];
-			[_generalManager displayErrorWithMessage:msg];
+			// [_generalManager displayErrorWithMessage:msg];
+			IALLogErr(@"%@", msg);
 			return NO;
 		}
 	}

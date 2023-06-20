@@ -95,10 +95,15 @@ int main(int argc, char **argv){
 					IALGeneralManager *gManager = [[IALGeneralManager alloc] sharedManagerForPurpose:0];
 					dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 					NSDate *startTime = [NSDate date];
-					[gManager makeBackupWithFilter:filter andCompletion:^(BOOL completed){
+					[gManager makeBackupWithFilter:filter andCompletion:^(BOOL completed, NSString *info){
 						if(completed){
 							NSTimeInterval duration = [[NSDate date] timeIntervalSinceDate:startTime];
 							NSString *msg = [NSString stringWithFormat:@"Tweak backup completed successfully in %.02f seconds!\nYour backup can be found in %@", duration, backupDir];
+							if([info length]){
+								msg = [[msg stringByAppendingString:@"\n"]
+											stringByAppendingString:[NSString stringWithFormat:@"The following packages are not properly installed/configured and were skipped:\n%@",
+											info]];
+							}
 							print(msg);
 							dispatch_semaphore_signal(sema);
 						}

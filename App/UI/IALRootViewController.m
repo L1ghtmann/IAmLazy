@@ -377,7 +377,7 @@
 	[app setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
 	_startTime = [NSDate date];
 
-	[_manager makeBackupWithFilter:filter andCompletion:^(BOOL completed){
+	[_manager makeBackupWithFilter:filter andCompletion:^(BOOL completed, NSString *info){
 		dispatch_async(dispatch_get_main_queue(), ^(void){
 			[app setIdleTimerDisabled:NO]; // re-enable idle timer regardless of completion status
 			if(completed){
@@ -385,7 +385,7 @@
 
 				dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
 					[self dismissViewControllerAnimated:YES completion:^{
-						[self popPostBackup];
+						[self popPostBackupWithInfo:info];
 					}];
 				});
 			}
@@ -530,16 +530,25 @@
 
 #pragma mark Popups
 
--(void)popPostBackup{
+-(void)popPostBackupWithInfo:(NSString *)info{
 	AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
+
+	NSString *msg = [NSString stringWithFormat:[[localize(@"Tweak backup completed successfully in %@ seconds!")
+																stringByAppendingString:@"\n\n"]
+																stringByAppendingString:localize(@"Your backup can be found in\n%@")],
+																[self getDuration],
+																backupDir];
+
+	if([info length]){
+		// TODO: localize
+		msg = [[msg stringByAppendingString:@"\n\n"]
+					stringByAppendingString:[NSString stringWithFormat:localize(@"The following packages are not properly installed/configured and were skipped:\n%@"),
+					info]];
+	}
 
 	UIAlertController *alert = [UIAlertController
 								alertControllerWithTitle:@"IAmLazy"
-								message:[NSString stringWithFormat:[[localize(@"Tweak backup completed successfully in %@ seconds!")
-																		stringByAppendingString:@"\n\n"]
-																		stringByAppendingString:localize(@"Your backup can be found in\n%@")],
-																		[self getDuration],
-																		backupDir]
+								message:msg
 								preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *export = [UIAlertAction

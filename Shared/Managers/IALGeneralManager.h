@@ -11,7 +11,7 @@
 -(instancetype)sharedManagerForPurpose:(NSInteger)purpose;
 #endif
 +(instancetype)sharedManager;
--(void)makeBackupWithFilter:(BOOL)filter andCompletion:(void (^)(BOOL))completed;
+-(void)makeBackupWithFilter:(BOOL)filter andCompletion:(void (^)(BOOL, NSString *))completed;
 -(void)restoreFromBackup:(NSString *)backupName withCompletion:(void (^)(BOOL))completed;
 -(BOOL)ensureBackupDirExists;
 -(BOOL)cleanupTmp;
