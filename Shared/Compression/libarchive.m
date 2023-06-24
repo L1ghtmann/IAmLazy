@@ -12,7 +12,7 @@
 #include <dispatch/queue.h>
 #include <sys/fcntl.h>
 #include "../../Log.h"
-#include <rootless.h>
+// #include <rootless.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>

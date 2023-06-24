@@ -252,60 +252,63 @@
 					if(pkgInfo && [pkgInfo isKindOfClass:[NSDictionary class]]){
 						pkgInfo = (NSDictionary *)pkgInfo;
 
-						id pkg = [pkgInfo objectForKey:@"package"]; // package id
+						// package id
+						id pkg = [pkgInfo objectForKey:@"package"];
 						if(pkg && [pkg isKindOfClass:[NSString class]]){
 							pkg = (NSString *)pkg;
-
-							id repoInfo = [pkgInfo objectForKey:@"repository"]; // package origin info
-							if(repoInfo && [repoInfo isKindOfClass:[NSDictionary class]]){
-								repoInfo = (NSDictionary *)repoInfo;
-
-								id isBootstrap = [repoInfo objectForKey:@"isBootstrap"];
-								if(isBootstrap && [isBootstrap isKindOfClass:[NSNumber class]]){
-									if([isBootstrap boolValue]){
-										// bootstrap-vended package
-										// these can cause issues if
-										// installed on incompatible jbs
-										[filter addObject:pkg];
-									}
-								}
-								else{
-									IALLogErr(@"Canister's %@'s repository's 'isBootstrap' was of unexpected type!", pkg);
-									callback(NO, nil);
-									return;
-								}
-							}
-							else{
-								IALLogErr(@"Canister's %@'s 'repository' was of unexpected type!", pkg);
-								callback(NO, nil);
-								return;
-							}
 						}
 						else{
 							IALLogErr(@"Canister's 'package' data object was of unexpected type!");
 							callback(NO, nil);
 							return;
+						} // end package id
+
+						// package repository
+						id repoInfo = [pkgInfo objectForKey:@"repository"];
+						if(repoInfo && [repoInfo isKindOfClass:[NSDictionary class]]){
+							repoInfo = (NSDictionary *)repoInfo;
+
+							// bootstrap status
+							id isBootstrap = [repoInfo objectForKey:@"isBootstrap"];
+							if(isBootstrap && [isBootstrap isKindOfClass:[NSNumber class]]){
+								if([isBootstrap boolValue]){
+									// bootstrap-vended package
+									// these can cause issues if
+									// installed on incompatible jbs
+									[filter addObject:pkg];
+								}
+							}
+							else{
+								IALLogErr(@"Canister's %@'s repository's 'isBootstrap' was of unexpected type!", pkg);
+								callback(NO, nil);
+								return;
+							} // end bootstrap status
 						}
+						else{
+							IALLogErr(@"Canister's %@'s 'repository' was of unexpected type!", pkg);
+							callback(NO, nil);
+							return;
+						} // end package repository
 					}
 					else{
 						IALLogErr(@"Canister's data's components were of unexpected type!");
 						callback(NO, nil);
 						return;
-					}
-				}
+					} // end pkgInfo
+				} // end for loop
 				callback(YES, filter);
 			}
 			else{
 				IALLogErr(@"Canister 'data' object was of unexpected type!");
 				callback(NO, nil);
 				return;
-			}
+			} // end data
 		}
 		else{
 			IALLogErr(@"Canister's response was of unexpected type! Serialization error: %@", jsonErr.localizedDescription);
 			callback(NO, nil);
 			return;
-		}
+		} // end JSON serialization
 	}] resume];
 }
 
