@@ -540,7 +540,6 @@
 																backupDir];
 
 	if([info length]){
-		// TODO: localize
 		msg = [[msg stringByAppendingString:@"\n\n"]
 					stringByAppendingString:[NSString stringWithFormat:localize(@"The following packages are not properly installed/configured and were skipped:\n%@"),
 					info]];
