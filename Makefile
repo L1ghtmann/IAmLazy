@@ -36,7 +36,7 @@ ial_INSTALL_PATH = /usr/local/bin
 include $(THEOS_MAKE_PATH)/tool.mk
 endif
 
-export ADDITIONAL_CFLAGS = -D CLI="$(CLI)" -D INSTALL_PREFIX='"$(THEOS_PACKAGE_INSTALL_PREFIX)"'
+export ADDITIONAL_CFLAGS = -D CLI="$(CLI)"
 
 SUBPROJECTS += AndSoAreYou
 

@@ -86,7 +86,7 @@
 	}
 
 	// specify rootless
-	if([@INSTALL_PREFIX length]){
+	if([@THEOS_PACKAGE_INSTALL_PREFIX length]){
 		if(![self makeRootlessFile]){
 			completed(NO, nil);
 			return;
