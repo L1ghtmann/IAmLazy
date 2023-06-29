@@ -502,6 +502,7 @@
 	if(![relevantControls count]){
 		// Using error log as opposed to alert as borked pkgs are skipped
 		// (and the entire backup does not stop because of one package)
+		// TODO: remove these strings??
 		NSString *msg = [NSString stringWithFormat:localize(@"There appear to be no controls for %@?!"), package];
 		// [_generalManager displayErrorWithMessage:msg];
 		IALLogErr(@"%@", msg);

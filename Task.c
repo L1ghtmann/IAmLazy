@@ -28,12 +28,10 @@ int task(const char *args[]){
 	pid_t pid;
 	// FIX: palera1n
 	// this is unprefixed by default ????
-	// print(getenv("PATH"), 99); // test
 	if(strstr(getenv("PATH"), "/var/jb") == NULL){
 		// https://github.com/opa334/Dopamine/blob/1595dbf05561e55aa36e8dd39a77ebe2a5dd00c1/Packages/Fugu15KernelExploit/Sources/Fugu15KernelExploit/oobPCI.swift#L252
 		setenv("PATH", "/sbin:/bin:/usr/sbin:/usr/bin:/var/jb/sbin:/var/jb/bin:/var/jb/usr/sbin:/var/jb/usr/bin", 1);
 	}
-	// print(getenv("PATH"), 99); // test
 #if DEBUG
 	posix_spawn_file_actions_t fd_actions;
 	posix_spawn_file_actions_init(&fd_actions);
