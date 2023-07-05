@@ -75,7 +75,7 @@
 
 	[backup setTranslatesAutoresizingMaskIntoConstraints:NO];
 	[[backup.widthAnchor constraintEqualToConstant:((kWidth/3) * 2)] setActive:YES];
-	[[backup.heightAnchor constraintEqualToConstant:55] setActive:YES];
+	[[backup.heightAnchor constraintEqualToConstant:(55 * hScaleFactor)] setActive:YES];
 	[[backup.centerXAnchor constraintEqualToAnchor:_mainView.centerXAnchor] setActive:YES];
 	[[backup.centerYAnchor constraintEqualToAnchor:_mainView.centerYAnchor constant:75] setActive:YES];
 
@@ -98,7 +98,7 @@
 
 	[restore setTranslatesAutoresizingMaskIntoConstraints:NO];
 	[[restore.widthAnchor constraintEqualToConstant:((kWidth/3) * 2)] setActive:YES];
-	[[restore.heightAnchor constraintEqualToConstant:55] setActive:YES];
+	[[restore.heightAnchor constraintEqualToConstant:(55 * hScaleFactor)] setActive:YES];
 	[[restore.centerXAnchor constraintEqualToAnchor:_mainView.centerXAnchor] setActive:YES];
 	[[restore.centerYAnchor constraintEqualToAnchor:_mainView.centerYAnchor constant:150] setActive:YES];
 
@@ -123,7 +123,7 @@
 
 	[_controlPanelView setTranslatesAutoresizingMaskIntoConstraints:NO];
 	[[_controlPanelView.widthAnchor constraintEqualToConstant:kWidth] setActive:YES];
-	[[_controlPanelView.heightAnchor constraintEqualToConstant:kHeight/4] setActive:YES];
+	[[_controlPanelView.heightAnchor constraintEqualToConstant:(kHeight/4)] setActive:YES];
 	[[_controlPanelView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor] setActive:YES];
 
 	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [_controlPanelView setBackgroundColor:[UIColor colorWithRed:16.0f/255.0f green:16.0f/255.0f blue:16.0f/255.0f alpha:1.0f]];
@@ -151,8 +151,8 @@
 	[_panelOneContainer addSubview:me];
 
 	[me setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[me.widthAnchor constraintEqualToConstant:(kWidth - 50)] setActive:YES];
-	[[me.heightAnchor constraintEqualToConstant:45] setActive:YES];
+	[[me.widthAnchor constraintEqualToConstant:((kWidth/7) * 6)] setActive:YES];
+	[[me.heightAnchor constraintEqualToConstant:(45 * hScaleFactor)] setActive:YES];
 	[[me.centerXAnchor constraintEqualToAnchor:_panelOneContainer.centerXAnchor] setActive:YES];
 	[[me.centerYAnchor constraintEqualToAnchor:_panelOneContainer.centerYAnchor constant:-27] setActive:YES];
 
@@ -171,8 +171,8 @@
 
 	[credits setTranslatesAutoresizingMaskIntoConstraints:NO];
 	[[credits.widthAnchor constraintEqualToConstant:(kWidth/2)] setActive:YES];
-	[[credits.heightAnchor constraintEqualToConstant:45] setActive:YES];
-	[[credits.leadingAnchor constraintEqualToAnchor:_panelOneContainer.leadingAnchor constant:25] setActive:YES];
+	[[credits.heightAnchor constraintEqualToConstant:(45 * hScaleFactor)] setActive:YES];
+	[[credits.leadingAnchor constraintEqualToAnchor:me.leadingAnchor] setActive:YES];
 	[[credits.centerYAnchor constraintEqualToAnchor:_panelOneContainer.centerYAnchor constant:27.5] setActive:YES];
 
 	[credits setTag:0];
@@ -191,8 +191,8 @@
 
 	[backups setTranslatesAutoresizingMaskIntoConstraints:NO];
 	[[backups.widthAnchor constraintEqualToConstant:(kWidth/2)] setActive:YES];
-	[[backups.heightAnchor constraintEqualToConstant:45] setActive:YES];
-	[[backups.trailingAnchor constraintEqualToAnchor:_panelOneContainer.trailingAnchor constant:-25] setActive:YES];
+	[[backups.heightAnchor constraintEqualToConstant:(45 * hScaleFactor)] setActive:YES];
+	[[backups.trailingAnchor constraintEqualToAnchor:me.trailingAnchor] setActive:YES];
 	[[backups.centerYAnchor constraintEqualToAnchor:_panelOneContainer.centerYAnchor constant:27.5] setActive:YES];
 
 	[backups setTag:1];
@@ -226,8 +226,8 @@
 	[_panelTwoContainer addSubview:go];
 
 	[go setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[go.widthAnchor constraintEqualToConstant:(kWidth - 50)] setActive:YES];
-	[[go.heightAnchor constraintEqualToConstant:45] setActive:YES];
+	[[go.widthAnchor constraintEqualToConstant:((kWidth/7) * 6)] setActive:YES];
+	[[go.heightAnchor constraintEqualToConstant:(45 * hScaleFactor)] setActive:YES];
 	[[go.centerXAnchor constraintEqualToAnchor:_panelTwoContainer.centerXAnchor] setActive:YES];
 	[[go.centerYAnchor constraintEqualToAnchor:_panelTwoContainer.centerYAnchor constant:-27] setActive:YES];
 
@@ -245,8 +245,8 @@
 	[_panelTwoContainer addSubview:_configSwitch];
 
 	[_configSwitch setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[_configSwitch.widthAnchor constraintEqualToConstant:(kWidth - 50)] setActive:YES];
-	[[_configSwitch.heightAnchor constraintEqualToConstant:45] setActive:YES];
+	[[_configSwitch.widthAnchor constraintEqualToConstant:((kWidth/7) * 6)] setActive:YES];
+	[[_configSwitch.heightAnchor constraintEqualToConstant:(45 * hScaleFactor)] setActive:YES];
 	[[_configSwitch.centerXAnchor constraintEqualToAnchor:_panelTwoContainer.centerXAnchor] setActive:YES];
 	[[_configSwitch.centerYAnchor constraintEqualToAnchor:_panelTwoContainer.centerYAnchor constant:27.5] setActive:YES];
 
@@ -367,6 +367,8 @@
 	[alert addAction:confirm];
 	[alert addAction:cancel];
 
+	[[alert popoverPresentationController] setSourceView:_panelTwoContainer];
+
 	[self presentViewController:alert animated:YES completion:nil];
 }
 
@@ -484,6 +486,8 @@
 									[subalert addAction:subyes];
 									[subalert addAction:subno];
 
+									[[subalert popoverPresentationController] setSourceView:_panelTwoContainer];
+
 									[self presentViewController:subalert animated:YES completion:nil];
 								}
 								else{
@@ -500,6 +504,8 @@
 
 	[alert addAction:yes];
 	[alert addAction:no];
+
+	[[alert popoverPresentationController] setSourceView:_panelTwoContainer];
 
 	[self presentViewController:alert animated:YES completion:nil];
 }

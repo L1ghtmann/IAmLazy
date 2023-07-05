@@ -8,8 +8,9 @@
 #import "IALProgressViewController.h"
 #import "../../Common.h"
 
-#define titleSize (30 * scaleFactor)
-#define backgroundSize (55 * scaleFactor)
+#define headerSize (85 * hScaleFactor)
+#define backgroundSize 55
+#define loadingSize 90
 
 @implementation IALProgressViewController
 
@@ -109,8 +110,8 @@
 	[self.view addSubview:_titleContainer];
 
 	[_titleContainer setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[_titleContainer.widthAnchor constraintEqualToConstant:kWidth] setActive:YES];
-	[[_titleContainer.heightAnchor constraintEqualToConstant:(titleSize + backgroundSize)] setActive:YES];
+	[[_titleContainer.widthAnchor constraintEqualToConstant:self.view.frame.size.width] setActive:YES];
+	[[_titleContainer.heightAnchor constraintEqualToConstant:headerSize] setActive:YES];
 	[[_titleContainer.topAnchor constraintEqualToAnchor:self.view.topAnchor] setActive:YES];
 	[[_titleContainer.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor] setActive:YES];
 
@@ -121,10 +122,10 @@
 	[_titleContainer addSubview:title];
 
 	[title setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[title.bottomAnchor constraintEqualToAnchor:_titleContainer.bottomAnchor constant:-(titleSize/2)] setActive:YES];
+	[[title.centerYAnchor constraintEqualToAnchor:_titleContainer.centerYAnchor constant:10] setActive:YES];
 	[[title.leadingAnchor constraintEqualToAnchor:_titleContainer.leadingAnchor constant:10] setActive:YES];
 
-	[title setFont:[UIFont systemFontOfSize:titleSize weight:0.60]];
+	[title setFont:[UIFont systemFontOfSize:30 weight:0.60]];
 	[title setText:localize(@"Progress")];
 	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [title setTextColor:[self IALOffWhite]];
 	else [title setTextColor:[self IALDarkGray]];
@@ -137,7 +138,7 @@
 	[[subtitle.topAnchor constraintEqualToAnchor:title.topAnchor constant:-15] setActive:YES];
 	[[subtitle.leadingAnchor constraintEqualToAnchor:title.leadingAnchor] setActive:YES];
 
-	[subtitle setFont:[UIFont systemFontOfSize:(titleSize/2) weight:0.23]];
+	[subtitle setFont:[UIFont systemFontOfSize:(title.font.pointSize/2) weight:0.23]];
 	[subtitle setText:[purposeString capitalizedString]];
 	[subtitle setTextColor:[UIColor systemGray2Color]];
 }
@@ -148,8 +149,8 @@
 	[self.view addSubview:_loadingContainer];
 
 	[_loadingContainer setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[_loadingContainer.widthAnchor constraintEqualToConstant:kWidth] setActive:YES];
-	[[_loadingContainer.heightAnchor constraintEqualToConstant:((titleSize + backgroundSize) * 2)] setActive:YES];
+	[[_loadingContainer.widthAnchor constraintEqualToConstant:(headerSize * 2)] setActive:YES];
+	[[_loadingContainer.heightAnchor constraintEqualToConstant:(headerSize * 2)] setActive:YES];
 	[[_loadingContainer.topAnchor constraintEqualToAnchor:_titleContainer.bottomAnchor] setActive:YES];
 	[[_loadingContainer.centerXAnchor constraintEqualToAnchor:_titleContainer.centerXAnchor] setActive:YES];
 
@@ -160,8 +161,8 @@
 	[_loadingContainer addSubview:loading];
 
 	[loading setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[loading.widthAnchor constraintEqualToConstant:(backgroundSize * 2)] setActive:YES];
-	[[loading.heightAnchor constraintEqualToConstant:(backgroundSize * 2)] setActive:YES];
+	[[loading.widthAnchor constraintEqualToConstant:(2 * backgroundSize * (hScaleFactor/wScaleFactor))] setActive:YES];
+	[[loading.heightAnchor constraintEqualToConstant:(2 * backgroundSize * (hScaleFactor/wScaleFactor))] setActive:YES];
 	[[loading.centerYAnchor constraintEqualToAnchor:_loadingContainer.centerYAnchor] setActive:YES];
 	[[loading.centerXAnchor constraintEqualToAnchor:_loadingContainer.centerXAnchor] setActive:YES];
 
@@ -170,19 +171,30 @@
 	// ref: https://stackoverflow.com/a/38520766
 	CAShapeLayer *circleFramework = [CAShapeLayer layer];
 	[circleFramework setFillColor:[[UIColor clearColor] CGColor]];
-	[circleFramework setFrame:CGRectMake(0, 0, 90, 90)];
-	[circleFramework setPosition:CGPointMake(backgroundSize, backgroundSize)];
+	if(iPad()){
+		[circleFramework setFrame:CGRectMake(0, 0, (loadingSize * (hScaleFactor/wScaleFactor)), (loadingSize * (hScaleFactor/wScaleFactor)))];
+		[circleFramework setLineWidth:((loadingSize/3) * (hScaleFactor/wScaleFactor))];
+	}
+	else{
+		[circleFramework setFrame:CGRectMake(0, 0, loadingSize, loadingSize)];
+		[circleFramework setLineWidth:(loadingSize/3)];
+	}
 	[circleFramework setPath:[[UIBezierPath bezierPathWithOvalInRect:circleFramework.bounds] CGPath]];
-	[circleFramework setLineWidth:30];
+	[circleFramework setPosition:CGPointMake(backgroundSize, backgroundSize)];
 	[circleFramework setStrokeColor:[[UIColor colorWithRed:16.0f/255.0f green:71.0f/255.0f blue:30.0f/255.0f alpha:1.0f] CGColor]];
 	[loading.layer addSublayer:circleFramework];
 
 	// ref: https://juannavas7.medium.com/how-to-make-an-animated-circle-progress-view-48fa2adb1501
 	// 		https://stackoverflow.com/questions/21872610/animate-a-cashapelayer-to-draw-a-progress-circle
 	_circleFill = [CAShapeLayer layer];
-	[_circleFill setLineWidth:30];
-	[_circleFill setLineCap:kCALineCapRound];
 	[_circleFill setFillColor:[[UIColor clearColor] CGColor]];
+	if(iPad()){
+		[_circleFill setLineWidth:((loadingSize/3) * (hScaleFactor/wScaleFactor))];
+	}
+	else{
+		[_circleFill setLineWidth:(loadingSize/3)];
+	}
+	[_circleFill setLineCap:kCALineCapRound];
 	[_circleFill setPath:[[UIBezierPath bezierPathWithArcCenter:circleFramework.position
 							radius:45
 							startAngle:(-M_PI/2) // func starts at 0/2pi and we're going clockwise, so go back pi/2
@@ -203,7 +215,7 @@
 	[self.view addSubview:_itemContainer];
 
 	[_itemContainer setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[_itemContainer.widthAnchor constraintEqualToConstant:kWidth] setActive:YES];
+	[[_itemContainer.widthAnchor constraintEqualToConstant:self.view.frame.size.width] setActive:YES];
 	[[_itemContainer.topAnchor constraintEqualToAnchor:_loadingContainer.bottomAnchor] setActive:YES];
 	[[_itemContainer.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor] setActive:YES];
 
@@ -212,34 +224,32 @@
 	// make sure bounds/frame are updated
 	[_itemContainer layoutIfNeeded];
 
-	for(int i = 0; i < [_itemIcons count]; i++){
-		CGFloat y = (i * (_itemContainer.frame.size.height/4.5));
+	NSInteger count = [_itemIcons count];
+	for(int i = 0; i < count; i++){
+		CGFloat size = (backgroundSize * (hScaleFactor/wScaleFactor));
+		// height of view minus the height of each icon minus the margin height
+		CGFloat diff = (_itemContainer.frame.size.height - (count * (size + 25)));
+		CGFloat y = (i * diff);
 
 		// circle border
 		UIView *background = [[UIView alloc] init];
 		[_itemContainer addSubview:background];
 
 		[background setTranslatesAutoresizingMaskIntoConstraints:NO];
-		[[background.widthAnchor constraintEqualToConstant:backgroundSize] setActive:YES];
-		[[background.heightAnchor constraintEqualToConstant:backgroundSize] setActive:YES];
-		[[background.topAnchor constraintEqualToAnchor:_itemContainer.topAnchor constant:(y + (5 * scaleFactor))] setActive:YES];
-		[[background.leadingAnchor constraintEqualToAnchor:_itemContainer.leadingAnchor constant:((kWidth/4) - 5 - backgroundSize)] setActive:YES];
+		[[background.widthAnchor constraintEqualToConstant:size] setActive:YES];
+		[[background.heightAnchor constraintEqualToConstant:size] setActive:YES];
+		[[background.topAnchor constraintEqualToAnchor:_itemContainer.topAnchor constant:y] setActive:YES];
+		[[background.leadingAnchor constraintEqualToAnchor:_itemContainer.leadingAnchor constant:15] setActive:YES];
+		[background layoutIfNeeded];
 
-		[background.layer setCornerRadius:backgroundSize/2];
+		[background.layer setCornerRadius:(backgroundSize/2)];
 		if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [background setBackgroundColor:[self IALOffWhite]];
 		else [background setBackgroundColor:[self IALDarkGray]];
 
 		// circle fill
-		UIView *fill = [[UIView alloc] init];
+		UIView *fill = [[UIView alloc] initWithFrame:CGRectInset(background.bounds, 1, 1)];
 		[background addSubview:fill];
-
-		[fill setTranslatesAutoresizingMaskIntoConstraints:NO];
-		[[fill.widthAnchor constraintEqualToConstant:backgroundSize - 2] setActive:YES];
-		[[fill.heightAnchor constraintEqualToConstant:backgroundSize - 2] setActive:YES];
-		[[fill.centerXAnchor constraintEqualToAnchor:background.centerXAnchor] setActive:YES];
-		[[fill.centerYAnchor constraintEqualToAnchor:background.centerYAnchor] setActive:YES];
-
-		[fill.layer setCornerRadius:backgroundSize/2];
+		[fill.layer setCornerRadius:(size/2)];
 		if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [fill setBackgroundColor:[self IALDarkGray]];
 		else [fill setBackgroundColor:[self IALOffWhite]];
 
@@ -249,8 +259,8 @@
 		[_items addObject:item];
 
 		[item setTranslatesAutoresizingMaskIntoConstraints:NO];
-		[[item.widthAnchor constraintEqualToConstant:backgroundSize/1.5] setActive:YES];
-		[[item.heightAnchor constraintEqualToConstant:backgroundSize/1.5] setActive:YES];
+		[[item.widthAnchor constraintEqualToConstant:(size/1.5)] setActive:YES];
+		[[item.heightAnchor constraintEqualToConstant:(size/1.5)] setActive:YES];
 		[[item.centerXAnchor constraintEqualToAnchor:fill.centerXAnchor] setActive:YES];
 		[[item.centerYAnchor constraintEqualToAnchor:fill.centerYAnchor] setActive:YES];
 
@@ -263,13 +273,12 @@
 		[_itemStatusIcons addObject:status];
 
 		[status setTranslatesAutoresizingMaskIntoConstraints:NO];
-		[[status.widthAnchor constraintEqualToConstant:backgroundSize/6] setActive:YES];
-		[[status.heightAnchor constraintEqualToConstant:backgroundSize/6] setActive:YES];
+		[[status.widthAnchor constraintEqualToConstant:(size/6)] setActive:YES];
+		[[status.heightAnchor constraintEqualToConstant:(size/6)] setActive:YES];
 		[[status.trailingAnchor constraintEqualToAnchor:fill.trailingAnchor constant:-2] setActive:YES];
 		[[status.topAnchor constraintEqualToAnchor:fill.topAnchor constant:(backgroundSize * 0.72)] setActive:YES];
-
 		[status setBackgroundColor:[UIColor grayColor]];
-		[status.layer setCornerRadius:backgroundSize/12];
+		[status.layer setCornerRadius:(size/12)];
 	}
 
 	[self elaborateItemList];
@@ -278,18 +287,22 @@
 -(void)elaborateItemList{
 	_itemStatusText = [NSMutableArray new];
 
-	for(int i = 0; i < [_items count]; i++){
-		CGFloat y = (i * (_itemContainer.frame.size.height/4.5));
+	NSInteger count = [_itemIcons count];
+	for(int i = 0; i < count; i++){
+		CGFloat size = (backgroundSize * (hScaleFactor/wScaleFactor));
+		// height of view minus the height of each icon minus the margin height
+		CGFloat diff = (_itemContainer.frame.size.height - (count * (size + 25)));
+		CGFloat y = (i * diff);
 
 		// top label
 		UILabel *itemDesc = [[UILabel alloc] init];
 		[_itemContainer addSubview:itemDesc];
 
 		[itemDesc setTranslatesAutoresizingMaskIntoConstraints:NO];
-		[[itemDesc.leadingAnchor constraintEqualToAnchor:_itemContainer.leadingAnchor constant:((kWidth/4) + 5)] setActive:YES];
-		[[itemDesc.topAnchor constraintEqualToAnchor:_itemContainer.topAnchor constant:(y + (10 * scaleFactor))] setActive:YES];
+		[[itemDesc.topAnchor constraintEqualToAnchor:_itemContainer.topAnchor constant:(y + 5)] setActive:YES];
+		[[itemDesc.leadingAnchor constraintEqualToAnchor:_itemContainer.leadingAnchor constant:(size + 25)] setActive:YES];
 
-		[itemDesc setFont:[UIFont systemFontOfSize:([UIFont labelFontSize] * scaleFactor)]];
+		[itemDesc setFont:[UIFont systemFontOfSize:[UIFont labelFontSize]]];
 		[itemDesc setText:_itemDescriptions[i]];
 		if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [itemDesc setTextColor:[self IALOffWhite]];
 		else [itemDesc setTextColor:[self IALDarkGray]];
