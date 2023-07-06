@@ -172,15 +172,16 @@
 	CAShapeLayer *circleFramework = [CAShapeLayer layer];
 	[circleFramework setFillColor:[[UIColor clearColor] CGColor]];
 	if(iPad()){
-		[circleFramework setFrame:CGRectMake(0, 0, (loadingSize * (hScaleFactor/wScaleFactor)), (loadingSize * (hScaleFactor/wScaleFactor)))];
-		[circleFramework setLineWidth:((loadingSize/3) * (hScaleFactor/wScaleFactor))];
+		[circleFramework setPosition:CGPointMake((backgroundSize * wScaleFactor), (backgroundSize * wScaleFactor))];
+		[circleFramework setFrame:CGRectMake(0, 0, (loadingSize * wScaleFactor), (loadingSize * wScaleFactor))];
+		[circleFramework setLineWidth:((loadingSize/3) * wScaleFactor)];
 	}
 	else{
+		[circleFramework setPosition:CGPointMake(backgroundSize, backgroundSize)];
 		[circleFramework setFrame:CGRectMake(0, 0, loadingSize, loadingSize)];
 		[circleFramework setLineWidth:(loadingSize/3)];
 	}
 	[circleFramework setPath:[[UIBezierPath bezierPathWithOvalInRect:circleFramework.bounds] CGPath]];
-	[circleFramework setPosition:CGPointMake(backgroundSize, backgroundSize)];
 	[circleFramework setStrokeColor:[[UIColor colorWithRed:16.0f/255.0f green:71.0f/255.0f blue:30.0f/255.0f alpha:1.0f] CGColor]];
 	[loading.layer addSublayer:circleFramework];
 
@@ -189,7 +190,7 @@
 	_circleFill = [CAShapeLayer layer];
 	[_circleFill setFillColor:[[UIColor clearColor] CGColor]];
 	if(iPad()){
-		[_circleFill setLineWidth:((loadingSize/3) * (hScaleFactor/wScaleFactor))];
+		[_circleFill setLineWidth:((loadingSize/3) * wScaleFactor)];
 	}
 	else{
 		[_circleFill setLineWidth:(loadingSize/3)];
@@ -226,7 +227,7 @@
 
 	NSInteger count = [_itemIcons count];
 	for(int i = 0; i < count; i++){
-		CGFloat size = (backgroundSize * (hScaleFactor/wScaleFactor));
+		CGFloat size = (backgroundSize * hScaleFactor);
 		// height of view minus the height of each icon minus the margin height
 		CGFloat diff = (_itemContainer.frame.size.height - (count * (size + 25)));
 		CGFloat y = (i * diff);
@@ -247,9 +248,9 @@
 		else [background setBackgroundColor:[self IALDarkGray]];
 
 		// circle fill
-		UIView *fill = [[UIView alloc] initWithFrame:CGRectInset(background.bounds, 1, 1)];
+		UIView *fill = [[UIView alloc] initWithFrame:CGRectInset(background.bounds, 1.5, 1.5)];
 		[background addSubview:fill];
-		[fill.layer setCornerRadius:(size/2)];
+		[fill.layer setCornerRadius:((background.bounds.size.height - 2)/2)];
 		if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [fill setBackgroundColor:[self IALDarkGray]];
 		else [fill setBackgroundColor:[self IALOffWhite]];
 
@@ -289,7 +290,7 @@
 
 	NSInteger count = [_itemIcons count];
 	for(int i = 0; i < count; i++){
-		CGFloat size = (backgroundSize * (hScaleFactor/wScaleFactor));
+		CGFloat size = (backgroundSize * hScaleFactor);
 		// height of view minus the height of each icon minus the margin height
 		CGFloat diff = (_itemContainer.frame.size.height - (count * (size + 25)));
 		CGFloat y = (i * diff);

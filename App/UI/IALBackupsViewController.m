@@ -90,10 +90,10 @@
 
 	// Note: to export a local file, need to use an NSURL
 	NSURL *fileURL = [NSURL fileURLWithPath:[backupDir stringByAppendingString:backupName]];
-
 	UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
 	[activityViewController setModalTransitionStyle:UIModalTransitionStyleCoverVertical];
-
+	[activityViewController.popoverPresentationController setSourceView:tableView];
+	[activityViewController.popoverPresentationController setSourceRect:CGRectMake(0, 0, kWidth, (kHeight/2))];
 	[self presentViewController:activityViewController animated:YES completion:nil];
 
 	[tableView deselectRowAtIndexPath:indexPath animated:YES];
