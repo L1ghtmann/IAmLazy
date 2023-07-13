@@ -151,7 +151,7 @@
 	[_loadingContainer setTranslatesAutoresizingMaskIntoConstraints:NO];
 	[[_loadingContainer.widthAnchor constraintEqualToConstant:(headerSize * 1.5)] setActive:YES];
 	[[_loadingContainer.heightAnchor constraintEqualToConstant:(headerSize * 1.5)] setActive:YES];
-	[[_loadingContainer.topAnchor constraintEqualToAnchor:_titleContainer.bottomAnchor] setActive:YES];
+	[[_loadingContainer.topAnchor constraintEqualToAnchor:_titleContainer.bottomAnchor constant:20] setActive:YES];
 	[[_loadingContainer.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor] setActive:YES];
 	[_loadingContainer layoutIfNeeded];
 
@@ -196,50 +196,47 @@
 	_itemStatusIcons = [NSMutableArray new];
 
 	// container for items
-	_itemContainer = [[UIView alloc] init];
+	_itemContainer = [[UIStackView alloc] init];
 	[self.view addSubview:_itemContainer];
 
 	[_itemContainer setTranslatesAutoresizingMaskIntoConstraints:NO];
 	[[_itemContainer.widthAnchor constraintEqualToConstant:self.view.frame.size.width] setActive:YES];
-	[[_itemContainer.topAnchor constraintEqualToAnchor:_loadingContainer.bottomAnchor] setActive:YES];
-	[[_itemContainer.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor] setActive:YES];
+	[[_itemContainer.topAnchor constraintEqualToAnchor:_loadingContainer.bottomAnchor constant:20] setActive:YES];
+	[[_itemContainer.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:-40] setActive:YES];
 
 	[_itemContainer setBackgroundColor:[UIColor clearColor]];
 
-	// make sure bounds/frame are updated
-	[_itemContainer layoutIfNeeded];
+	[_itemContainer setAlignment:UIStackViewAlignmentLeading];
+	[_itemContainer setAxis:UILayoutConstraintAxisVertical];
+	[_itemContainer setDistribution:UIStackViewDistributionEqualSpacing];
+	[_itemContainer setLayoutMargins:UIEdgeInsetsMake(0, 15, 0, 0)];
+	[_itemContainer setLayoutMarginsRelativeArrangement:YES];
 
-	NSInteger count = [_itemIcons count];
-	for(int i = 0; i < count; i++){
-		CGFloat diff = ((_itemContainer.frame.size.height/(count * 2)) + (backgroundSize + 25));
-		CGFloat y = (i * diff);
-
+	for(NSString *img in _itemIcons){
 		// circle border
 		UIView *background = [[UIView alloc] init];
-		[_itemContainer addSubview:background];
+		[_itemContainer addArrangedSubview:background];
 
 		[background setTranslatesAutoresizingMaskIntoConstraints:NO];
 		[[background.widthAnchor constraintEqualToConstant:backgroundSize] setActive:YES];
 		[[background.heightAnchor constraintEqualToConstant:backgroundSize] setActive:YES];
-		[[background.topAnchor constraintEqualToAnchor:_itemContainer.topAnchor constant:y] setActive:YES];
-		[[background.leadingAnchor constraintEqualToAnchor:_itemContainer.leadingAnchor constant:15] setActive:YES];
-		[background layoutIfNeeded];
 
 		[background.layer setCornerRadius:(backgroundSize/2)];
 		if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [background setBackgroundColor:[self IALOffWhite]];
 		else [background setBackgroundColor:[self IALDarkGray]];
 
 		// circle fill
-		UIView *fill = [[UIView alloc] initWithFrame:CGRectInset(background.bounds, 1.5, 1.5)];
+		CGFloat diff = 3;
+		UIView *fill = [[UIView alloc] initWithFrame:CGRectMake((diff/2), (diff/2), (backgroundSize - diff), (backgroundSize - diff))];
 		[background addSubview:fill];
-		[fill.layer setCornerRadius:((background.bounds.size.height - 2)/2)];
+
+		[fill.layer setCornerRadius:((backgroundSize - diff)/2)];
 		if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [fill setBackgroundColor:[self IALDarkGray]];
 		else [fill setBackgroundColor:[self IALOffWhite]];
 
 		// icon
 		UIImageView *item = [[UIImageView alloc] init];
 		[fill addSubview:item];
-		[_items addObject:item];
 
 		[item setTranslatesAutoresizingMaskIntoConstraints:NO];
 		[[item.widthAnchor constraintEqualToConstant:(backgroundSize/1.5)] setActive:YES];
@@ -247,13 +244,14 @@
 		[[item.centerXAnchor constraintEqualToAnchor:fill.centerXAnchor] setActive:YES];
 		[[item.centerYAnchor constraintEqualToAnchor:fill.centerYAnchor] setActive:YES];
 
-		[item setImage:[UIImage systemImageNamed:_itemIcons[i]]];
+		[item setImage:[UIImage systemImageNamed:img]];
 		[item setContentMode:UIViewContentModeScaleAspectFit];
+
+		[_items addObject:item];
 
 		// status indicator (colored circle)
 		UIView *status = [[UIView alloc] init];
 		[fill addSubview:status];
-		[_itemStatusIcons addObject:status];
 
 		[status setTranslatesAutoresizingMaskIntoConstraints:NO];
 		[[status.widthAnchor constraintEqualToConstant:(backgroundSize/6)] setActive:YES];
@@ -262,6 +260,8 @@
 		[[status.topAnchor constraintEqualToAnchor:fill.topAnchor constant:(backgroundSize * 0.72)] setActive:YES];
 		[status setBackgroundColor:[UIColor grayColor]];
 		[status.layer setCornerRadius:(backgroundSize/12)];
+
+		[_itemStatusIcons addObject:status];
 	}
 
 	[self elaborateItemList];
@@ -270,38 +270,37 @@
 -(void)elaborateItemList{
 	_itemStatusText = [NSMutableArray new];
 
-	NSInteger count = [_itemIcons count];
-	for(int i = 0; i < count; i++){
-		CGFloat diff = ((_itemContainer.frame.size.height/(count * 2)) + (backgroundSize + 25));
-		CGFloat y = (i * diff);
-
+	for(int i = 0; i < [_items count]; i++){
 		// top label
 		UILabel *itemDesc = [[UILabel alloc] init];
-		[_itemContainer addSubview:itemDesc];
+		[_items[i] addSubview:itemDesc];
 
 		[itemDesc setTranslatesAutoresizingMaskIntoConstraints:NO];
-		[[itemDesc.topAnchor constraintEqualToAnchor:_itemContainer.topAnchor constant:(y + 5)] setActive:YES];
 		[[itemDesc.leadingAnchor constraintEqualToAnchor:_itemContainer.leadingAnchor constant:(backgroundSize + 25)] setActive:YES];
+		[[itemDesc.topAnchor constraintEqualToAnchor:_items[i].topAnchor constant:-5] setActive:YES];
+		[[itemDesc.widthAnchor constraintEqualToConstant:(kWidth - (backgroundSize + 40))] setActive:YES];
 
-		[itemDesc setFont:[UIFont systemFontOfSize:[UIFont labelFontSize]]];
+		[itemDesc setAdjustsFontSizeToFitWidth:YES];
 		[itemDesc setText:_itemDescriptions[i]];
+		[itemDesc setMinimumScaleFactor:0.5];
 		if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [itemDesc setTextColor:[self IALOffWhite]];
 		else [itemDesc setTextColor:[self IALDarkGray]];
 
 		// bottom label
 		UILabel *itemStatus = [[UILabel alloc] init];
-		[_itemContainer addSubview:itemStatus];
-		[_itemStatusText addObject:itemStatus];
+		[_items[i] addSubview:itemStatus];
 
 		[itemStatus setTranslatesAutoresizingMaskIntoConstraints:NO];
 		[[itemStatus.leadingAnchor constraintEqualToAnchor:itemDesc.leadingAnchor] setActive:YES];
-		[[itemStatus.topAnchor constraintEqualToAnchor:itemDesc.topAnchor constant:20] setActive:YES];
+		[[itemStatus.topAnchor constraintEqualToAnchor:itemDesc.bottomAnchor] setActive:YES];
 
 		[itemStatus setFont:[UIFont systemFontOfSize:(itemDesc.font.pointSize - 3) weight:-0.60]];
 		[itemStatus setText:localize(@"Waiting")];
 		if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [itemStatus setTextColor:[self IALOffWhite]];
 		else [itemStatus setTextColor:[self IALDarkGray]];
 		[itemStatus setAlpha:0.75];
+
+		[_itemStatusText addObject:itemStatus];
 	}
 }
 
