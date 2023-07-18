@@ -75,7 +75,7 @@
 
 	[backup setTranslatesAutoresizingMaskIntoConstraints:NO];
 	[[backup.widthAnchor constraintEqualToConstant:((kWidth/3) * 2)] setActive:YES];
-	[[backup.heightAnchor constraintEqualToConstant:55] setActive:YES];
+	[[backup.heightAnchor constraintEqualToConstant:(55 * hScaleFactor)] setActive:YES];
 	[[backup.centerXAnchor constraintEqualToAnchor:_mainView.centerXAnchor] setActive:YES];
 	[[backup.centerYAnchor constraintEqualToAnchor:_mainView.centerYAnchor constant:75] setActive:YES];
 
@@ -98,9 +98,9 @@
 
 	[restore setTranslatesAutoresizingMaskIntoConstraints:NO];
 	[[restore.widthAnchor constraintEqualToConstant:((kWidth/3) * 2)] setActive:YES];
-	[[restore.heightAnchor constraintEqualToConstant:55] setActive:YES];
+	[[restore.heightAnchor constraintEqualToConstant:(55 * hScaleFactor)] setActive:YES];
 	[[restore.centerXAnchor constraintEqualToAnchor:_mainView.centerXAnchor] setActive:YES];
-	[[restore.centerYAnchor constraintEqualToAnchor:_mainView.centerYAnchor constant:150] setActive:YES];
+	[[restore.topAnchor constraintEqualToAnchor:backup.bottomAnchor constant:15] setActive:YES];
 
 	[restore setTag:1];
 	[restore setClipsToBounds:YES];
@@ -123,7 +123,7 @@
 
 	[_controlPanelView setTranslatesAutoresizingMaskIntoConstraints:NO];
 	[[_controlPanelView.widthAnchor constraintEqualToConstant:kWidth] setActive:YES];
-	[[_controlPanelView.heightAnchor constraintEqualToConstant:kHeight/4] setActive:YES];
+	[[_controlPanelView.heightAnchor constraintEqualToConstant:(kHeight/4)] setActive:YES];
 	[[_controlPanelView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor] setActive:YES];
 
 	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [_controlPanelView setBackgroundColor:[UIColor colorWithRed:16.0f/255.0f green:16.0f/255.0f blue:16.0f/255.0f alpha:1.0f]];
@@ -145,21 +145,22 @@
 	[[_panelOneContainer.bottomAnchor constraintEqualToAnchor:_controlPanelView.bottomAnchor] setActive:YES];
 	[[_panelOneContainer.leadingAnchor constraintEqualToAnchor:_controlPanelView.leadingAnchor] setActive:YES];
 	[[_panelOneContainer.trailingAnchor constraintEqualToAnchor:_controlPanelView.trailingAnchor] setActive:YES];
+	[_panelOneContainer layoutIfNeeded];
 
 	// me
 	UIButton *me = [UIButton buttonWithType:UIButtonTypeSystem];
 	[_panelOneContainer addSubview:me];
 
 	[me setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[me.widthAnchor constraintEqualToConstant:(kWidth - 50)] setActive:YES];
-	[[me.heightAnchor constraintEqualToConstant:45] setActive:YES];
+	[[me.widthAnchor constraintEqualToConstant:((kWidth/7) * 6)] setActive:YES];
+	[[me.heightAnchor constraintEqualToConstant:(45 * hScaleFactor)] setActive:YES];
 	[[me.centerXAnchor constraintEqualToAnchor:_panelOneContainer.centerXAnchor] setActive:YES];
-	[[me.centerYAnchor constraintEqualToAnchor:_panelOneContainer.centerYAnchor constant:-27] setActive:YES];
+	[[me.centerYAnchor constraintEqualToAnchor:_panelOneContainer.centerYAnchor constant:-(_panelOneContainer.bounds.size.height/6)] setActive:YES];
 
 	[me setTag:2];
 	[me setClipsToBounds:YES];
 	[me.layer setCornerRadius:10];
-	[me setTitle:[localize(@"Created by Lightmann") stringByAppendingString:@" | v2.3.0"] forState:UIControlStateNormal];
+	[me setTitle:[localize(@"Created by Lightmann") stringByAppendingString:@" | v2.4.0"] forState:UIControlStateNormal];
 	[me.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:0.40]];
 	[me setTintColor:[self IALBlue]];
 	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [me setBackgroundColor:[UIColor systemGray6Color]];
@@ -170,10 +171,10 @@
 	[_panelOneContainer addSubview:credits];
 
 	[credits setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[credits.widthAnchor constraintEqualToConstant:(kWidth/2)] setActive:YES];
-	[[credits.heightAnchor constraintEqualToConstant:45] setActive:YES];
-	[[credits.leadingAnchor constraintEqualToAnchor:_panelOneContainer.leadingAnchor constant:25] setActive:YES];
-	[[credits.centerYAnchor constraintEqualToAnchor:_panelOneContainer.centerYAnchor constant:27.5] setActive:YES];
+	[[credits.widthAnchor constraintEqualToConstant:(((kWidth/7) * 3) + 8)] setActive:YES];
+	[[credits.heightAnchor constraintEqualToConstant:(45 * hScaleFactor)] setActive:YES];
+	[[credits.leadingAnchor constraintEqualToAnchor:me.leadingAnchor] setActive:YES];
+	[[credits.topAnchor constraintEqualToAnchor:me.bottomAnchor constant:15] setActive:YES];
 
 	[credits setTag:0];
 	[credits setClipsToBounds:YES];
@@ -190,10 +191,10 @@
 	[_panelOneContainer addSubview:backups];
 
 	[backups setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[backups.widthAnchor constraintEqualToConstant:(kWidth/2)] setActive:YES];
-	[[backups.heightAnchor constraintEqualToConstant:45] setActive:YES];
-	[[backups.trailingAnchor constraintEqualToAnchor:_panelOneContainer.trailingAnchor constant:-25] setActive:YES];
-	[[backups.centerYAnchor constraintEqualToAnchor:_panelOneContainer.centerYAnchor constant:27.5] setActive:YES];
+	[[backups.widthAnchor constraintEqualToConstant:(((kWidth/7) * 3) + 8)] setActive:YES];
+	[[backups.heightAnchor constraintEqualToConstant:(45 * hScaleFactor)] setActive:YES];
+	[[backups.trailingAnchor constraintEqualToAnchor:me.trailingAnchor] setActive:YES];
+	[[backups.topAnchor constraintEqualToAnchor:me.bottomAnchor constant:15] setActive:YES];
 
 	[backups setTag:1];
 	[backups setClipsToBounds:YES];
@@ -217,6 +218,7 @@
 	[[_panelTwoContainer.bottomAnchor constraintEqualToAnchor:_controlPanelView.bottomAnchor] setActive:YES];
 	[[_panelTwoContainer.leadingAnchor constraintEqualToAnchor:_controlPanelView.leadingAnchor] setActive:YES];
 	[[_panelTwoContainer.trailingAnchor constraintEqualToAnchor:_controlPanelView.trailingAnchor] setActive:YES];
+	[_panelTwoContainer layoutIfNeeded];
 
 	// hide until needed
 	[_panelTwoContainer setAlpha:0];
@@ -226,10 +228,10 @@
 	[_panelTwoContainer addSubview:go];
 
 	[go setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[go.widthAnchor constraintEqualToConstant:(kWidth - 50)] setActive:YES];
-	[[go.heightAnchor constraintEqualToConstant:45] setActive:YES];
+	[[go.widthAnchor constraintEqualToConstant:((kWidth/7) * 6)] setActive:YES];
+	[[go.heightAnchor constraintEqualToConstant:(45 * hScaleFactor)] setActive:YES];
 	[[go.centerXAnchor constraintEqualToAnchor:_panelTwoContainer.centerXAnchor] setActive:YES];
-	[[go.centerYAnchor constraintEqualToAnchor:_panelTwoContainer.centerYAnchor constant:-27] setActive:YES];
+	[[go.centerYAnchor constraintEqualToAnchor:_panelTwoContainer.centerYAnchor constant:-(_panelOneContainer.bounds.size.height/6)] setActive:YES];
 
 	[go setClipsToBounds:YES];
 	[go.layer setCornerRadius:10];
@@ -245,10 +247,10 @@
 	[_panelTwoContainer addSubview:_configSwitch];
 
 	[_configSwitch setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[_configSwitch.widthAnchor constraintEqualToConstant:(kWidth - 50)] setActive:YES];
-	[[_configSwitch.heightAnchor constraintEqualToConstant:45] setActive:YES];
+	[[_configSwitch.widthAnchor constraintEqualToConstant:((kWidth/7) * 6)] setActive:YES];
+	[[_configSwitch.heightAnchor constraintEqualToConstant:(45 * hScaleFactor)] setActive:YES];
 	[[_configSwitch.centerXAnchor constraintEqualToAnchor:_panelTwoContainer.centerXAnchor] setActive:YES];
-	[[_configSwitch.centerYAnchor constraintEqualToAnchor:_panelTwoContainer.centerYAnchor constant:27.5] setActive:YES];
+	[[_configSwitch.topAnchor constraintEqualToAnchor:go.bottomAnchor constant:15] setActive:YES];
 
 	[_configSwitch addTarget:self action:@selector(configSegmentChanged:) forControlEvents:UIControlEventValueChanged];
 }
@@ -367,6 +369,8 @@
 	[alert addAction:confirm];
 	[alert addAction:cancel];
 
+	[[alert popoverPresentationController] setSourceView:_panelTwoContainer];
+
 	[self presentViewController:alert animated:YES completion:nil];
 }
 
@@ -484,6 +488,8 @@
 									[subalert addAction:subyes];
 									[subalert addAction:subno];
 
+									[[subalert popoverPresentationController] setSourceView:_panelTwoContainer];
+
 									[self presentViewController:subalert animated:YES completion:nil];
 								}
 								else{
@@ -500,6 +506,8 @@
 
 	[alert addAction:yes];
 	[alert addAction:no];
+
+	[[alert popoverPresentationController] setSourceView:_panelTwoContainer];
 
 	[self presentViewController:alert animated:YES completion:nil];
 }
@@ -556,10 +564,10 @@
 								handler:^(UIAlertAction *action){
 									// Note: to export a local file, need to use an NSURL
 									NSURL *fileURL = [NSURL fileURLWithPath:[backupDir stringByAppendingPathComponent:[[_manager getBackups] firstObject]]];
-
 									UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
 									[activityViewController setModalTransitionStyle:UIModalTransitionStyleCoverVertical];
-
+									[activityViewController.popoverPresentationController setSourceView:self.view.window.rootViewController.view];
+									[activityViewController.popoverPresentationController setSourceRect:CGRectMake(0, 0, kWidth, (kHeight/2))];
 									[self presentViewController:activityViewController animated:YES completion:nil];
 								}];
 

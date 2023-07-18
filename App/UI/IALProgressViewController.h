@@ -8,7 +8,7 @@
     NSMutableArray<UILabel *> *_itemStatusText;
     UIView *_titleContainer;
     UIView *_loadingContainer;
-    UIView *_itemContainer;
+    UIStackView *_itemContainer;
     CAShapeLayer *_circleFill;
 }
 -(instancetype)initWithPurpose:(NSInteger)purpose withFilter:(BOOL)filter;

@@ -39,8 +39,12 @@
 
 -(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UITableViewHeaderFooterView *)header forSection:(NSInteger)section{
 	[header.textLabel setTextColor:[UIColor labelColor]];
-	[header.textLabel setFont:[UIFont systemFontOfSize:(20 * scaleFactor) weight:0.56]];
+	[header.textLabel setFont:[UIFont systemFontOfSize:20 weight:0.56]];
 	[header.textLabel setText:[header.textLabel.text capitalizedString]];
+
+	[header.textLabel setTranslatesAutoresizingMaskIntoConstraints:NO];
+	[[header.textLabel.centerYAnchor constraintEqualToAnchor:header.centerYAnchor] setActive:YES];
+	[[header.textLabel.leadingAnchor constraintEqualToAnchor:header.leadingAnchor constant:15] setActive:YES];
 
 	// add link button to header
 	UIButton *link = [UIButton buttonWithType:UIButtonTypeSystem];

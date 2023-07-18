@@ -11,17 +11,17 @@ jobs:
     steps:
       - uses: actions/checkout@main
 
-      - name: Build Package
+      - name: Build Rootless Package
         uses: L1ghtmann/theos-build@main
         with:
           extra_args: ROOTLESS=1 CLI=1 FINALPACKAGE=1
 
-      - name: Build Package
+      - name: Build Rootful Package
         uses: L1ghtmann/theos-build@main
         with:
           extra_args: ROOTLESS=0 CLI=1 FINALPACKAGE=1
 
-      - name: Attach Package To Release
+      - name: Attach Packages To Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

@@ -140,7 +140,7 @@
 	NSString *txt = [@"." stringByAppendingString:rootless];
 	NSString *file = [tmpDir stringByAppendingPathComponent:txt];
 	BOOL check = [[NSFileManager defaultManager] fileExistsAtPath:file];
-	if(!check && [@INSTALL_PREFIX length]){
+	if(!check && [@THEOS_PACKAGE_INSTALL_PREFIX length]){
 		NSString *msg = [NSString stringWithFormat:[[localize(@"The backup you're trying to restore from was made for %@ jailbreaks.")
 														stringByAppendingString:@"\n\n"]
 														stringByAppendingString:localize(@"Your current jailbreak is %@!")],
@@ -149,7 +149,7 @@
 		[_generalManager displayErrorWithMessage:msg];
 		return NO;
 	}
-	else if(check && ![@INSTALL_PREFIX length]){
+	else if(check && ![@THEOS_PACKAGE_INSTALL_PREFIX length]){
 		NSString *msg = [NSString stringWithFormat:[[localize(@"The backup you're trying to restore from was made for %@ jailbreaks.")
 														stringByAppendingString:@"\n\n"]
 														stringByAppendingString:localize(@"Your current jailbreak is %@!")],

@@ -48,8 +48,12 @@
 
 -(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UITableViewHeaderFooterView *)header forSection:(NSInteger)section{
 	[header.textLabel setTextColor:[UIColor labelColor]];
-	[header.textLabel setFont:[UIFont systemFontOfSize:(20 * scaleFactor) weight:0.56]];
+	[header.textLabel setFont:[UIFont systemFontOfSize:20 weight:0.56]];
 	[header.textLabel setText:[header.textLabel.text capitalizedString]];
+
+	[header.textLabel setTranslatesAutoresizingMaskIntoConstraints:NO];
+	[[header.textLabel.centerYAnchor constraintEqualToAnchor:header.centerYAnchor] setActive:YES];
+	[[header.textLabel.leadingAnchor constraintEqualToAnchor:header.leadingAnchor constant:15] setActive:YES];
 
 	// add import "+" button to header
 	UIButton *import = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -86,10 +90,10 @@
 
 	// Note: to export a local file, need to use an NSURL
 	NSURL *fileURL = [NSURL fileURLWithPath:[backupDir stringByAppendingString:backupName]];
-
 	UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
 	[activityViewController setModalTransitionStyle:UIModalTransitionStyleCoverVertical];
-
+	[activityViewController.popoverPresentationController setSourceView:tableView];
+	[activityViewController.popoverPresentationController setSourceRect:CGRectMake(0, 0, kWidth, (kHeight/2))];
 	[self presentViewController:activityViewController animated:YES completion:nil];
 
 	[tableView deselectRowAtIndexPath:indexPath animated:YES];
