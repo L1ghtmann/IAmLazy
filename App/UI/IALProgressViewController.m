@@ -10,7 +10,6 @@
 
 #define headerSize (85 * hScaleFactor)
 #define backgroundSize 55
-#define loadingSize 90
 
 @implementation IALProgressViewController
 
@@ -159,6 +158,7 @@
 
 	// create loading wheel
 	// ref: https://stackoverflow.com/a/38520766
+	CGFloat loadingSize = 90;
 	CAShapeLayer *circleFramework = [CAShapeLayer layer];
 	[circleFramework setFillColor:[[UIColor clearColor] CGColor]];
 	if(iPad()){
@@ -212,6 +212,7 @@
 	[_itemContainer setLayoutMargins:UIEdgeInsetsMake(0, 15, 0, 0)];
 	[_itemContainer setLayoutMarginsRelativeArrangement:YES];
 
+	CGFloat circleFillDiff = 3;
 	for(NSString *img in _itemIcons){
 		// circle border
 		UIView *background = [[UIView alloc] init];
@@ -226,11 +227,10 @@
 		else [background setBackgroundColor:[self IALDarkGray]];
 
 		// circle fill
-		CGFloat diff = 3;
-		UIView *fill = [[UIView alloc] initWithFrame:CGRectMake((diff/2), (diff/2), (backgroundSize - diff), (backgroundSize - diff))];
+		UIView *fill = [[UIView alloc] initWithFrame:CGRectMake((circleFillDiff/2), (circleFillDiff/2), (backgroundSize - circleFillDiff), (backgroundSize - circleFillDiff))];
 		[background addSubview:fill];
 
-		[fill.layer setCornerRadius:((backgroundSize - diff)/2)];
+		[fill.layer setCornerRadius:((backgroundSize - circleFillDiff)/2)];
 		if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [fill setBackgroundColor:[self IALDarkGray]];
 		else [fill setBackgroundColor:[self IALOffWhite]];
 
