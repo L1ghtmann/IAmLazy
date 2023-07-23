@@ -88,7 +88,6 @@
 		[button setTag:i];
 		[button setClipsToBounds:YES];
 		[button.layer setCornerRadius:10];
-
 		if(i == 0){
 			[button setTitle:localize(@"Backup") forState:UIControlStateNormal];
 			[button setImage:[UIImage systemImageNamed:@"plus.app"] forState:UIControlStateNormal];
@@ -97,7 +96,6 @@
 			[button setTitle:localize(@"Restore") forState:UIControlStateNormal];
 			[button setImage:[UIImage systemImageNamed:@"arrow.counterclockwise.circle"] forState:UIControlStateNormal];
 		}
-
 		[button.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:0.56]];
 		[button setTintColor:[self IALBlue]];
 		[button setTitleColor:[self IALBlue] forState:UIControlStateNormal];
@@ -178,8 +176,8 @@
 
 -(void)configurePanelOne{
 	// setup left and right buttons
+	UIView *ref = _panelOneContainer.subviews.firstObject;
 	for(int i = 0; i < 2; i++){
-		UIView *ref = _panelOneContainer.subviews.firstObject;
 		UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
 		[_panelOneContainer addSubview:button];
 

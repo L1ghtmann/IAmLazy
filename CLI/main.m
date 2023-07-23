@@ -42,9 +42,22 @@ NSString *getInput(){
 	}
 }
 
+BOOL jbCheck(){
+	@autoreleasepool{
+		BOOL dir = NO;
+		BOOL jb = [[NSFileManager defaultManager] fileExistsAtPath:@"/var/Liy/xina" isDirectory:&dir];
+		return (jb && dir);
+	}
+}
+
 int main(int argc, char **argv){
 	@autoreleasepool {
 		// sanity check
+		if(jbCheck()){
+			print(@"Note: XinaA15 is not currently supported.\nIf you'd like to see support, please let me know.");
+			return 0;
+		}
+
 		NSArray *opts = getOpts();
 		if(argc != 2 || ![opts containsObject:@(argv[1])]){
 			print(getHelp());
