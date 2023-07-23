@@ -363,8 +363,13 @@
 															stringByAppendingString:localize(@"Info: %@")],
 															path,
 															error.localizedDescription];
-			[_generalManager displayErrorWithMessage:msg];
-			return NO;
+			// [_generalManager displayErrorWithMessage:msg];
+			IALLogErr(@"%@", msg);
+
+			// skip any packages that are not 'Field 3: state: "installed"' (have an entry in /var/lib/dpkg/status but no files on-device)
+			[_skip addObject:package];
+
+			continue;
 		}
 
 		NSArray *lines = [contents componentsSeparatedByCharactersInSet:newlineChars];
@@ -523,7 +528,14 @@
 		IALLogErr(@"%@", msg);
 		return NO;
 	}
-	else if([theOne rangeOfString:@"Status: install ok"].location == NSNotFound){
+	/*
+	https://manpages.ubuntu.com/manpages/impish/en/man1/dpkg.1.html
+		Field 1: selection state: "install" || "hold" acceptable as sufficiently installed
+		Field 2: flag: "ok" acceptable as package is in a known state
+		Field 3: state: "installed" acceptable as sufficiently configured
+	*/
+	else if([theOne rangeOfString:@"Status: install ok installed"].location == NSNotFound &&
+			[theOne rangeOfString:@"Status: hold ok installed"].location == NSNotFound){
 	#if CLI || DEBUG
 		NSString *msg = [NSString stringWithFormat:localize(@"%@ is not fully installed?!"), package];
 	#endif
