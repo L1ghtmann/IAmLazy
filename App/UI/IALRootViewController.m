@@ -194,6 +194,7 @@
 		}
 		[[button.topAnchor constraintEqualToAnchor:ref.bottomAnchor constant:15] setActive:YES];
 
+		[button setTag:i];
 		[button setClipsToBounds:YES];
 		[button.layer setCornerRadius:10];
 		if(i == 0){
