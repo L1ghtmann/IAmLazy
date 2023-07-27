@@ -358,11 +358,13 @@
 		NSString *path = [[dpkgInfoDir stringByAppendingPathComponent:package] stringByAppendingPathExtension:@"list"];
 		NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&error];
 		if(error){
+		#if CLI || DEBUG
 			NSString *msg = [NSString stringWithFormat:[[localize(@"Failed to get contents of %@!")
 															stringByAppendingString:@" "]
 															stringByAppendingString:localize(@"Info: %@")],
 															path,
 															error.localizedDescription];
+		#endif
 			// [_generalManager displayErrorWithMessage:msg];
 			IALLogErr(@"%@", msg);
 			error = nil;
