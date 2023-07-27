@@ -149,7 +149,7 @@
 		else [button setBackgroundColor:[UIColor whiteColor]];
 
 		if(i == 0){
-			[button setTitle:[localize(@"Created by Lightmann") stringByAppendingString:@" | v2.4.0"] forState:UIControlStateNormal];
+			[button setTitle:[localize(@"Created by Lightmann") stringByAppendingString:@" | v2.4.1"] forState:UIControlStateNormal];
 			[button setTintColor:[self IALBlue]];
 
 			_panelOneContainer = view;
