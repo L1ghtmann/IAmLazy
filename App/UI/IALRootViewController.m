@@ -77,7 +77,6 @@
 		[[button.widthAnchor constraintEqualToConstant:((kWidth/3) * 2)] setActive:YES];
 		[[button.heightAnchor constraintEqualToConstant:(55 * hScaleFactor)] setActive:YES];
 		[[button.centerXAnchor constraintEqualToAnchor:mainView.centerXAnchor] setActive:YES];
-
 		if(i == 0){
 			[[button.centerYAnchor constraintEqualToAnchor:mainView.centerYAnchor constant:75] setActive:YES];
 		}
@@ -184,13 +183,13 @@
 		[button setTranslatesAutoresizingMaskIntoConstraints:NO];
 		[[button.widthAnchor constraintEqualToConstant:(((kWidth/7) * 3) + 8)] setActive:YES];
 		[[button.heightAnchor constraintEqualToConstant:(45 * hScaleFactor)] setActive:YES];
+		[[button.topAnchor constraintEqualToAnchor:ref.bottomAnchor constant:15] setActive:YES];
 		if(i == 0){
 			[[button.leadingAnchor constraintEqualToAnchor:ref.leadingAnchor] setActive:YES];
 		}
 		else{
 			[[button.trailingAnchor constraintEqualToAnchor:ref.trailingAnchor] setActive:YES];
 		}
-		[[button.topAnchor constraintEqualToAnchor:ref.bottomAnchor constant:15] setActive:YES];
 
 		[button setTag:i];
 		[button setClipsToBounds:YES];

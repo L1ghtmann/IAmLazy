@@ -365,6 +365,7 @@
 															error.localizedDescription];
 			// [_generalManager displayErrorWithMessage:msg];
 			IALLogErr(@"%@", msg);
+			error = nil;
 
 			// skip any packages that are not 'Field 3: state: "installed"' (have an entry in /var/lib/dpkg/status but no files on-device)
 			[_skip addObject:package];
