@@ -79,11 +79,12 @@ int main(int argc, char *argv[]){
 
 		// get attributes of IAmLazy
 		struct stat iamlazy;
-		#if !(CLI)
-			const char bin[] = ROOT_PATH("/Applications/IAmLazy.app/IAmLazy");
-		#else
-			const char bin[] = ROOT_PATH("/usr/local/bin/ial");
-		#endif
+		char bin[PATH_MAX];
+	#if !(CLI)
+		strcpy(bin, ROOT_PATH("/Applications/IAmLazy.app/IAmLazy"));
+	#else
+		strcpy(bin, ROOT_PATH("/usr/local/bin/ial"));
+	#endif
 		if(lstat(bin, &iamlazy) != 0){
 			puts("Wut?");
 			return 1;

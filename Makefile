@@ -6,6 +6,7 @@ ifeq ($(ROOTLESS),1)
 export THEOS_PACKAGE_SCHEME = rootless
 export TARGET = iphone:clang:latest:15.0
 else
+export ADDITIONAL_CFLAGS = -D XINA_SUPPORT
 export TARGET = iphone:clang:latest:13.0
 endif
 
@@ -36,7 +37,7 @@ ial_INSTALL_PATH = /usr/local/bin
 include $(THEOS_MAKE_PATH)/tool.mk
 endif
 
-export ADDITIONAL_CFLAGS = -D CLI="$(CLI)"
+export ADDITIONAL_CFLAGS += -D CLI="$(CLI)"
 
 SUBPROJECTS += AndSoAreYou
 
