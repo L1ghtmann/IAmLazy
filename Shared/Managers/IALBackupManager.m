@@ -93,7 +93,7 @@
 		}
 	}
 	// xina
-	else if([self verifyFileAtPath:@"/var/Liy/xina"]){
+	else if([fileManager fileExistsAtPath:@"/var/Liy/xina"]){
 		if(![self makeXinaFile]){
 			completed(NO, nil);
 			return;
@@ -405,7 +405,7 @@
 				line = bits.firstObject;
 			}
 
-			if([self verifyFileAtPath:@"/var/Liy/xina"] && ![line hasPrefix:@"/var/jb"]){
+			if([fileManager fileExistsAtPath:@"/var/Liy/xina"] && ![line hasPrefix:@"/var/jb"]){
 				// XinaA15 patches rootful debs to install them to rootless paths
 				// This means that the package.lists do not reflect the *actual* file paths
 				// Thus, we need to prefix the file paths ourselves before attempting to view/copy
