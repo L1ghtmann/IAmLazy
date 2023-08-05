@@ -137,9 +137,10 @@
 -(BOOL)verifyTypeForBackup{
 	NSString *rootful = @"rootful";
 	NSString *rootless = @"rootless";
-	NSString *txt = [@"." stringByAppendingString:rootless];
-	NSString *file = [tmpDir stringByAppendingPathComponent:txt];
-	BOOL check = [[NSFileManager defaultManager] fileExistsAtPath:file];
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	NSString *file = [tmpDir stringByAppendingPathComponent:[@"." stringByAppendingString:rootless]];
+	BOOL check = [fileManager fileExistsAtPath:file];
+	// rootful backup but rootless jb
 	if(!check && [@THEOS_PACKAGE_INSTALL_PREFIX length]){
 		NSString *msg = [NSString stringWithFormat:[[localize(@"The backup you're trying to restore from was made for %@ jailbreaks.")
 														stringByAppendingString:@"\n\n"]
@@ -149,12 +150,20 @@
 		[_generalManager displayErrorWithMessage:msg];
 		return NO;
 	}
+	// rootless backup but rootful jb
 	else if(check && ![@THEOS_PACKAGE_INSTALL_PREFIX length]){
 		NSString *msg = [NSString stringWithFormat:[[localize(@"The backup you're trying to restore from was made for %@ jailbreaks.")
 														stringByAppendingString:@"\n\n"]
 														stringByAppendingString:localize(@"Your current jailbreak is %@!")],
 														rootless,
 														rootful];
+		[_generalManager displayErrorWithMessage:msg];
+		return NO;
+	}
+	// xina backup but not xina jb
+	else if([fileManager fileExistsAtPath:[tmpDir stringByAppendingPathComponent:@".xina"]] && ![fileManager fileExistsAtPath:@"/var/Liy/xina"]){
+		// TODO: localize!
+		NSString *msg = [NSString stringWithFormat:localize(@"The backup you're trying to restore from was made for XinaA15.")];
 		[_generalManager displayErrorWithMessage:msg];
 		return NO;
 	}
