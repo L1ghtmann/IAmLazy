@@ -103,7 +103,7 @@
 }
 
 -(BOOL)extractArchive:(NSString *)backupPath{
-	return extract_archive([backupPath fileSystemRepresentation]);
+	return extract_archive([backupPath fileSystemRepresentation], [[tmpDir stringByDeletingLastPathComponent] fileSystemRepresentation]);
 }
 
 -(BOOL)verifyBootstrapForBackup{
