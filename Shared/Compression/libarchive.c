@@ -1,22 +1,28 @@
 //
-// 	libarchive.m
+// 	libarchive.c
 //	IAmLazy
 //
 //	Created by Lightmann during COVID-19
 //
 
-#include <Foundation/NSNotification.h>
 #include <libarchive/archive_entry.h>
-#include <Foundation/NSString.h>
+#include <CoreFoundation/CFString.h>
 #include <libarchive/archive.h>
 #include <dispatch/queue.h>
 #include <sys/fcntl.h>
-#include "../../Log.h"
 // #include <rootless.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
 #include <limits.h>
+
+#if DEBUG
+#define IALLog(fmt, ...) printf("[i] %s\n", fmt, ##__VA_ARGS__)
+#define IALLogErr(fmt, ...) printf("[x] %s\n", fmt, ##__VA_ARGS__)
+#else
+#define IALLog(...)
+#define IALLogErr(...)
+#endif
 
 int get_file_count(){
 	int file_count = 0;
@@ -131,19 +137,21 @@ bool write_archive(const char *outname){
 		archive_entry_free(entry);
 
 		progress+=progress_per_part;
-		#if !(CLI)
-			dispatch_async(dispatch_get_main_queue(), ^{
-				// Note: file is .m because we need to use NSNotificationCenter
-				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
-			});
-		#else
-			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
-		#endif
+
+		CFStringRef progStr = CFStringCreateWithFormat(NULL, NULL, CFSTR("%f"), progress);
+	#if !(CLI)
+		dispatch_async(dispatch_get_main_queue(), ^{
+			CFNotificationCenterPostNotification(CFNotificationCenterGetLocalCenter(), CFSTR("updateItemProgress"), progStr, NULL, true);
+		});
+	#else
+		CFNotificationCenterPostNotification(CFNotificationCenterGetLocalCenter(), CFSTR("updateItemProgress"), progStr, NULL, true);
+	#endif
+		CFRelease(progStr);
 
 		// delete debs as we
 		// go to save space
 		if(remove(file) != 0){
-			IALLogErr(@"failed to delete %s", file);
+			IALLogErr("failed to delete deb");
 		}
 		free(file);
 	}
@@ -170,7 +178,7 @@ int copy_data(struct archive *ar, struct archive *aw){
 
 		r = archive_write_data_block(aw, buff, size, offset);
 		if(r < ARCHIVE_OK){
-			IALLogErr(@"%s", archive_error_string(aw));
+			IALLogErr(archive_error_string(aw));
 			return r;
 		}
 	}
@@ -234,16 +242,19 @@ bool extract_archive(const char *filename){
 		}
 		else{
 			progress+=progress_per_part;
-			#if !(CLI)
-				dispatch_async(dispatch_get_main_queue(), ^{
-					[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
-				});
-			#else
-				[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:[NSString stringWithFormat:@"%f", progress]];
-			#endif
+
+			CFStringRef progStr = CFStringCreateWithFormat(NULL, NULL, CFSTR("%f"), progress);
+		#if !(CLI)
+			dispatch_async(dispatch_get_main_queue(), ^{
+				CFNotificationCenterPostNotification(CFNotificationCenterGetLocalCenter(), CFSTR("updateItemProgress"), progStr, NULL, true);
+			});
+		#else
+			CFNotificationCenterPostNotification(CFNotificationCenterGetLocalCenter(), CFSTR("updateItemProgress"), progStr, NULL, true);
+		#endif
+			CFRelease(progStr);
 		}
 		if(r < ARCHIVE_OK){
-			IALLogErr(@"%s", archive_error_string(a));
+			IALLogErr(archive_error_string(a));
 		}
 		if(r < ARCHIVE_WARN){
 			return false;
@@ -251,12 +262,12 @@ bool extract_archive(const char *filename){
 
 		r = archive_write_header(ext, entry);
 		if(r < ARCHIVE_OK){
-			IALLogErr(@"%s", archive_error_string(ext));
+			IALLogErr(archive_error_string(ext));
 		}
 		else if(archive_entry_size(entry) > 0){
 			r = copy_data(a, ext);
 			if(r < ARCHIVE_OK){
-				IALLogErr(@"%s", archive_error_string(ext));
+				IALLogErr(archive_error_string(ext));
 			}
 			if(r < ARCHIVE_WARN){
 				return false;
@@ -265,7 +276,7 @@ bool extract_archive(const char *filename){
 
 		r = archive_write_finish_entry(ext);
 		if(r < ARCHIVE_OK){
-			IALLogErr(@"%s", archive_error_string(ext));
+			IALLogErr(archive_error_string(ext));
 		}
 		if(r < ARCHIVE_WARN){
 			return false;
