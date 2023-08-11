@@ -5,6 +5,7 @@
 //	Created by Lightmann during COVID-19
 //
 
+#import "../Shared/Compression/libarchive.h"
 #import <Foundation/Foundation.h>
 #import "../Common.h"
 #import <sys/stat.h>
@@ -295,33 +296,64 @@ int main(int argc, char *argv[]){
 			}
 
 			NSString *tweak = [tmpDir stringByAppendingPathComponent:current];
-			const char *args[] = {
-				ROOT_PATH("/usr/bin/dpkg-deb"),
-				"-b",
-				"-Zgzip",
-				"-z9",
-				[tweak fileSystemRepresentation],
-				NULL
-			};
-			ret = task(args);
-			if(ret < 0){
-				IALLogErr(@"buildDeb failed: %d for: %@", ret, current);
+
+			// control.tar.gz
+			NSString *debian = [tweak stringByAppendingPathComponent:@"DEBIAN"];
+			NSString *controlTarget = [tmpDir stringByAppendingPathComponent:@"control.tar.gz"];
+			BOOL ret = write_component_archive([debian fileSystemRepresentation], [controlTarget fileSystemRepresentation]);
+			if(!ret){
+				IALLogErr(@"write_component_archive [control] failed.");
 				return 1;
 			}
 
-			// delete dir with files now that deb has been built
+			// delete DEBIAN dir now that control archive has been made
 			NSError *deleteError = nil;
 			NSFileManager *fileManager = [NSFileManager defaultManager];
+			[fileManager removeItemAtPath:debian error:&deleteError];
+			if(deleteError){
+				IALLogErr(@"Failed to delete %@! Info: %@", debian, deleteError.localizedDescription);
+				return 1;
+			}
+
+			// data.tar.gz
+			NSString *dataTarget = [tmpDir stringByAppendingPathComponent:@"data.tar.gz"];
+			ret = write_component_archive([tweak fileSystemRepresentation], [dataTarget fileSystemRepresentation]);
+			if(!ret){
+				IALLogErr(@"write_component_archive [data] failed.");
+				return 1;
+			}
+
+			// delete main dir now that data archive has been made
 			[fileManager removeItemAtPath:tweak error:&deleteError];
 			if(deleteError){
 				IALLogErr(@"Failed to delete %@! Info: %@", tweak, deleteError.localizedDescription);
+				return 1;
 			}
 
-			if(![fileManager fileExistsAtPath:[tweak stringByAppendingPathExtension:@"deb"]]){
+			// package.deb
+			NSString *tweakTarget = [tweak stringByAppendingPathExtension:@"deb"];
+			ret = write_deb_archive([tmpDir fileSystemRepresentation], [tweakTarget fileSystemRepresentation]);
+			if(!ret){
+				IALLogErr(@"write_deb_archive failed.");
+				return 1;
+			}
+			else if(![fileManager fileExistsAtPath:tweakTarget]){
 				IALLogErr(@"%@.deb failed to build!", tweak);
 				return 1;
 			}
 			IALLog(@"%@.deb created successfully!", tweak);
+
+			// delete component archives since deb has been made
+			[fileManager removeItemAtPath:controlTarget error:&deleteError];
+			if(deleteError){
+				IALLogErr(@"Failed to delete %@! Info: %@", controlTarget, deleteError.localizedDescription);
+				return 1;
+			}
+			[fileManager removeItemAtPath:dataTarget error:&deleteError];
+			if(deleteError){
+				IALLogErr(@"Failed to delete %@! Info: %@", dataTarget, deleteError.localizedDescription);
+				return 1;
+			}
 		}
 		else if(strcmp(argv[1], "installDeb") == 0){
 			// get debs from tmpDir

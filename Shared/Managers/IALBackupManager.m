@@ -655,6 +655,12 @@
 }
 
 -(BOOL)buildDebs{
+	// write general use 'debian-binary' to file
+	NSData *data = [@"2.0\n" dataUsingEncoding:NSUTF8StringEncoding];
+	NSString *formatVer = [tmpDir stringByAppendingPathComponent:@"debian-binary"];
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	[fileManager createFileAtPath:formatVer contents:data attributes:nil];
+
 	NSUInteger total = [_packages count];
 	CGFloat progressPerPart = (1.0/total);
 	CGFloat progress = 0.0;
@@ -670,6 +676,9 @@
 		progress+=progressPerPart;
 		[_generalManager updateItemProgress:progress];
 	}
+
+	// remove 'debian-binary' now that we're done w it
+	[fileManager removeItemAtPath:formatVer error:nil];
 
 	return [self verifyDebs];
 }

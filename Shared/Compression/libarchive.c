@@ -27,6 +27,137 @@
 #define IALLogErr(...)
 #endif
 
+// TODO: find a way to unify these
+// there is a lot of duplicate code here
+
+#pragma mark Deb Archive
+
+bool write_component_archive(const char *src, const char *outname){
+	struct archive *a, *disk;
+	struct archive_entry *entry;
+	char buff[8192];
+	int r, len, fd;
+
+	disk = archive_read_disk_new();
+	archive_read_disk_set_standard_lookup(disk);
+
+	a = archive_write_new();
+	archive_write_add_filter_gzip(a);
+	archive_write_set_format_pax_restricted(a);
+	archive_write_open_filename(a, outname);
+
+	r = archive_read_disk_open(disk, src);
+	if(r != ARCHIVE_OK){
+		IALLogErr("failed to open %s: %s", src, archive_error_string(disk));
+		return false;
+	}
+
+	while(true){
+		entry = archive_entry_new();
+		r = archive_read_next_header2(disk, entry);
+		if(r == ARCHIVE_EOF){
+			break;
+		}
+		else if(r != ARCHIVE_OK){
+			IALLogErr("read failure: %s", archive_error_string(disk));
+			return false;
+		}
+		archive_read_disk_descend(disk);
+
+		const char *name = archive_entry_pathname(entry);
+
+		// skip first entry that is just the basename
+		if(strcmp(name, src) == 0) continue;
+
+		char *path = (char *)name;
+		if(strstr(outname, "control")){
+			// don't include dirname in archive
+			// rename each filepath to exclude dirname
+			path = strrchr(name, '/');
+		}
+		else if(strstr(outname, "data")){
+			// don't include /tmp/me.lightmann.iamlazy/some.tweak.name/
+			// in archive; rename each filepath to exclude this path
+			path += strlen(src);
+		}
+		archive_entry_set_pathname(entry, path);
+
+		r = archive_write_header(a, entry);
+		if(r < ARCHIVE_OK){
+			IALLogErr("header write failure: %s", archive_error_string(a));
+			return false;
+		}
+		else if(r == ARCHIVE_FATAL){
+			IALLogErr("header write fatality");
+			return false;
+		}
+		else if(r > ARCHIVE_FAILED){
+			fd = open(archive_entry_sourcepath(entry), O_RDONLY);
+			len = read(fd, buff, sizeof(buff));
+			while (len > 0) {
+				archive_write_data(a, buff, len);
+				len = read(fd, buff, sizeof(buff));
+			}
+			close(fd);
+
+			// char *target = strrchr(outname, '/') + 1;
+			// IALLog("added %s to %s", path, target);
+		}
+	}
+	archive_entry_free(entry);
+	archive_read_close(disk);
+	archive_read_free(disk);
+	archive_write_close(a);
+	archive_write_free(a);
+	return true;
+}
+
+void write_entry(struct archive *a, const char *item){
+	struct archive_entry *entry;
+	char buff[8192];
+	size_t size;
+	FILE *fp;
+
+	entry = archive_entry_new();
+	archive_entry_set_pathname(entry, item);
+	fp = fopen(item, "rb");
+	fseek(fp, 0, SEEK_END);
+	size = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+	archive_entry_set_filetype(entry, AE_IFREG);
+	archive_entry_set_size(entry, size);
+	archive_entry_set_perm(entry, 0644);
+	archive_write_header(a, entry);
+	while((size = fread(buff, 1, sizeof(buff), fp)) > 0){
+		archive_write_data(a, buff, size);
+	}
+	archive_entry_free(entry);
+}
+
+bool write_deb_archive(const char *tmp, const char *outname){
+	struct archive *a;
+	char db[PATH_MAX], control[PATH_MAX], data[PATH_MAX];
+
+	// components
+	// note: archival order of these matters
+	sprintf(db, "%sdebian-binary", tmp);
+	sprintf(control, "%scontrol.tar.gz", tmp);
+	sprintf(data, "%sdata.tar.gz", tmp);
+
+	a = archive_write_new();
+	archive_write_set_format_ar_bsd(a);
+	archive_write_open_filename(a, outname);
+
+	write_entry(a, db);
+	write_entry(a, control);
+	write_entry(a, data);
+
+	archive_write_close(a);
+	return true;
+}
+
+#pragma mark Main Archive
+
 int get_file_count(const char *path){
 	struct dirent *entry;
 	// DIR *directory = opendir(ROOT_PATH(path));
@@ -54,7 +185,7 @@ bool write_archive(const char *src, const char *outname){
 	int r, len, fd;
 
 	disk = archive_read_disk_new();
-    archive_read_disk_set_standard_lookup(disk);
+	archive_read_disk_set_standard_lookup(disk);
 
 	a = archive_write_new();
 	archive_write_add_filter_gzip(a);
@@ -131,8 +262,8 @@ bool write_archive(const char *src, const char *outname){
 		#endif
 			CFRelease(progStr);
 
-			char *target = strrchr(outname, '/') + 1;
-			IALLog("added %s to %s", file, target);
+			// char *target = strrchr(outname, '/') + 1;
+			// IALLog("added %s to %s", file, target);
 		}
 	}
 	archive_entry_free(entry);
@@ -143,33 +274,10 @@ bool write_archive(const char *src, const char *outname){
 	return true;
 }
 
-int copy_data(struct archive *ar, struct archive *aw){
-	int r;
-	const void *buff;
-	size_t size;
-	la_int64_t offset;
-
-	while(true){
-		r = archive_read_data_block(ar, &buff, &size, &offset);
-		if(r == ARCHIVE_EOF){
-			return ARCHIVE_OK;
-		}
-		if(r < ARCHIVE_OK){
-			return r;
-		}
-
-		r = archive_write_data_block(aw, buff, size, offset);
-		if(r < ARCHIVE_OK){
-			IALLogErr("archive_write_data_block error: %s", archive_error_string(aw));
-			return r;
-		}
-	}
-}
-
 bool extract_archive(const char *src, const char *dest){
 	struct archive *a;
-    struct archive_entry *entry;
-    int flags, r;
+	struct archive_entry *entry;
+	int flags, r;
 
 	// item count read
 	a = archive_read_new();
@@ -192,32 +300,32 @@ bool extract_archive(const char *src, const char *dest){
 	float progress_per_part = (1.0/count);
 	float progress = 0.0;
 
-    a = archive_read_new();
-    archive_read_support_format_tar(a);
-    archive_read_support_filter_gzip(a);
-    if((r = archive_read_open_filename(a, src, 10240))){
+	a = archive_read_new();
+	archive_read_support_format_tar(a);
+	archive_read_support_filter_gzip(a);
+	if((r = archive_read_open_filename(a, src, 10240))){
 		IALLogErr("failed to open %s for extraction [2]!", src);
-        return false;
-    }
+		return false;
+	}
 
 	// attributes we want to restore
-    flags = ARCHIVE_EXTRACT_TIME;
-    flags |= ARCHIVE_EXTRACT_PERM;
-    flags |= ARCHIVE_EXTRACT_ACL;
-    flags |= ARCHIVE_EXTRACT_FFLAGS;
+	flags = ARCHIVE_EXTRACT_TIME;
+	flags |= ARCHIVE_EXTRACT_PERM;
+	flags |= ARCHIVE_EXTRACT_ACL;
+	flags |= ARCHIVE_EXTRACT_FFLAGS;
 
-    while(archive_read_next_header(a, &entry) == ARCHIVE_OK){
-        const char *file = archive_entry_pathname(entry);
+	while(archive_read_next_header(a, &entry) == ARCHIVE_OK){
+		const char *file = archive_entry_pathname(entry);
 
 		char path[1024];
-        sprintf(path, "%s/%s", dest, file);
-        archive_entry_set_pathname(entry, path);
+		sprintf(path, "%s/%s", dest, file);
+		archive_entry_set_pathname(entry, path);
 
-        r = archive_read_extract(a, entry, flags);
-        if(r != ARCHIVE_OK){
-            IALLogErr("failed to extract %s: %s", path, archive_error_string(a));
-            return false;
-        }
+		r = archive_read_extract(a, entry, flags);
+		if(r != ARCHIVE_OK){
+			IALLogErr("failed to extract %s: %s", path, archive_error_string(a));
+			return false;
+		}
 
 		progress+=progress_per_part;
 
@@ -231,11 +339,10 @@ bool extract_archive(const char *src, const char *dest){
 	#endif
 		CFRelease(progStr);
 
-		char *deb = strrchr(path, '/') + 1;
-		IALLog("successfully extracted %s from %s", deb, src);
-    }
-
-    archive_read_close(a);
-    archive_read_free(a);
+		// char *deb = strrchr(path, '/') + 1;
+		// IALLog("successfully extracted %s from %s", deb, src);
+	}
+	archive_read_close(a);
+	archive_read_free(a);
 	return true;
 }
