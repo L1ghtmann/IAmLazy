@@ -302,7 +302,7 @@ int main(int argc, char *argv[]){
 			NSString *controlTarget = [tmpDir stringByAppendingPathComponent:@"control.tar.gz"];
 			BOOL ret = write_component_archive([debian fileSystemRepresentation], [controlTarget fileSystemRepresentation]);
 			if(!ret){
-				IALLogErr(@"write_component_archive [control] failed.");
+				IALLogErr(@"write_component_archive [control] failed for %@", tweak);
 				return 1;
 			}
 
@@ -319,7 +319,7 @@ int main(int argc, char *argv[]){
 			NSString *dataTarget = [tmpDir stringByAppendingPathComponent:@"data.tar.gz"];
 			ret = write_component_archive([tweak fileSystemRepresentation], [dataTarget fileSystemRepresentation]);
 			if(!ret){
-				IALLogErr(@"write_component_archive [data] failed.");
+				IALLogErr(@"write_component_archive [data] failed for %@", tweak);
 				return 1;
 			}
 
@@ -334,14 +334,14 @@ int main(int argc, char *argv[]){
 			NSString *tweakTarget = [tweak stringByAppendingPathExtension:@"deb"];
 			ret = write_deb_archive([tmpDir fileSystemRepresentation], [tweakTarget fileSystemRepresentation]);
 			if(!ret){
-				IALLogErr(@"write_deb_archive failed.");
+				IALLogErr(@"write_deb_archive failed for %@", tweak);
 				return 1;
 			}
 			else if(![fileManager fileExistsAtPath:tweakTarget]){
-				IALLogErr(@"%@.deb failed to build!", tweak);
+				IALLogErr(@"%@ failed to build!", tweakTarget);
 				return 1;
 			}
-			IALLog(@"%@.deb created successfully!", tweak);
+			IALLog(@"%@ created successfully!", tweakTarget);
 
 			// delete component archives since deb has been made
 			[fileManager removeItemAtPath:controlTarget error:&deleteError];

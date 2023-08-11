@@ -10,6 +10,8 @@
 #include <libarchive/archive.h>
 #include <dispatch/queue.h>
 // #include <rootless.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
@@ -49,6 +51,10 @@ bool write_component_archive(const char *src, const char *outname){
 	r = archive_read_disk_open(disk, src);
 	if(r != ARCHIVE_OK){
 		IALLogErr("failed to open %s: %s", src, archive_error_string(disk));
+		archive_read_close(disk);
+		archive_read_free(disk);
+		archive_write_close(a);
+		archive_write_free(a);
 		return false;
 	}
 
@@ -60,6 +66,11 @@ bool write_component_archive(const char *src, const char *outname){
 		}
 		else if(r != ARCHIVE_OK){
 			IALLogErr("read failure: %s", archive_error_string(disk));
+			archive_entry_free(entry);
+			archive_read_close(disk);
+			archive_read_free(disk);
+			archive_write_close(a);
+			archive_write_free(a);
 			return false;
 		}
 		archive_read_disk_descend(disk);
@@ -67,7 +78,9 @@ bool write_component_archive(const char *src, const char *outname){
 		const char *name = archive_entry_pathname(entry);
 
 		// skip first entry that is just the basename
-		if(strcmp(name, src) == 0) continue;
+		if(strcmp(name, src) == 0){
+			continue;
+		}
 
 		char *path = (char *)name;
 		if(strstr(outname, "control")){
@@ -85,16 +98,26 @@ bool write_component_archive(const char *src, const char *outname){
 		r = archive_write_header(a, entry);
 		if(r < ARCHIVE_OK){
 			IALLogErr("header write failure: %s", archive_error_string(a));
+			archive_entry_free(entry);
+			archive_read_close(disk);
+			archive_read_free(disk);
+			archive_write_close(a);
+			archive_write_free(a);
 			return false;
 		}
 		else if(r == ARCHIVE_FATAL){
 			IALLogErr("header write fatality");
+			archive_entry_free(entry);
+			archive_read_close(disk);
+			archive_read_free(disk);
+			archive_write_close(a);
+			archive_write_free(a);
 			return false;
 		}
 		else if(r > ARCHIVE_FAILED){
 			fd = open(archive_entry_sourcepath(entry), O_RDONLY);
 			len = read(fd, buff, sizeof(buff));
-			while (len > 0) {
+			while(len > 0){
 				archive_write_data(a, buff, len);
 				len = read(fd, buff, sizeof(buff));
 			}
@@ -131,6 +154,7 @@ void write_entry(struct archive *a, const char *item){
 	while((size = fread(buff, 1, sizeof(buff), fp)) > 0){
 		archive_write_data(a, buff, size);
 	}
+	fclose(fp);
 	archive_entry_free(entry);
 }
 
@@ -153,6 +177,7 @@ bool write_deb_archive(const char *tmp, const char *outname){
 	write_entry(a, data);
 
 	archive_write_close(a);
+	archive_write_free(a);
 	return true;
 }
 
@@ -184,14 +209,6 @@ bool write_archive(const char *src, const char *outname){
 	char buff[8192];
 	int r, len, fd;
 
-	disk = archive_read_disk_new();
-	archive_read_disk_set_standard_lookup(disk);
-
-	a = archive_write_new();
-	archive_write_add_filter_gzip(a);
-	archive_write_set_format_pax_restricted(a);
-	archive_write_open_filename(a, outname);
-
 	int count = get_file_count(src);
 	if(count == 0){
 		IALLogErr("%s file count is 0!", src);
@@ -201,9 +218,21 @@ bool write_archive(const char *src, const char *outname){
 	float progress_per_part = (1.0/count);
 	float progress = 0.0;
 
+	disk = archive_read_disk_new();
+	archive_read_disk_set_standard_lookup(disk);
+
+	a = archive_write_new();
+	archive_write_add_filter_gzip(a);
+	archive_write_set_format_pax_restricted(a);
+	archive_write_open_filename(a, outname);
+
 	r = archive_read_disk_open(disk, src);
 	if(r != ARCHIVE_OK){
 		IALLogErr("failed to open %s: %s", src, archive_error_string(disk));
+		archive_read_close(disk);
+		archive_read_free(disk);
+		archive_write_close(a);
+		archive_write_free(a);
 		return false;
 	}
 
@@ -215,6 +244,11 @@ bool write_archive(const char *src, const char *outname){
 		}
 		else if(r != ARCHIVE_OK){
 			IALLogErr("read failure: %s", archive_error_string(disk));
+			archive_entry_free(entry);
+			archive_read_close(disk);
+			archive_read_free(disk);
+			archive_write_close(a);
+			archive_write_free(a);
 			return false;
 		}
 		archive_read_disk_descend(disk);
@@ -235,16 +269,26 @@ bool write_archive(const char *src, const char *outname){
 		r = archive_write_header(a, entry);
 		if(r < ARCHIVE_OK){
 			IALLogErr("header write failure: %s", archive_error_string(a));
+			archive_entry_free(entry);
+			archive_read_close(disk);
+			archive_read_free(disk);
+			archive_write_close(a);
+			archive_write_free(a);
 			return false;
 		}
 		else if(r == ARCHIVE_FATAL){
 			IALLogErr("header write fatality");
+			archive_entry_free(entry);
+			archive_read_close(disk);
+			archive_read_free(disk);
+			archive_write_close(a);
+			archive_write_free(a);
 			return false;
 		}
 		else if(r > ARCHIVE_FAILED){
 			fd = open(archive_entry_sourcepath(entry), O_RDONLY);
 			len = read(fd, buff, sizeof(buff));
-			while (len > 0) {
+			while(len > 0){
 				archive_write_data(a, buff, len);
 				len = read(fd, buff, sizeof(buff));
 			}
@@ -285,6 +329,8 @@ bool extract_archive(const char *src, const char *dest){
 	archive_read_support_filter_gzip(a);
 	if((r = archive_read_open_filename(a, src, 10240))){
 		IALLogErr("failed to open %s for extraction [1]!", src);
+		archive_read_close(a);
+		archive_read_free(a);
 		return false;
 	}
 
@@ -305,6 +351,8 @@ bool extract_archive(const char *src, const char *dest){
 	archive_read_support_filter_gzip(a);
 	if((r = archive_read_open_filename(a, src, 10240))){
 		IALLogErr("failed to open %s for extraction [2]!", src);
+		archive_read_close(a);
+		archive_read_free(a);
 		return false;
 	}
 
@@ -324,6 +372,8 @@ bool extract_archive(const char *src, const char *dest){
 		r = archive_read_extract(a, entry, flags);
 		if(r != ARCHIVE_OK){
 			IALLogErr("failed to extract %s: %s", path, archive_error_string(a));
+			archive_read_close(a);
+			archive_read_free(a);
 			return false;
 		}
 
