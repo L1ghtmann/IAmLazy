@@ -162,7 +162,6 @@
 	}
 	// xina backup but not xina jb
 	else if([fileManager fileExistsAtPath:[tmpDir stringByAppendingPathComponent:@".xina"]] && ![fileManager fileExistsAtPath:@"/var/Liy/xina"]){
-		// TODO: localize!
 		NSString *msg = [NSString stringWithFormat:localize(@"The backup you're trying to restore from was made for XinaA15.")];
 		[_generalManager displayErrorWithMessage:msg];
 		return NO;

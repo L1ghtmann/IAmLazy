@@ -746,7 +746,6 @@
 	[_generalManager cleanupTmp];
 	if(!status2) return status2;
 	else if(!status){
-		// TODO: localize!
 		[_generalManager displayErrorWithMessage:localize(@"Failed to build final archive!")];
 	}
 	return status;
