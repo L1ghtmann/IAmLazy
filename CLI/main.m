@@ -1,4 +1,5 @@
 #import "../Shared/Managers/IALGeneralManager.h"
+#import "../App/UI/IALProgressViewController.h"
 #import "../Common.h"
 #import "../Task.h"
 
@@ -92,7 +93,8 @@ int main(int argc, char **argv){
 						return 0;
 					}
 
-					IALGeneralManager *gManager = [[IALGeneralManager alloc] sharedManagerForPurpose:0];
+					__unused IALProgressViewController *prog = [[IALProgressViewController alloc] initWithPurpose:0 withFilter:filter];
+					IALGeneralManager *gManager = [IALGeneralManager sharedManager];
 					dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 					NSDate *startTime = [NSDate date];
 					[gManager makeBackupWithFilter:filter andCompletion:^(BOOL completed, NSString *info){
@@ -129,7 +131,8 @@ int main(int argc, char **argv){
 						}
 					} while(true);
 
-					IALGeneralManager *gManager = [[IALGeneralManager alloc] sharedManagerForPurpose:1];
+					__unused IALProgressViewController *prog = [[IALProgressViewController alloc] initWithPurpose:1 withFilter:nil];
+					IALGeneralManager *gManager = [IALGeneralManager sharedManager];
 					NSArray *backups = [gManager getBackups];
 					NSUInteger count = [backups count];
 					if(!count){

@@ -13,28 +13,9 @@
 #import "../../Common.h"
 #import "../../Task.h"
 
-#if CLI
-#import "../../App/UI/IALProgressViewController.h"
-#endif
-
 @implementation IALGeneralManager
 
 #pragma mark Setup
-
-#if CLI
--(instancetype)sharedManagerForPurpose:(NSInteger)purpose{
-	static dispatch_once_t p = 0;
-	__strong static IALGeneralManager *sharedManager = nil;
-	dispatch_once(&p, ^{
-		sharedManager = [self init];
-	#pragma clang diagnostic push
-	#pragma clang diagnostic ignored "-Wunused-value"
-		[[IALProgressViewController alloc] initWithPurpose:purpose withFilter:_backupManager.filtered];
-	#pragma clang diagnostic pop
-	});
-	return sharedManager;
-}
-#endif
 
 +(instancetype)sharedManager{
 	static dispatch_once_t p = 0;
