@@ -222,7 +222,7 @@ bool write_archive(const char *src, const char *outname, bool component){
 			}
 
 			// char *target = strrchr(outname, '/') + 1;
-			// IALLog("added %s to %s", path, target);
+			// IALLog("added %s to %s", relPath, target);
 		}
 	}
 	archive_entry_free(entry);
@@ -234,12 +234,11 @@ bool write_archive(const char *src, const char *outname, bool component){
 }
 
 bool extract_archive(const char *src, const char *dest){
-	struct archive *a;
-	struct archive_entry *entry;
-	int flags, r;
+	struct archive_entry *entry = NULL;
+	int r;
 
 	// item count read
-	a = archive_read_new();
+	struct archive *a = archive_read_new();
 	archive_read_support_format_tar(a);
 	archive_read_support_filter_gzip(a);
 	if((r = archive_read_open_filename(a, src, 10240))){
@@ -251,7 +250,7 @@ bool extract_archive(const char *src, const char *dest){
 
 	// get item count
 	int count = 0;
-	while(archive_read_next_header(a, &entry) == ARCHIVE_OK){
+	while(archive_read_next_header2(a, entry) == ARCHIVE_OK){
 		count++;
 		archive_read_data_skip(a);
 	}
@@ -272,12 +271,12 @@ bool extract_archive(const char *src, const char *dest){
 	}
 
 	// attributes we want to restore
-	flags = ARCHIVE_EXTRACT_TIME;
+	int flags = ARCHIVE_EXTRACT_TIME;
 	flags |= ARCHIVE_EXTRACT_PERM;
 	flags |= ARCHIVE_EXTRACT_ACL;
 	flags |= ARCHIVE_EXTRACT_FFLAGS;
 
-	while(archive_read_next_header(a, &entry) == ARCHIVE_OK){
+	while(archive_read_next_header2(a, entry) == ARCHIVE_OK){
 		const char *file = archive_entry_pathname(entry);
 
 		char path[1024];
