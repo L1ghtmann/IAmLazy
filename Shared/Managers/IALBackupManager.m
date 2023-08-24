@@ -519,11 +519,9 @@
 	if(![relevantControls count]){
 		// Using error log as opposed to alert as borked pkgs are skipped
 		// (and the entire backup does not stop because of one package)
-		// TODO: remove these strings??
 	#if CLI || DEBUG
-		NSString *msg = [NSString stringWithFormat:localize(@"There appear to be no controls for %@?!"), package];
+		NSString *msg = [NSString stringWithFormat:@"There appear to be no controls for %@?!", package];
 	#endif
-		// [_generalManager displayErrorWithMessage:msg];
 		IALLogErr(@"%@", msg);
 		return NO;
 	}
@@ -531,11 +529,7 @@
 	NSString *theOne = [relevantControls firstObject];
 	if (![theOne length]){
 	#if CLI || DEBUG
-		NSString *msg = [NSString stringWithFormat:[[localize(@"The control for")
-														stringByAppendingString:@" "]
-														stringByAppendingString:localize(@"%@ is blank?!")],
-														package];
-		// [_generalManager displayErrorWithMessage:msg];
+		NSString *msg = [NSString stringWithFormat:@"The control for %@ is blank?!", package];
 	#endif
 		IALLogErr(@"%@", msg);
 		return NO;
@@ -549,9 +543,8 @@
 	else if([theOne rangeOfString:@"Status: install ok installed"].location == NSNotFound &&
 			[theOne rangeOfString:@"Status: hold ok installed"].location == NSNotFound){
 	#if CLI || DEBUG
-		NSString *msg = [NSString stringWithFormat:localize(@"%@ is not fully installed?!"), package];
+		NSString *msg = [NSString stringWithFormat:@"%@ is not fully installed?!", package];
 	#endif
-		// [_generalManager displayErrorWithMessage:msg];
 		IALLogErr(@"%@", msg);
 		return NO;
 	}
@@ -560,21 +553,16 @@
 	NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"Status:\\s.*\n" options:NSRegularExpressionCaseInsensitive error:&error];
 	if(error){
 	#if CLI || DEBUG
-		NSString *msg = [NSString stringWithFormat:localize(@"Regex error: %@"), error.localizedDescription];
+		NSString *msg = [NSString stringWithFormat:@"Regex error: %@", error.localizedDescription];
 	#endif
-		// [_generalManager displayErrorWithMessage:msg];
 		IALLogErr(@"%@", msg);
 		return NO;
 	}
 	NSString *noStatusLine = [regex stringByReplacingMatchesInString:theOne options:0 range:NSMakeRange(0, [theOne length]) withTemplate:@""];
 	if(![noStatusLine length]){
 	#if CLI || DEBUG
-		NSString *msg = [NSString stringWithFormat:[[localize(@"The control for")
-														stringByAppendingString:@" "]
-														stringByAppendingString:localize(@"%@ is blank?!")],
-														package];
+		NSString *msg = [NSString stringWithFormat:@"The control for %@ is blank?!", package];
 	#endif
-		// [_generalManager displayErrorWithMessage:msg];
 		IALLogErr(@"%@", msg);
 		return NO;
 	}
@@ -590,13 +578,8 @@
 		[fileManager createDirectoryAtPath:debian withIntermediateDirectories:YES attributes:nil error:&writeError];
 		if(writeError){
 		#if CLI || DEBUG
-			NSString *msg = [NSString stringWithFormat:[[localize(@"Failed to create %@!")
-															stringByAppendingString:@" "]
-															stringByAppendingString:localize(@"Info: %@")],
-															debian,
-															writeError.localizedDescription];
+			NSString *msg = [NSString stringWithFormat:@"Failed to create %@! Info: %@", debian, writeError.localizedDescription];
 		#endif
-			// [_generalManager displayErrorWithMessage:msg];
 			IALLogErr(@"%@", msg);
 			return NO;
 		}
