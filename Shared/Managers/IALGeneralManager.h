@@ -18,7 +18,6 @@
 -(BOOL)updateAPT;
 -(NSArray<NSString *> *)getBackups;
 -(BOOL)executeCommandAsRoot:(NSString *)cmd;
--(void)updateItemStatus:(CGFloat)status;
--(void)updateItemProgress:(CGFloat)status;
+-(void)updateItem:(NSInteger)item WithStatus:(CGFloat)status;
 -(void)displayErrorWithMessage:(NSString *)msg;
 @end

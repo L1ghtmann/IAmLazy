@@ -28,7 +28,7 @@
 	}
 
 	_filtered = filter;
-	[_generalManager updateItemStatus:-0.5];
+	[_generalManager updateItem:0 WithStatus:-0.5];
 
 	_controlFiles = [self getControlFiles];
 	if(![_controlFiles count]){
@@ -45,7 +45,7 @@
 		return;
 	}
 
-	[_generalManager updateItemStatus:0];
+	[_generalManager updateItem:0 WithStatus:0];
 
 	// make fresh tmp directory
 	if(![fileManager fileExistsAtPath:tmpDir]){
@@ -63,23 +63,23 @@
 		}
 	}
 
-	[_generalManager updateItemStatus:0.5];
+	[_generalManager updateItem:0 WithStatus:0.5];
 	if(![self gatherFilesForPackages]){
 		completed(NO, nil);
 		return;
 	}
-	[_generalManager updateItemStatus:1];
+	[_generalManager updateItem:0 WithStatus:1];
 
-	[_generalManager updateItemStatus:1.5];
+	[_generalManager updateItem:0 WithStatus:1.5];
 	if(![self buildDebs]){
 		completed(NO, nil);
 		return;
 	}
-	[_generalManager updateItemStatus:2];
+	[_generalManager updateItem:0 WithStatus:2];
 
 	// specify the bootstrap it was created on
 	if(!_filtered){
-		if(![self makeBootstrapFile]){
+		if(![self markBackupAs:0]){
 			completed(NO, nil);
 			return;
 		}
@@ -87,37 +87,32 @@
 
 	// specify rootless
 	if([@THEOS_PACKAGE_INSTALL_PREFIX length]){
-		if(![self makeRootlessFile]){
+		if(![self markBackupAs:1]){
 			completed(NO, nil);
 			return;
 		}
 	}
 	// xina
 	else if([fileManager fileExistsAtPath:@"/var/Liy/xina"]){
-		if(![self makeXinaFile]){
+		if(![self markBackupAs:2]){
 			completed(NO, nil);
 			return;
 		}
 	}
 
 	// make archive of packages
-	[_generalManager updateItemStatus:2.5];
+	[_generalManager updateItem:0 WithStatus:2.5];
 	if(![self makeTarball]){
 		completed(NO, nil);
 		return;
 	}
-	[_generalManager updateItemStatus:3];
+	[_generalManager updateItem:0 WithStatus:3];
 
-	if([_skip count]){
-		completed(YES, [_skip componentsJoinedByString:@",\n"]);
-	}
-	else{
-		completed(YES, nil);
-	}
+	completed(YES, [_skip count] ? [_skip componentsJoinedByString:@",\n"] : nil);
 }
 
 -(NSArray<NSString *> *)getControlFiles{
-	[_generalManager updateItemProgress:0];
+	[_generalManager updateItem:1 WithStatus:0];
 
 	// get control files for all installed packages
 	NSError *readError = nil;
@@ -140,7 +135,7 @@
 		return [NSArray new];
 	}
 
-	[_generalManager updateItemProgress:0.1];
+	[_generalManager updateItem:1 WithStatus:0.1];
 
 	// divvy up massive control collection into individual control files
 	NSMutableArray *controls = [NSMutableArray new];
@@ -159,7 +154,7 @@
 		}
 	}
 
-	[_generalManager updateItemProgress:0.2];
+	[_generalManager updateItem:1 WithStatus:0.2];
 
 	return controls;
 }
@@ -209,7 +204,7 @@
 		}
 
 		progress+=progressPerPart;
-		[_generalManager updateItemProgress:progress];
+		[_generalManager updateItem:1 WithStatus:progress];
 	}
 	return packages;
 }
@@ -320,7 +315,7 @@
 }
 
 -(NSMutableArray<NSString *> *)getUserPackages{
-	[_generalManager updateItemProgress:0.8];
+	[_generalManager updateItem:1 WithStatus:0.8];
 
 	dispatch_semaphore_t sem = dispatch_semaphore_create(0);
 
@@ -343,7 +338,7 @@
 	// wait for block to return before proceeding
 	dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
 
-	[_generalManager updateItemProgress:0.9];
+	[_generalManager updateItem:1 WithStatus:0.9];
 
 	return packages;
 }
@@ -473,7 +468,7 @@
 		}
 
 		progress+=progressPerPart;
-		[_generalManager updateItemProgress:progress];
+		[_generalManager updateItem:1 WithStatus:progress];
 
 		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:package];
 		if(![self makeControlForPackage:package inDirectory:tweakDir]){
@@ -483,28 +478,28 @@
 		}
 
 		progress+=progressPerPart;
-		[_generalManager updateItemProgress:progress];
+		[_generalManager updateItem:1 WithStatus:progress];
 
 		if(![self makeSubDirectories:directories inDirectory:tweakDir]){
 			return NO;
 		}
 
 		progress+=progressPerPart;
-		[_generalManager updateItemProgress:progress];
+		[_generalManager updateItem:1 WithStatus:progress];
 
-		if(![self copyGenericFiles]){
+		if(![self copyFilesOfType:0]){
 			return NO;
 		}
 
 		progress+=progressPerPart;
-		[_generalManager updateItemProgress:progress];
+		[_generalManager updateItem:1 WithStatus:progress];
 
-		if(![self copyDEBIANFiles]){
+		if(![self copyFilesOfType:1]){
 			return NO;
 		}
 
 		progress+=progressPerPart;
-		[_generalManager updateItemProgress:progress];
+		[_generalManager updateItem:1 WithStatus:progress];
 	}
 
 	// remove list file now that we're done w it
@@ -636,20 +631,24 @@
 	return YES;
 }
 
--(BOOL)copyGenericFiles{
-	// have to run as root in order to retain file attributes (ownership, etc)
-	BOOL ret = [_generalManager executeCommandAsRoot:@"cpGFiles"];
-	if(!ret){
-		[_generalManager displayErrorWithMessage:localize(@"Failed to copy generic files!")];
+-(BOOL)copyFilesOfType:(NSInteger)type{
+	NSString *cmd, *msg;
+	switch(type){
+		case 0:{
+			cmd = @"cpGFiles";
+			msg = @"Failed to copy generic files!";
+			break;
+		}
+		case 1:{
+			cmd = @"cpDFiles";
+			msg = @"Failed to copy DEBIAN files!";
+			break;
+		}
 	}
-	return ret;
-}
-
--(BOOL)copyDEBIANFiles{
-	// have to copy as root in order to retain file attributes (ownership, etc)
-	BOOL ret = [_generalManager executeCommandAsRoot:@"cpDFiles"];
+	// have to run as root in order to retain file attributes (ownership, etc)
+	BOOL ret = [_generalManager executeCommandAsRoot:cmd];
 	if(!ret){
-		[_generalManager displayErrorWithMessage:localize(@"Failed to copy DEBIAN files!")];
+		[_generalManager displayErrorWithMessage:localize(msg)];
 	}
 	return ret;
 }
@@ -674,7 +673,7 @@
 		}
 
 		progress+=progressPerPart;
-		[_generalManager updateItemProgress:progress];
+		[_generalManager updateItem:1 WithStatus:progress];
 	}
 
 	// remove 'debian-binary' now that we're done w it
@@ -710,27 +709,30 @@
 	return YES;
 }
 
--(BOOL)makeBootstrapFile{
-	NSString *bootstrap = @"elucubratus";
+-(BOOL)markBackupAs:(NSInteger)type{
 	NSFileManager *fileManager = [NSFileManager defaultManager];
-	if([fileManager fileExistsAtPath:ROOT_PATH_NS_VAR(@"/.procursus_strapped")]){
-		bootstrap = @"procursus";
+	NSString *file;
+	switch(type){
+		case 0:{
+			NSString *bootstrap = @"elucubratus";
+			if([fileManager fileExistsAtPath:ROOT_PATH_NS_VAR(@"/.procursus_strapped")]){
+				bootstrap = @"procursus";
+			}
+			file = [NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap];
+			break;
+		}
+		case 1:{
+			NSString *txt = @".rootless";
+			file = [tmpDir stringByAppendingPathComponent:txt];
+			break;
+		}
+		case 2:{
+			NSString *txt = @".xina";
+			file = [tmpDir stringByAppendingPathComponent:txt];
+			break;
+		}
 	}
-
-	NSString *file = [NSString stringWithFormat:@"%@.made_on_%@", tmpDir, bootstrap];
 	return [fileManager createFileAtPath:file contents:nil attributes:nil];
-}
-
--(BOOL)makeRootlessFile{
-	NSString *txt = @".rootless";
-	NSString *file = [tmpDir stringByAppendingPathComponent:txt];
-	return [[NSFileManager defaultManager] createFileAtPath:file contents:nil attributes:nil];
-}
-
--(BOOL)makeXinaFile{
-	NSString *txt = @".xina";
-	NSString *file = [tmpDir stringByAppendingPathComponent:txt];
-	return [[NSFileManager defaultManager] createFileAtPath:file contents:nil attributes:nil];
 }
 
 -(BOOL)makeTarball{
@@ -742,12 +744,13 @@
 	NSString *backupPath = [backupDir stringByAppendingPathComponent:backupName];
 
 	BOOL status = write_archive([tmpDir fileSystemRepresentation], [backupPath fileSystemRepresentation], NO);
-	BOOL status2 = [self verifyFileAtPath:backupPath];
-	[_generalManager cleanupTmp];
-	if(!status2) return status2;
-	else if(!status){
+	if(status){
+		status = [self verifyFileAtPath:backupPath];
+	}
+	else{
 		[_generalManager displayErrorWithMessage:localize(@"Failed to build final archive!")];
 	}
+	[_generalManager cleanupTmp];
 	return status;
 }
 

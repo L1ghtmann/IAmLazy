@@ -27,10 +27,10 @@
 	__strong static IALGeneralManager *sharedManager = nil;
 	dispatch_once(&p, ^{
 		sharedManager = [self init];
-		#pragma clang diagnostic push
-		#pragma clang diagnostic ignored "-Wunused-value"
-			[[IALProgressViewController alloc] initWithPurpose:purpose withFilter:_backupManager.filtered];
-		#pragma clang diagnostic pop
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wunused-value"
+		[[IALProgressViewController alloc] initWithPurpose:purpose withFilter:_backupManager.filtered];
+	#pragma clang diagnostic pop
 	});
 	return sharedManager;
 }
@@ -50,9 +50,9 @@
 
 	if(self){
 		[self ensureBackupDirExists];
-		#if DEBUG
+	#if DEBUG
 		[self cleanLog];
-		#endif
+	#endif
 		[self ensureUsableDpkgLock];
 	}
 
@@ -279,25 +279,15 @@
 	return NO;
 }
 
--(void)updateItemStatus:(CGFloat)status{
+-(void)updateItem:(NSInteger)item WithStatus:(CGFloat)status{
 	NSString *statusStr = [NSString stringWithFormat:@"%f", status];
+	NSString *name = item ? @"updateItemProgress" : @"updateItemStatus";
 	#if !(CLI)
 		dispatch_async(dispatch_get_main_queue(), ^(void){
-			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemStatus" object:statusStr];
+			[[NSNotificationCenter defaultCenter] postNotificationName:name object:statusStr];
 		});
 	#else
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemStatus" object:statusStr];
-	#endif
-}
-
--(void)updateItemProgress:(CGFloat)status{
-	NSString *statusStr = [NSString stringWithFormat:@"%f", status];
-	#if !(CLI)
-		dispatch_async(dispatch_get_main_queue(), ^(void){
-			[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:statusStr];
-		});
-	#else
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateItemProgress" object:statusStr];
+		[[NSNotificationCenter defaultCenter] postNotificationName:name object:statusStr];
 	#endif
 }
 
