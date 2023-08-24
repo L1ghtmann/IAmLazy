@@ -29,21 +29,19 @@
 #endif
 
 void write_entry(struct archive *a, const char *item){
-	struct archive_entry *entry;
-	char buff[8192];
-	size_t size;
-	FILE *fp;
-
-	entry = archive_entry_new();
+	struct archive_entry *entry = archive_entry_new();
 	archive_entry_set_pathname(entry, item);
-	fp = fopen(item, "rb");
+	FILE *fp = fopen(item, "rb");
 	fseek(fp, 0, SEEK_END);
-	size = ftell(fp);
+	size_t size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
+
 	archive_entry_set_filetype(entry, AE_IFREG);
 	archive_entry_set_size(entry, size);
 	archive_entry_set_perm(entry, 0644);
 	archive_write_header(a, entry);
+
+	char buff[8192];
 	while((size = fread(buff, 1, sizeof(buff), fp)) > 0){
 		archive_write_data(a, buff, size);
 	}
@@ -52,16 +50,15 @@ void write_entry(struct archive *a, const char *item){
 }
 
 bool write_deb_archive(const char *tmp, const char *outname){
-	struct archive *a;
-	char db[PATH_MAX], control[PATH_MAX], data[PATH_MAX];
 
 	// components
 	// note: archival order of these matters
+	char db[PATH_MAX], control[PATH_MAX], data[PATH_MAX];
 	sprintf(db, "%sdebian-binary", tmp);
 	sprintf(control, "%scontrol.tar.gz", tmp);
 	sprintf(data, "%sdata.tar.gz", tmp);
 
-	a = archive_write_new();
+	struct archive *a = archive_write_new();
 	archive_write_set_format_ar_bsd(a);
 	archive_write_open_filename(a, outname);
 
@@ -94,10 +91,6 @@ int get_file_count(const char *path){
 }
 
 bool write_archive(const char *src, const char *outname, bool component){
-	struct archive_entry *entry;
-	char buff[8192];
-	int len, fd;
-
 	int count = 1;
 	if(!component){
 		count = get_file_count(src);
@@ -127,6 +120,7 @@ bool write_archive(const char *src, const char *outname, bool component){
 		return false;
 	}
 
+	struct archive_entry *entry;
 	while(true){
 		entry = archive_entry_new();
 		r = archive_read_next_header2(disk, entry);
@@ -200,8 +194,9 @@ bool write_archive(const char *src, const char *outname, bool component){
 			return false;
 		}
 		else if(r > ARCHIVE_FAILED){
-			fd = open(archive_entry_sourcepath(entry), O_RDONLY);
-			len = read(fd, buff, sizeof(buff));
+			char buff[8192];
+			int fd = open(archive_entry_sourcepath(entry), O_RDONLY);
+			int len = read(fd, buff, sizeof(buff));
 			while(len > 0){
 				archive_write_data(a, buff, len);
 				len = read(fd, buff, sizeof(buff));
@@ -278,7 +273,7 @@ bool extract_archive(const char *src, const char *dest){
 	while(archive_read_next_header2(a, entry) == ARCHIVE_OK){
 		const char *file = archive_entry_pathname(entry);
 
-		char path[1024];
+		char path[PATH_MAX];
 		sprintf(path, "%s/%s", dest, file);
 		archive_entry_set_pathname(entry, path);
 
