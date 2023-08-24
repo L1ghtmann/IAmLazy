@@ -43,6 +43,22 @@ NSString *getInput(){
 	}
 }
 
+NSString *prompt(NSDictionary<NSString *, NSString *> *items, NSInteger upperBound){
+	@autoreleasepool{
+		__block NSString *input = nil;
+		do {
+			for(NSString *key in items){
+				print([items objectForKey:key]);
+			}
+			input = getInput();
+			if([input length] == 1 && [input intValue] <= upperBound){
+				break;
+			}
+		} while(true);
+		return input;
+	}
+}
+
 int main(int argc, char **argv){
 	@autoreleasepool {
 		// sanity check
@@ -53,6 +69,8 @@ int main(int argc, char **argv){
 		}
 
 		// the work
+		// shoutout Uro
+		// https://gist.github.com/uroboro/8782641c7d2412427b5487254e8f40b0
 		for(int i = 0; i < argc; i++){
 			switch([opts indexOfObject:@(argv[i])]){
 				// help
@@ -64,30 +82,21 @@ int main(int argc, char **argv){
 				// backup
 				case 2:
 				case 3: {
-					__block NSString *input = nil;
-					do {
-						print(@"Please select a backup type:");
-						print(@"  [0] standard");
-						print(@"  [1] developer");
-
-						input = getInput();
-						if([input length] == 1 && [input intValue] <= 1){
-							break;
-						}
-					} while(true);
+					NSDictionary *items = @{
+						@"0" : @"Please select a backup type:",
+						@"1" : @"  [0] standard",
+						@"2" : @"  [1] developer"
+					};
+					NSString *input = prompt(items, 1);
 
 					BOOL filter = ![input boolValue];
 
-					do {
-						print(@"Please confirm that you have adequate free storage before proceeding:");
-						print(@"  [0] Cancel");
-						print(@"  [1] Confirm");
-
-						input = getInput();
-						if([input length] == 1 && [input intValue] <= 1){
-							break;
-						}
-					} while(true);
+					items = @{
+						@"0" : @"Please confirm that you have adequate free storage before proceeding:",
+						@"1" : @"  [0] Cancel",
+						@"2" : @"  [1] Confirm"
+					};
+					input = prompt(items, 1);
 
 					if(![input boolValue]){
 						return 0;
@@ -119,18 +128,6 @@ int main(int argc, char **argv){
 				// restore
 				case 4:
 				case 5: {
-					__block NSString *input = nil;
-					do {
-						print(@"Please select a restore type:");
-						print(@"  [0] latest");
-						print(@"  [1] specific");
-
-						input = getInput();
-						if([input length] == 1 && [input intValue] <= 1){
-							break;
-						}
-					} while(true);
-
 					__unused IALProgressViewController *prog = [[IALProgressViewController alloc] initWithPurpose:1 withFilter:nil];
 					IALGeneralManager *gManager = [IALGeneralManager sharedManager];
 					NSArray *backups = [gManager getBackups];
@@ -139,6 +136,14 @@ int main(int argc, char **argv){
 						print(@"No backups were found.");
 						return 1;
 					}
+
+					__block NSDictionary *items = @{
+						@"0" : @"Please select a restore type:",
+						@"1" : @"  [0] latest",
+						@"2" : @"  [1] specific"
+					};
+					__block NSString *input = prompt(items, 1);
+
 					NSString *backup = nil;
 					if(![input boolValue]){
 						backup = [backups firstObject];
@@ -166,34 +171,24 @@ int main(int argc, char **argv){
 					}
 					else if([backup hasSuffix:@"u.tar.gz"]){
 						print(@"You have chosen to restore from a developer backup. This backup includes bootstrap packages.");
-						do {
-							print(@"Please confirm that you understand this and still wish to proceed with the restore");
-							print(@"  [0] No");
-							print(@"  [1] Yes");
-
-							input = getInput();
-							if([input length] == 1 && [input intValue] <= 1){
-								break;
-							}
-						} while(true);
-
+						items = @{
+							@"0" : @"Please confirm that you understand this and still wish to proceed with the restore",
+							@"1" : @"  [0] No",
+							@"2" : @"  [1] Yes"
+						};
+						input = prompt(items, 1);
 						if(![input boolValue]){
 							return 0;
 						}
 					}
 
 					NSString *msg = [NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backup];
-					do {
-						print(msg);
-						print(@"  [0] No");
-						print(@"  [1] Yes");
-
-						input = getInput();
-						if([input length] == 1 && [input intValue] <= 1){
-							break;
-						}
-					} while(true);
-
+					items = @{
+						@"0" : msg,
+						@"1" : @"  [0] No",
+						@"2" : @"  [1] Yes"
+					};
+					input = prompt(items, 1);
 					if(![input boolValue]){
 						return 0;
 					}
@@ -201,17 +196,13 @@ int main(int argc, char **argv){
 					dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 					[gManager restoreFromBackup:backup withCompletion:^(BOOL completed){
 						if(completed){
-							do{
-								print(@"Choose a post-restore command:");
-								print(@"  [0] Respring");
-								print(@"  [1] UICache & Respring");
-								print(@"  [2] None");
-
-								input = getInput();
-								if([input length] == 1 && [input intValue] <= 2){
-									break;
-								}
-							} while(true);
+							items = @{
+								@"0" : @"Choose a post-restore command:",
+								@"1" : @"  [0] Respring",
+								@"2" : @"  [1] UICache & Respring",
+								@"3" : @"  [2] None"
+							};
+							input = prompt(items, 2);
 
 							switch([input intValue]){
 								case 0: {
