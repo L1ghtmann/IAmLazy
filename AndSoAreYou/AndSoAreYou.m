@@ -300,9 +300,9 @@ int main(int argc, char *argv[]){
 			// control.tar.gz
 			NSString *debian = [tweak stringByAppendingPathComponent:@"DEBIAN"];
 			NSString *controlTarget = [tmpDir stringByAppendingPathComponent:@"control.tar.gz"];
-			BOOL ret = write_component_archive([debian fileSystemRepresentation], [controlTarget fileSystemRepresentation]);
+			BOOL ret = write_archive([debian fileSystemRepresentation], [controlTarget fileSystemRepresentation], YES);
 			if(!ret){
-				IALLogErr(@"write_component_archive [control] failed for %@", tweak);
+				IALLogErr(@"write_archive [control] failed for %@", tweak);
 				return 1;
 			}
 
@@ -317,9 +317,9 @@ int main(int argc, char *argv[]){
 
 			// data.tar.gz
 			NSString *dataTarget = [tmpDir stringByAppendingPathComponent:@"data.tar.gz"];
-			ret = write_component_archive([tweak fileSystemRepresentation], [dataTarget fileSystemRepresentation]);
+			ret = write_archive([tweak fileSystemRepresentation], [dataTarget fileSystemRepresentation], YES);
 			if(!ret){
-				IALLogErr(@"write_component_archive [data] failed for %@", tweak);
+				IALLogErr(@"write_archive [data] failed for %@", tweak);
 				return 1;
 			}
 

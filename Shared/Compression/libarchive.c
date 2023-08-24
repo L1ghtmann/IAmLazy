@@ -9,7 +9,6 @@
 #include <CoreFoundation/CFString.h>
 #include <libarchive/archive.h>
 #include <dispatch/queue.h>
-// #include <rootless.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,112 +27,6 @@
 #define IALLog(...)
 #define IALLogErr(...)
 #endif
-
-// TODO: find a way to unify these
-// there is a lot of duplicate code here
-
-#pragma mark Deb Archive
-
-bool write_component_archive(const char *src, const char *outname){
-	struct archive *a, *disk;
-	struct archive_entry *entry;
-	char buff[8192];
-	int r, len, fd;
-
-	disk = archive_read_disk_new();
-	archive_read_disk_set_standard_lookup(disk);
-
-	a = archive_write_new();
-	archive_write_add_filter_gzip(a);
-	archive_write_set_format_pax_restricted(a);
-	archive_write_open_filename(a, outname);
-
-	r = archive_read_disk_open(disk, src);
-	if(r != ARCHIVE_OK){
-		IALLogErr("failed to open %s: %s", src, archive_error_string(disk));
-		archive_read_close(disk);
-		archive_read_free(disk);
-		archive_write_close(a);
-		archive_write_free(a);
-		return false;
-	}
-
-	while(true){
-		entry = archive_entry_new();
-		r = archive_read_next_header2(disk, entry);
-		if(r == ARCHIVE_EOF){
-			break;
-		}
-		else if(r != ARCHIVE_OK){
-			IALLogErr("read failure: %s", archive_error_string(disk));
-			archive_entry_free(entry);
-			archive_read_close(disk);
-			archive_read_free(disk);
-			archive_write_close(a);
-			archive_write_free(a);
-			return false;
-		}
-		archive_read_disk_descend(disk);
-
-		const char *name = archive_entry_pathname(entry);
-
-		// skip first entry that is just the basename
-		if(strcmp(name, src) == 0){
-			continue;
-		}
-
-		char *path = (char *)name;
-		if(strstr(outname, "control")){
-			// don't include dirname in archive
-			// rename each filepath to exclude dirname
-			path = strrchr(name, '/');
-		}
-		else if(strstr(outname, "data")){
-			// don't include /tmp/me.lightmann.iamlazy/some.tweak.name/
-			// in archive; rename each filepath to exclude this path
-			path += strlen(src);
-		}
-		archive_entry_set_pathname(entry, path);
-
-		r = archive_write_header(a, entry);
-		if(r < ARCHIVE_OK){
-			IALLogErr("header write failure: %s", archive_error_string(a));
-			archive_entry_free(entry);
-			archive_read_close(disk);
-			archive_read_free(disk);
-			archive_write_close(a);
-			archive_write_free(a);
-			return false;
-		}
-		else if(r == ARCHIVE_FATAL){
-			IALLogErr("header write fatality");
-			archive_entry_free(entry);
-			archive_read_close(disk);
-			archive_read_free(disk);
-			archive_write_close(a);
-			archive_write_free(a);
-			return false;
-		}
-		else if(r > ARCHIVE_FAILED){
-			fd = open(archive_entry_sourcepath(entry), O_RDONLY);
-			len = read(fd, buff, sizeof(buff));
-			while(len > 0){
-				archive_write_data(a, buff, len);
-				len = read(fd, buff, sizeof(buff));
-			}
-			close(fd);
-
-			// char *target = strrchr(outname, '/') + 1;
-			// IALLog("added %s to %s", path, target);
-		}
-	}
-	archive_entry_free(entry);
-	archive_read_close(disk);
-	archive_read_free(disk);
-	archive_write_close(a);
-	archive_write_free(a);
-	return true;
-}
 
 void write_entry(struct archive *a, const char *item){
 	struct archive_entry *entry;
@@ -181,11 +74,8 @@ bool write_deb_archive(const char *tmp, const char *outname){
 	return true;
 }
 
-#pragma mark Main Archive
-
 int get_file_count(const char *path){
 	struct dirent *entry;
-	// DIR *directory = opendir(ROOT_PATH(path));
 	DIR *directory = opendir(path);
 	if(!directory){
 		IALLogErr("failed to opendir %s!", path);
@@ -203,30 +93,31 @@ int get_file_count(const char *path){
 	return file_count;
 }
 
-bool write_archive(const char *src, const char *outname){
-	struct archive *a, *disk;
+bool write_archive(const char *src, const char *outname, bool component){
 	struct archive_entry *entry;
 	char buff[8192];
-	int r, len, fd;
+	int len, fd;
 
-	int count = get_file_count(src);
-	if(count == 0){
-		IALLogErr("%s file count is 0!", src);
-		return false;
+	int count = 1;
+	if(!component){
+		count = get_file_count(src);
+		if(count == 0){
+			IALLogErr("%s file count is 0!", src);
+			return false;
+		}
 	}
-
 	float progress_per_part = (1.0/count);
 	float progress = 0.0;
 
-	disk = archive_read_disk_new();
+	struct archive *disk = archive_read_disk_new();
 	archive_read_disk_set_standard_lookup(disk);
 
-	a = archive_write_new();
+	struct archive *a = archive_write_new();
 	archive_write_add_filter_gzip(a);
 	archive_write_set_format_pax_restricted(a);
 	archive_write_open_filename(a, outname);
 
-	r = archive_read_disk_open(disk, src);
+	int r = archive_read_disk_open(disk, src);
 	if(r != ARCHIVE_OK){
 		IALLogErr("failed to open %s: %s", src, archive_error_string(disk));
 		archive_read_close(disk);
@@ -257,14 +148,37 @@ bool write_archive(const char *src, const char *outname){
 
 		// skip first entry that is just the basename
 		// (i.e., src but without a final trailing slash)
-		if(strstr(name, src) == NULL) continue;
+		if(!component && strstr(name, src) == NULL){
+			continue;
+		}
+		else if(strcmp(name, src) == 0){
+			continue;
+		}
 
-		// don't include /tmp/ in archive
-		// rename each filepath to exclude /tmp/
-		char path[PATH_MAX];
-		char *file = strrchr(name, '/');
-		sprintf(path, "me.lightmann.iamlazy%s", file);
-		archive_entry_set_pathname(entry, path);
+		char *relPath;
+		if(!component){
+			// don't include /tmp/ in archive
+			// rename each filepath to exclude /tmp/
+			char path[PATH_MAX];
+			char *file = strrchr(name, '/');
+			sprintf(path, "me.lightmann.iamlazy%s", file);
+			relPath = path;
+		}
+		else{
+			char *path = (char *)name;
+			if(strstr(outname, "control")){
+				// don't include dirname in archive
+				// rename each filepath to exclude dirname
+				path = strrchr(name, '/');
+			}
+			else if(strstr(outname, "data")){
+				// don't include /tmp/me.lightmann.iamlazy/some.tweak.name/
+				// in archive; rename each filepath to exclude this path
+				path += strlen(src);
+			}
+			relPath = path;
+		}
+		archive_entry_set_pathname(entry, relPath);
 
 		r = archive_write_header(a, entry);
 		if(r < ARCHIVE_OK){
@@ -295,19 +209,20 @@ bool write_archive(const char *src, const char *outname){
 			close(fd);
 
 			progress+=progress_per_part;
-
-			CFStringRef progStr = CFStringCreateWithFormat(NULL, NULL, CFSTR("%f"), progress);
-		#if !(CLI)
-			dispatch_async(dispatch_get_main_queue(), ^{
+			if(!component){
+				CFStringRef progStr = CFStringCreateWithFormat(NULL, NULL, CFSTR("%f"), progress);
+			#if !(CLI)
+				dispatch_async(dispatch_get_main_queue(), ^{
+					CFNotificationCenterPostNotification(CFNotificationCenterGetLocalCenter(), CFSTR("updateItemProgress"), progStr, NULL, true);
+				});
+			#else
 				CFNotificationCenterPostNotification(CFNotificationCenterGetLocalCenter(), CFSTR("updateItemProgress"), progStr, NULL, true);
-			});
-		#else
-			CFNotificationCenterPostNotification(CFNotificationCenterGetLocalCenter(), CFSTR("updateItemProgress"), progStr, NULL, true);
-		#endif
-			CFRelease(progStr);
+			#endif
+				CFRelease(progStr);
+			}
 
 			// char *target = strrchr(outname, '/') + 1;
-			// IALLog("added %s to %s", file, target);
+			// IALLog("added %s to %s", path, target);
 		}
 	}
 	archive_entry_free(entry);

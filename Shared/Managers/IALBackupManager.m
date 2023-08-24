@@ -741,7 +741,7 @@
 	else backupName = [new stringByAppendingPathExtension:@"tar.gz"];
 	NSString *backupPath = [backupDir stringByAppendingPathComponent:backupName];
 
-	BOOL status = write_archive([tmpDir fileSystemRepresentation], [backupPath fileSystemRepresentation]);
+	BOOL status = write_archive([tmpDir fileSystemRepresentation], [backupPath fileSystemRepresentation], NO);
 	BOOL status2 = [self verifyFileAtPath:backupPath];
 	[_generalManager cleanupTmp];
 	if(!status2) return status2;
