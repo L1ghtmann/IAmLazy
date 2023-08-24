@@ -159,7 +159,7 @@
 -(BOOL)ensureUsableDpkgLock{
 	// check for dpkg's tmp install file and, if it exists and has contents (padding), dpkg was interupted
 	// this means that the lock-frontend is most likely locked and dpkg will be unusable until it is freed
-	NSString *dpkgUpdatesDir = @"/var/lib/dpkg/updates/";
+	NSString *dpkgUpdatesDir = ROOT_PATH_NS_VAR(@"/var/lib/dpkg/updates/");
 	NSString *tmpFile = [dpkgUpdatesDir stringByAppendingPathComponent:@"tmp.i"];
 	if([[NSFileManager defaultManager] fileExistsAtPath:tmpFile]){
 		NSError *readError = nil;
