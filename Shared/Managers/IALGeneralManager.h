@@ -14,6 +14,7 @@
 -(void)makeBackupWithFilter:(BOOL)filter andCompletion:(void (^)(BOOL, NSString *))completed;
 -(void)restoreFromBackup:(NSString *)backupName withCompletion:(void (^)(BOOL))completed;
 -(BOOL)ensureBackupDirExists;
+-(BOOL)ensureUsableDpkgLock;
 -(BOOL)cleanupTmp;
 -(BOOL)updateAPT;
 -(NSArray<NSString *> *)getBackups;

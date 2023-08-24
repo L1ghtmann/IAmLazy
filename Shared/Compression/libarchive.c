@@ -234,10 +234,8 @@ bool write_archive(const char *src, const char *outname, bool component){
 }
 
 bool extract_archive(const char *src, const char *dest){
-	struct archive_entry *entry = NULL;
-	int r;
-
 	// item count read
+	int r;
 	struct archive *a = archive_read_new();
 	archive_read_support_format_tar(a);
 	archive_read_support_filter_gzip(a);
@@ -250,6 +248,7 @@ bool extract_archive(const char *src, const char *dest){
 
 	// get item count
 	int count = 0;
+	struct archive_entry *entry = archive_entry_new();
 	while(archive_read_next_header2(a, entry) == ARCHIVE_OK){
 		count++;
 		archive_read_data_skip(a);

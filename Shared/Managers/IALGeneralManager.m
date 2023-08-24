@@ -156,7 +156,7 @@
 	return YES;
 }
 
--(void)ensureUsableDpkgLock{
+-(BOOL)ensureUsableDpkgLock{
 	// check for dpkg's tmp install file and, if it exists and has contents (padding), dpkg was interupted
 	// this means that the lock-frontend is most likely locked and dpkg will be unusable until it is freed
 	NSString *dpkgUpdatesDir = @"/var/lib/dpkg/updates/";
@@ -171,7 +171,7 @@
 															tmpFile,
 															readError.localizedDescription];
 			[self displayErrorWithMessage:msg];
-			return;
+			return NO;
 		}
 
 		if([[contentsString componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]] count] > 0){
@@ -179,9 +179,11 @@
 
 			if(![self executeCommandAsRoot:@"unlockDpkg"]){
 				[self displayErrorWithMessage:localize(@"Failed to free dpkg lock!")];
+				return NO;
 			}
 		}
 	}
+	return YES;
 }
 
 -(void)cleanLog{
