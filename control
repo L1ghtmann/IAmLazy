@@ -1,6 +1,6 @@
 Package: me.lightmann.iamlazy
 Name: IAmLazy
-Version: 2.5.0
+Version: 2.5.1
 Depends: apt, uikittools, firmware (>= 13.0)
 Conflicts: me.lightmann.iamlazy-cli
 Architecture: iphoneos-arm
