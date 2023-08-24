@@ -43,12 +43,12 @@ NSString *getInput(){
 	}
 }
 
-NSString *prompt(NSDictionary<NSString *, NSString *> *items, NSInteger upperBound){
+NSString *prompt(NSArray<NSString *> *items, NSInteger upperBound){
 	@autoreleasepool{
 		__block NSString *input = nil;
 		do {
-			for(NSString *key in items){
-				print([items objectForKey:key]);
+			for(NSString *item in items){
+				print(item);
 			}
 			input = getInput();
 			if([input length] == 1 && [input intValue] <= upperBound){
@@ -82,20 +82,20 @@ int main(int argc, char **argv){
 				// backup
 				case 2:
 				case 3: {
-					NSDictionary *items = @{
-						@"0" : @"Please select a backup type:",
-						@"1" : @"  [0] standard",
-						@"2" : @"  [1] developer"
-					};
+					NSArray *items = @[
+						@"Please select a backup type:",
+						@"  [0] standard",
+						@"  [1] developer"
+					];
 					NSString *input = prompt(items, 1);
 
 					BOOL filter = ![input boolValue];
 
-					items = @{
-						@"0" : @"Please confirm that you have adequate free storage before proceeding:",
-						@"1" : @"  [0] Cancel",
-						@"2" : @"  [1] Confirm"
-					};
+					items = @[
+						@"Please confirm that you have adequate free storage before proceeding:",
+						@"  [0] Cancel",
+						@"  [1] Confirm"
+					];
 					input = prompt(items, 1);
 
 					if(![input boolValue]){
@@ -137,11 +137,11 @@ int main(int argc, char **argv){
 						return 1;
 					}
 
-					__block NSDictionary *items = @{
-						@"0" : @"Please select a restore type:",
-						@"1" : @"  [0] latest",
-						@"2" : @"  [1] specific"
-					};
+					__block NSArray *items = @[
+						@"Please select a restore type:",
+						@"  [0] latest",
+						@"  [1] specific"
+					];
 					__block NSString *input = prompt(items, 1);
 
 					NSString *backup = nil;
@@ -171,11 +171,11 @@ int main(int argc, char **argv){
 					}
 					else if([backup hasSuffix:@"u.tar.gz"]){
 						print(@"You have chosen to restore from a developer backup. This backup includes bootstrap packages.");
-						items = @{
-							@"0" : @"Please confirm that you understand this and still wish to proceed with the restore",
-							@"1" : @"  [0] No",
-							@"2" : @"  [1] Yes"
-						};
+						items = @[
+							@"Please confirm that you understand this and still wish to proceed with the restore",
+							@"  [0] No",
+							@"  [1] Yes"
+						];
 						input = prompt(items, 1);
 						if(![input boolValue]){
 							return 0;
@@ -183,11 +183,11 @@ int main(int argc, char **argv){
 					}
 
 					NSString *msg = [NSString stringWithFormat:@"Are you sure that you want to restore from %@?", backup];
-					items = @{
-						@"0" : msg,
-						@"1" : @"  [0] No",
-						@"2" : @"  [1] Yes"
-					};
+					items = @[
+						msg,
+						@"  [0] No",
+						@"  [1] Yes"
+					];
 					input = prompt(items, 1);
 					if(![input boolValue]){
 						return 0;
@@ -196,12 +196,12 @@ int main(int argc, char **argv){
 					dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 					[gManager restoreFromBackup:backup withCompletion:^(BOOL completed){
 						if(completed){
-							items = @{
-								@"0" : @"Choose a post-restore command:",
-								@"1" : @"  [0] Respring",
-								@"2" : @"  [1] UICache & Respring",
-								@"3" : @"  [2] None"
-							};
+							items = @[
+								@"Choose a post-restore command:",
+								@"  [0] Respring",
+								@"  [1] UICache & Respring",
+								@"  [2] None"
+							];
 							input = prompt(items, 2);
 
 							switch([input intValue]){

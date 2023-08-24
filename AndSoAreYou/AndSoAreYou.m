@@ -69,7 +69,7 @@ int proc_pidpath(int pid, void * buffer, uint32_t  buffersize);
 
 // proc_info.h
 #define PROC_ALL_PIDS				1
-#define PROC_PIDPATHINFO_MAXSIZE	(4*MAXPATHLEN)
+#define PROC_PIDPATHINFO_MAXSIZE	(4 * MAXPATHLEN)
 
 int main(int argc, char *argv[]){
 	@autoreleasepool{
@@ -404,8 +404,7 @@ int main(int argc, char *argv[]){
 			// and will leave the AndSoAreYou child process running.
 			// We don't want that, so check to see if the IAL process is
 			// alive and, if not, finish the current package and return
-			BOOL alive = !kill(ppid, 0);
-			if(!alive){
+			if(kill(ppid, 0)){
 				IALLogErr(@"IAL process was killed. Returning.");
 				return 0;
 			}
