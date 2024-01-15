@@ -92,13 +92,6 @@
 			return;
 		}
 	}
-	// xina
-	else if([fileManager fileExistsAtPath:@"/var/Liy/xina"]){
-		if(![self markBackupAs:2]){
-			completed(NO, nil);
-			return;
-		}
-	}
 
 	// make archive of packages
 	[_generalManager updateItem:0 WithStatus:2.5];
@@ -400,13 +393,6 @@
 				line = bits.firstObject;
 			}
 
-			if([fileManager fileExistsAtPath:@"/var/Liy/xina"] && ![fileManager fileExistsAtPath:line]){
-				// XinaA15 patches rootful debs to install them to rootless paths
-				// This means that the package.lists do not reflect the *actual* file paths
-				// Thus, we need to prefix the file paths ourselves before attempting to view/copy
-				line = [@"/var/jb" stringByAppendingPathComponent:line];
-			}
-
 			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:line error:&error];
 			if(error){
 				IALLogErr(@"Failed to get attributes for %@! Info: %@", line, error.localizedDescription);
@@ -706,11 +692,6 @@
 		}
 		case 1:{
 			NSString *txt = @".rootless";
-			file = [tmpDir stringByAppendingPathComponent:txt];
-			break;
-		}
-		case 2:{
-			NSString *txt = @".xina";
 			file = [tmpDir stringByAppendingPathComponent:txt];
 			break;
 		}
