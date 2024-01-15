@@ -38,6 +38,7 @@ int task(const char *args[]){
 	// posix_spawn_file_actions_addopen(&fd_actions, 2, ROOT_PATH("/tmp/ial.log"), O_WRONLY | O_CREAT | O_APPEND, 0666);
 	posix_spawn_file_actions_addopen(&fd_actions, 2, "/tmp/ial.log", O_WRONLY | O_CREAT | O_APPEND, 0666);
 	int ret = posix_spawn(&pid, args[0], &fd_actions, NULL, (char* const*)args, environ);
+	posix_spawn_file_actions_destroy(&fd_actions);
 #else
 	int ret = posix_spawn(&pid, args[0], NULL, NULL, (char* const*)args, environ);
 #endif
