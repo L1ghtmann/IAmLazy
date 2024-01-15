@@ -7,7 +7,7 @@ Available for free on Chariz. [Depiction](https://chariz.com/get/iamlazy).
 - [Apple](https://developer.apple.com/library/archive/samplecode/Reachability/) for Reachability
 - [aesign](https://twitter.com/aesign_) for design inspiration (re: [Electra](https://coolstar.org/electra/))
 - [Canister](https://docs.canister.me/) for bootstrap package identification
-- [libarchive](https://github.com/libarchive/libarchive/wiki/Examples) for the base libarchive methods
+- [libarchive](https://github.com/libarchive/libarchive/) for archival functions
 - [ScrawlingAfterlife on DeviantArt](https://www.deviantart.com/scrawlingafterlife/art/Snorlax-342569288) for the icon artwork
 
 ## Translation

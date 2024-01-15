@@ -87,7 +87,7 @@
 		@"Apple" : @"Reachability project",
 		@"aesign_" : @"Design inspiration (re: Electra)",
 		@"Canister" : @"Bootstrap package identification",
-		@"libarchive" : @"Base libarchive methods",
+		@"libarchive" : @"Archival functions",
 		@"ScrawlingAfterlife" : @"Icon artwork"
 	};
 }
