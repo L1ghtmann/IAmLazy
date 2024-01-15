@@ -102,7 +102,7 @@
 		@"sevenpastzeero" : @"Arabic translation",
 		@"Alejandro Katz" : @"Spanish translation",
 		@"gujiaming2022" : @"Simplified Chinese translation",
-		@"olivertzeng" : @"Taiwanese Mandarin translation"
+		@"olivertzeng, Neo1102" : @"Taiwanese Mandarin translation"
 	};
 
 }
