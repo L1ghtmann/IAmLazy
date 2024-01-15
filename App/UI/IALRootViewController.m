@@ -31,286 +31,181 @@
 
 -(void)loadView{
 	[super loadView];
-
-	[self makeMainScreen];
-	[self makeControlPanel];
+	[self setupMainScreen];
 }
 
--(void)makeMainScreen{
+-(void)setupMainScreen{
 	// setup main background
-	UIView *mainView = [[UIView alloc] init];
-	[self.view addSubview:mainView];
-
-	[mainView setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[mainView.topAnchor constraintEqualToAnchor:self.view.topAnchor] setActive:YES];
-	[[mainView.widthAnchor constraintEqualToConstant:kWidth] setActive:YES];
-	[[mainView.heightAnchor constraintEqualToConstant:((kHeight/4) * 3)] setActive:YES];
-
-	// make sure bounds/frame are updated
-	// can't use constraints on calayers
-	// so need mainView's bounds to exist
-	[mainView layoutIfNeeded];
+	_mainView = [[UIView alloc] initWithFrame:self.view.frame];
+	[self.view addSubview:_mainView];
 
 	CAGradientLayer *gradient = [CAGradientLayer layer];
-	[gradient setFrame:mainView.bounds];
-	[gradient setColors:@[(id)[self IALBlue].CGColor,
-						(id)[UIColor colorWithRed:252.0f/255.0f green:251.0f/255.0f blue:216.0f/255.0f alpha:1.0f].CGColor]];
-	[mainView.layer insertSublayer:gradient atIndex:0];
+	[gradient setFrame:_mainView.bounds];
+	[gradient setColors:@[(id)[UIColor colorWithRed:252.0f/255.0f green:251.0f/255.0f blue:216.0f/255.0f alpha:1.0f].CGColor,
+						  (id)[self IALBlue].CGColor]];
+	[_mainView.layer insertSublayer:gradient atIndex:0];
 
+	[self configureMainScreen];
+
+	// setup footer label
+	UILabel *footer = [[UILabel alloc] init];
+	[_mainView addSubview:footer];
+
+	[footer setTranslatesAutoresizingMaskIntoConstraints:NO];
+	[[footer.centerXAnchor constraintEqualToAnchor:_mainView.centerXAnchor] setActive:YES];
+	[[footer.bottomAnchor constraintEqualToAnchor:_mainView.bottomAnchor constant:-15] setActive:YES];
+
+	[footer setText:@"v2.5.1 | Lightmann 2021-2024"];
+	[footer setFont:[UIFont systemFontOfSize:[UIFont smallSystemFontSize] weight:UIFontWeightUltraLight]];
+	[footer setUserInteractionEnabled:NO];
+}
+
+-(void)configureMainScreen{
 	// setup IAL icon
 	UIImageView *imgView = [[UIImageView alloc] init];
-	[mainView addSubview:imgView];
+	[_mainView addSubview:imgView];
 
 	[imgView setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[imgView.centerXAnchor constraintEqualToAnchor:mainView.centerXAnchor] setActive:YES];
-	[[imgView.centerYAnchor constraintEqualToAnchor:mainView.centerYAnchor constant:-85] setActive:YES];
+	[[imgView.centerXAnchor constraintEqualToAnchor:_mainView.centerXAnchor] setActive:YES];
+	[[imgView.topAnchor constraintEqualToAnchor:_mainView.topAnchor constant:85] setActive:YES];
 
 	[imgView setImage:[UIImage imageNamed:@"Assets/AppIcon250-Clear"]];
 	[imgView setUserInteractionEnabled:NO];
 
-	// setup two primary function buttons
+
+	// container for labels
+	_labelContainer = [[UIStackView alloc] init];
+	[_mainView addSubview:_labelContainer];
+
+	[_labelContainer setTranslatesAutoresizingMaskIntoConstraints:NO];
+	[[_labelContainer.widthAnchor constraintEqualToConstant:kWidth] setActive:YES];
+	[[_labelContainer.centerXAnchor constraintEqualToAnchor:_mainView.centerXAnchor] setActive:YES];
+	[[_labelContainer.topAnchor constraintEqualToAnchor:imgView.bottomAnchor] setActive:YES];
+
+	[_labelContainer setBackgroundColor:[UIColor clearColor]];
+
+	[_labelContainer setAlignment:UIStackViewAlignmentCenter];
+	[_labelContainer setAxis:UILayoutConstraintAxisVertical];
+	[_labelContainer setDistribution:UIStackViewDistributionEqualSpacing];
+
+	[self configureLabelContainer];
+
+
+	// container for items
+	_itemContainer = [[UIStackView alloc] init];
+	[_mainView addSubview:_itemContainer];
+
+	[_itemContainer setTranslatesAutoresizingMaskIntoConstraints:NO];
+	[[_itemContainer.widthAnchor constraintEqualToConstant:((kWidth/3) * 2)] setActive:YES];
+	[[_itemContainer.heightAnchor constraintEqualToConstant:125] setActive:YES];
+	[[_itemContainer.centerXAnchor constraintEqualToAnchor:_mainView.centerXAnchor] setActive:YES];
+	[[_itemContainer.topAnchor constraintEqualToAnchor:_labelContainer.bottomAnchor constant:50] setActive:YES];
+
+	[_itemContainer setBackgroundColor:[UIColor redColor]];
+
+	[_itemContainer setSpacing:15];
+	[_itemContainer setAlignment:UIStackViewAlignmentFill];
+	[_itemContainer setAxis:UILayoutConstraintAxisVertical];
+	[_itemContainer setDistribution:UIStackViewDistributionFillEqually];
+
+	[self configureItemContainer];
+}
+
+-(void)configureLabelContainer{
+	// setup IAL label
+	UILabel *label = [[UILabel alloc] init];
+	[_labelContainer addArrangedSubview:label];
+
+	[label setText:@"IAmLazy"];
+	[label setFont:[UIFont systemFontOfSize:([UIFont labelFontSize] * 2) weight:UIFontWeightBlack]];
+	[label setShadowColor:[UIColor darkGrayColor]];
+	[label setShadowOffset:CGSizeMake(1,2)];
+	[label setUserInteractionEnabled:NO];
+
+
+	// setup sublabel
+	UILabel *sublabel = [[UILabel alloc] init];
+	[_labelContainer addArrangedSubview:sublabel];
+
+	[sublabel setText:@"Easily backup and restore your tweaks"];
+	[sublabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:UIFontWeightRegular]];
+	[sublabel setUserInteractionEnabled:NO];
+}
+
+-(void)configureItemContainer{
+	// setup two function buttons
 	for(int i = 0; i < 2; i++){
 		UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
-		[mainView addSubview:button];
-
-		[button setTranslatesAutoresizingMaskIntoConstraints:NO];
-		[[button.widthAnchor constraintEqualToConstant:((kWidth/3) * 2)] setActive:YES];
-		[[button.heightAnchor constraintEqualToConstant:(55 * hScaleFactor)] setActive:YES];
-		[[button.centerXAnchor constraintEqualToAnchor:mainView.centerXAnchor] setActive:YES];
-		if(i == 0){
-			[[button.centerYAnchor constraintEqualToAnchor:mainView.centerYAnchor constant:75] setActive:YES];
-		}
-		else{
-			[[button.topAnchor constraintEqualToAnchor:mainView.subviews[i].bottomAnchor constant:15] setActive:YES];
-		}
+		[_itemContainer addArrangedSubview:button];
 
 		[button setTag:i];
-		[button setClipsToBounds:YES];
-		[button.layer setCornerRadius:10];
+
 		if(i == 0){
-			[button setTitle:localize(@"Backup") forState:UIControlStateNormal];
-			[button setImage:[UIImage systemImageNamed:@"plus.app"] forState:UIControlStateNormal];
+			[button setTitle:localize(@"Begin") forState:UIControlStateNormal];
+			[button setImage:[UIImage systemImageNamed:@"chevron.right.circle"] forState:UIControlStateNormal];
 		}
 		else{
-			[button setTitle:localize(@"Restore") forState:UIControlStateNormal];
-			[button setImage:[UIImage systemImageNamed:@"arrow.counterclockwise.circle"] forState:UIControlStateNormal];
+			[button setTitle:localize(@"Credits") forState:UIControlStateNormal];
+			[button setImage:[UIImage systemImageNamed:@"person.circle"] forState:UIControlStateNormal];
 		}
+
+		// flip title and icon
+		[button setSemanticContentAttribute:UISemanticContentAttributeForceRightToLeft];
+		[button setImageEdgeInsets:UIEdgeInsetsMake(2.5, 5, 0, 0)];
+
 		[button.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:0.56]];
 		[button setTintColor:[self IALBlue]];
 		[button setTitleColor:[self IALBlue] forState:UIControlStateNormal];
 		if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [button setBackgroundColor:[UIColor systemGray6Color]];
 		else [button setBackgroundColor:[UIColor whiteColor]];
+
+		// fix me
+		[button layoutIfNeeded];
+		[button.layer setMasksToBounds:YES];
+		[button.layer setCornerRadius:button.bounds.size.height/2];
+
 		[button setAdjustsImageWhenHighlighted:NO];
 		[button addTarget:self action:@selector(mainButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
 	}
 }
 
--(void)makeControlPanel{
-	// setup control panel background
-	UIView *controlPanelView = [[UIView alloc] init];
-	[self.view addSubview:controlPanelView];
-
-	[controlPanelView setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[controlPanelView.widthAnchor constraintEqualToConstant:kWidth] setActive:YES];
-	[[controlPanelView.heightAnchor constraintEqualToConstant:(kHeight/4)] setActive:YES];
-	[[controlPanelView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor] setActive:YES];
-
-	if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [controlPanelView setBackgroundColor:[UIColor colorWithRed:16.0f/255.0f green:16.0f/255.0f blue:16.0f/255.0f alpha:1.0f]];
-	else [controlPanelView setBackgroundColor:[UIColor colorWithRed:247.0f/255.0f green:249.0f/255.0f blue:250.0f/255.0f alpha:1.0f]];
-
-	// setup two button containers
-	for(int i = 0; i < 2; i++){
-		// container
-		UIView *view = [[UIView alloc] init];
-		[view setBackgroundColor:[UIColor clearColor]];
-		[controlPanelView addSubview:view];
-
-		[view setTranslatesAutoresizingMaskIntoConstraints:NO];
-		[[view.topAnchor constraintEqualToAnchor:controlPanelView.topAnchor] setActive:YES];
-		[[view.bottomAnchor constraintEqualToAnchor:controlPanelView.bottomAnchor] setActive:YES];
-		[[view.leadingAnchor constraintEqualToAnchor:controlPanelView.leadingAnchor] setActive:YES];
-		[[view.trailingAnchor constraintEqualToAnchor:controlPanelView.trailingAnchor] setActive:YES];
-		[view layoutIfNeeded];
-
-		// top button
-		UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
-		[view addSubview:button];
-
-		[button setTranslatesAutoresizingMaskIntoConstraints:NO];
-		[[button.widthAnchor constraintEqualToConstant:((kWidth/7) * 6)] setActive:YES];
-		[[button.heightAnchor constraintEqualToConstant:(45 * hScaleFactor)] setActive:YES];
-		[[button.centerXAnchor constraintEqualToAnchor:view.centerXAnchor] setActive:YES];
-		[[button.centerYAnchor constraintEqualToAnchor:view.centerYAnchor constant:-(view.bounds.size.height/6)] setActive:YES];
-
-		[button setClipsToBounds:YES];
-		[button.layer setCornerRadius:10];
-		[button.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:0.40]];
-		if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [button setBackgroundColor:[UIColor systemGray6Color]];
-		else [button setBackgroundColor:[UIColor whiteColor]];
-
-		if(i == 0){
-			[button setTitle:[localize(@"Created by Lightmann") stringByAppendingString:@" | v2.5.1"] forState:UIControlStateNormal];
-			[button setTintColor:[self IALBlue]];
-
-			_panelOneContainer = view;
-
-			[self configurePanelOne];
-		}
-		else{
-			// hide until needed
-			[view setAlpha:0];
-
-			[button setTitle:localize(@"Go") forState:UIControlStateNormal];
-			[button setTintColor:[UIColor systemGreenColor]];
-			[button addTarget:self action:@selector(startWork) forControlEvents:UIControlEventTouchUpInside];
-
-			_panelTwoContainer = view;
-
-			[self configurePanelTwo];
-		}
-	}
-
-	_controlPanelState = 0;
-}
-
--(void)configurePanelOne{
-	// setup left and right buttons
-	UIView *ref = _panelOneContainer.subviews.firstObject;
-	for(int i = 0; i < 2; i++){
-		UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
-		[_panelOneContainer addSubview:button];
-
-		[button setTranslatesAutoresizingMaskIntoConstraints:NO];
-		[[button.widthAnchor constraintEqualToConstant:(((kWidth/7) * 3) + 8)] setActive:YES];
-		[[button.heightAnchor constraintEqualToConstant:(45 * hScaleFactor)] setActive:YES];
-		[[button.topAnchor constraintEqualToAnchor:ref.bottomAnchor constant:15] setActive:YES];
-		if(i == 0){
-			[[button.leadingAnchor constraintEqualToAnchor:ref.leadingAnchor] setActive:YES];
-		}
-		else{
-			[[button.trailingAnchor constraintEqualToAnchor:ref.trailingAnchor] setActive:YES];
-		}
-
-		[button setTag:i];
-		[button setClipsToBounds:YES];
-		[button.layer setCornerRadius:10];
-		if(i == 0){
-			[button setTitle:localize(@"Credits") forState:UIControlStateNormal];
-		}
-		else{
-			[button setTitle:localize(@"Backups") forState:UIControlStateNormal];
-		}
-		[button.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:0.40]];
-		[button setTintColor:[self IALBlue]];
-		if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [button setBackgroundColor:[UIColor systemGray6Color]];
-		else [button setBackgroundColor:[UIColor whiteColor]];
-		[button addTarget:self action:@selector(subButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-	}
-}
-
--(void)configurePanelTwo{
-	// config switch
-	UIView *ref = _panelTwoContainer.subviews.firstObject;
-	_configSwitch = [[UISegmentedControl alloc] initWithItems:nil];
-	[_panelTwoContainer addSubview:_configSwitch];
-
-	[_configSwitch setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[_configSwitch.widthAnchor constraintEqualToConstant:((kWidth/7) * 6)] setActive:YES];
-	[[_configSwitch.heightAnchor constraintEqualToConstant:(45 * hScaleFactor)] setActive:YES];
-	[[_configSwitch.centerXAnchor constraintEqualToAnchor:_panelTwoContainer.centerXAnchor] setActive:YES];
-	[[_configSwitch.topAnchor constraintEqualToAnchor:ref.bottomAnchor constant:15] setActive:YES];
-
-	[_configSwitch addTarget:self action:@selector(configSegmentChanged:) forControlEvents:UIControlEventValueChanged];
-}
-
 -(void)mainButtonTapped:(UIButton *)sender{
-	AudioServicesPlaySystemSound(1520); // haptic feedback
-
-	// reset button states if
-	// control panel is at state 0
-	if(_controlPanelState == 0){
-		[sender setSelected:NO];
-	}
-
-	// not selected already
-	if(!sender.selected){
-		[UIView animateWithDuration:0.5 animations:^(void) {
-			[_panelOneContainer setAlpha:0];
-			[_panelTwoContainer setAlpha:1];
-		}];
-	}
-
-	// if control panel is at state 0 or if other main button was selected
-	if(_controlPanelState == 0 || (sender.tag + 1) != _controlPanelState){
-		[_configSwitch removeAllSegments];
-		switch(sender.tag){
-			case 0:
-				[_configSwitch insertSegmentWithTitle:localize(@"Standard") atIndex:0 animated:NO];
-				[_configSwitch insertSegmentWithTitle:localize(@"Developer") atIndex:1 animated:NO];
-				_controlPanelState = 1;
-				break;
-			case 1:
-				[_configSwitch insertSegmentWithTitle:localize(@"Latest") atIndex:0 animated:NO];
-				[_configSwitch insertSegmentWithTitle:localize(@"Specific") atIndex:1 animated:NO];
-				_controlPanelState = 2;
-				break;
-		}
-		[_configSwitch setSelectedSegmentIndex:0];
-	}
-	// if control panel state is not 0 and/or tapped an already selected button
-	else{
-		[UIView animateWithDuration:0.5 animations:^(void) {
-			[_panelOneContainer setAlpha:1];
-			[_panelTwoContainer setAlpha:0];
-			_controlPanelState = 0;
-		}];
-	}
-
-	// change state
-	[sender setSelected:!sender.selected];
-}
-
--(void)subButtonTapped:(UIButton *)sender{
 	AudioServicesPlaySystemSound(1520);
 
 	switch(sender.tag){
 		case 0: {
-			IALCreditsViewController *creditsViewController = [[IALCreditsViewController alloc] init];
-			[self presentViewController:creditsViewController animated:YES completion:nil];
-			break;
-		}
-		case 1: {
 			IALBackupsViewController *backupsViewController = [[IALBackupsViewController alloc] init];
 			[self presentViewController:backupsViewController animated:YES completion:nil];
 			break;
 		}
+		case 1: {
+			IALCreditsViewController *creditsViewController = [[IALCreditsViewController alloc] init];
+			[self presentViewController:creditsViewController animated:YES completion:nil];
+			break;
+		}
 	}
 }
 
--(void)startWork{
-	AudioServicesPlaySystemSound(1520);
+// -(void)startWork{
+// 	AudioServicesPlaySystemSound(1520);
 
-	switch(_controlPanelState){
-		case 1: // backup
-			// standard = 0 | developer = 1
-			[self selectedBackupWithFilter:!_configSwitch.selectedSegmentIndex];
-			break;
-		case 2: // restore
-			// latest = 0 | specific = 1
-			[self restoreLatestBackup:!_configSwitch.selectedSegmentIndex];
-			break;
-	}
+// 	switch(_controlPanelState){
+// 		case 1: // backup
+// 			// standard = 0 | developer = 1
+// 			[self selectedBackupWithFilter:!_configSwitch.selectedSegmentIndex];
+// 			break;
+// 		case 2: // restore
+// 			// latest = 0 | specific = 1
+// 			[self restoreLatestBackup:!_configSwitch.selectedSegmentIndex];
+// 			break;
+// 	}
 
-	[UIView animateWithDuration:0.5 animations:^(void) {
-		[_panelOneContainer setAlpha:1];
-		[_panelTwoContainer setAlpha:0];
-		_controlPanelState = 0;
-	}];
-}
-
--(void)configSegmentChanged:(UISegmentedControl *)sender{
-	AudioServicesPlaySystemSound(1520);
-}
+// 	[UIView animateWithDuration:0.5 animations:^(void) {
+// 		[_panelOneContainer setAlpha:1];
+// 		[_panelTwoContainer setAlpha:0];
+// 		_controlPanelState = 0;
+// 	}];
+// }
 
 #pragma mark Functionality
 
@@ -337,7 +232,7 @@
 	[alert addAction:confirm];
 	[alert addAction:cancel];
 
-	[[alert popoverPresentationController] setSourceView:_panelTwoContainer];
+	[[alert popoverPresentationController] setSourceView:self.view];
 
 	[self presentViewController:alert animated:YES completion:nil];
 }
@@ -456,7 +351,7 @@
 									[subalert addAction:subyes];
 									[subalert addAction:subno];
 
-									[[subalert popoverPresentationController] setSourceView:_panelTwoContainer];
+									[[subalert popoverPresentationController] setSourceView:self.view];
 
 									[self presentViewController:subalert animated:YES completion:nil];
 								}
@@ -475,7 +370,7 @@
 	[alert addAction:yes];
 	[alert addAction:no];
 
-	[[alert popoverPresentationController] setSourceView:_panelTwoContainer];
+	[[alert popoverPresentationController] setSourceView:self.view];
 
 	[self presentViewController:alert animated:YES completion:nil];
 }

@@ -4,10 +4,9 @@
 
 @interface IALRootViewController : UIViewController {
     IALGeneralManager *_manager;
-    UIView *_panelOneContainer;
-    UIView *_panelTwoContainer;
-    int _controlPanelState;
-    UISegmentedControl *_configSwitch;
+    UIView *_mainView;
+    UIStackView *_labelContainer;
+    UIStackView *_itemContainer;
     NSDate *_startTime;
     NSDate *_endTime;
 }
