@@ -10,7 +10,7 @@
 #import "../../Common.h"
 #import <objc/runtime.h>
 
-#define headerSize 85
+#define headerSize (85 * hScaleFactor)
 #define backgroundSize 55
 
 @implementation IALProgressViewController
@@ -298,18 +298,20 @@
 
 		// Note: colorWithRed:green:blue:alpha: seems to use sRGB, not Adobe RGB (https://stackoverflow.com/a/40052756)
 		// a helpful link -- https://www.easyrgb.com/en/convert.php#inputFORM
-		if(isInteger){
-			[UIView animateWithDuration:0.5 animations:^{
-				[_itemStatusIndicators[itemInt] setBackgroundColor:[UIColor colorWithRed:0.04716 green:0.73722 blue:0.09512 alpha:1.00000]];
-				[_itemStatusText[itemInt] setText:localize(@"Completed")];
-			}];
-		}
-		else{
-			[UIView animateWithDuration:0.5 animations:^{
-				[_itemStatusIndicators[itemInt] setBackgroundColor:[UIColor colorWithRed:1.00000 green:0.67260 blue:0.21379 alpha:1.00000]];
-				[_itemStatusText[itemInt] setText:localize(@"In-progress")];
-			}];
-		}
+		dispatch_async(dispatch_get_main_queue(), ^(void){
+			if(isInteger){
+				[UIView animateWithDuration:0.5 animations:^{
+					[_itemStatusIndicators[itemInt] setBackgroundColor:[UIColor colorWithRed:0.04716 green:0.73722 blue:0.09512 alpha:1.00000]];
+					[_itemStatusText[itemInt] setText:localize(@"Completed")];
+				}];
+			}
+			else{
+				[UIView animateWithDuration:0.5 animations:^{
+					[_itemStatusIndicators[itemInt] setBackgroundColor:[UIColor colorWithRed:1.00000 green:0.67260 blue:0.21379 alpha:1.00000]];
+					[_itemStatusText[itemInt] setText:localize(@"In-progress")];
+				}];
+			}
+		});
 	#else
 		NSString *msg = [@"[!] " stringByAppendingString:_itemDescriptions[itemInt]];
 		puts([msg UTF8String]);

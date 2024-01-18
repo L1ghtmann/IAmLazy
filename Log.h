@@ -21,7 +21,6 @@
 
 #else // for libarchive functions
 #include <CoreFoundation/CoreFoundation.h>
-
 extern CFNotificationCenterRef CFNotificationCenterGetDistributedCenter(void);
 
 #define IALLog(format, ...) do { \

@@ -152,6 +152,7 @@
 	UILabel *sublabel = [[UILabel alloc] init];
 	[labelContainer addArrangedSubview:sublabel];
 
+	// TODO: localize
 	[sublabel setText:@"Easily backup and restore your tweaks"];
 	[sublabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:UIFontWeightRegular]];
 	[sublabel setUserInteractionEnabled:NO];
@@ -163,11 +164,15 @@
 		UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
 		[itemContainer addArrangedSubview:button];
 
+		[button setTranslatesAutoresizingMaskIntoConstraints:NO];
+		[[button.widthAnchor constraintEqualToConstant:((kWidth/3) * 2)] setActive:YES];
+		[[button.heightAnchor constraintEqualToConstant:55] setActive:YES];
+
 		[button setTag:i];
 
 		if(i == 0){
 			[button setTitle:localize(@"Backup") forState:UIControlStateNormal];
-			[button setImage:[UIImage systemImageNamed:@"chevron.right.circle"] forState:UIControlStateNormal];
+			[button setImage:[UIImage systemImageNamed:@"plus.circle"] forState:UIControlStateNormal];
 		}
 		else{
 			[button setTitle:localize(@"Restore") forState:UIControlStateNormal];
@@ -177,6 +182,7 @@
 		// flip title and icon
 		[button setSemanticContentAttribute:UISemanticContentAttributeForceRightToLeft];
 		[button setImageEdgeInsets:UIEdgeInsetsMake(2.5, 5, 0, 0)];
+		[button setAdjustsImageWhenHighlighted:NO];
 
 		[button.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:UIFontWeightHeavy]];
 		[button setTintColor:[self IALBlue]];
@@ -184,17 +190,14 @@
 		if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [button setBackgroundColor:[UIColor systemGray6Color]];
 		else [button setBackgroundColor:[UIColor whiteColor]];
 
-		// TODO: fix me
 		[button layoutIfNeeded];
-		[button.layer setMasksToBounds:YES];
-		[button.layer setCornerRadius:button.bounds.size.height/2];
+		[button.layer setCornerRadius:55/2];
 
 		[button addTarget:self action:@selector(mainButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
 		if(i == 0){
 			UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(mainButtonLongPressed:)];
 			[button addGestureRecognizer:longPressGesture];
 		}
-		[button setAdjustsImageWhenHighlighted:NO];
 	}
 }
 

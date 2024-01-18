@@ -89,8 +89,8 @@
 		[cell.textLabel setText:backup];
 		[cell.textLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:UIFontWeightBold]];
 
-		NSString *type = [backup containsString:@"u"] ? @"Developer" : @"Standard";
-		[cell.detailTextLabel setText:[NSString stringWithFormat:@"Type: %@", type]];
+		NSString *type = [backup containsString:@"u"] ? localize(@"Developer") : localize(@"Standard");
+		[cell.detailTextLabel setText:[NSString stringWithFormat:@"Type: %@", type]]; // TODO: localize
 		[cell.detailTextLabel setTextColor:[UIColor systemGrayColor]];
 
 		UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:30];
@@ -124,7 +124,7 @@
     // Note: to export a local file, need to use an NSURL
     NSURL *fileURL = [NSURL fileURLWithPath:[backupDir stringByAppendingString:backupName]];
 
-    UIContextualAction *action = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal title:@"Export" handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
+    UIContextualAction *action = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal title:localize(@"Export") handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
 		AudioServicesPlaySystemSound(1520);
         UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
         [activityViewController setModalTransitionStyle:UIModalTransitionStyleCoverVertical];
@@ -147,6 +147,7 @@
     NSString *filePath = [backupDir stringByAppendingPathComponent:backupName];
     NSFileManager *fileManager = [NSFileManager defaultManager];
 
+	// TODO: localize
     UIContextualAction *action = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleDestructive title:@"Delete" handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
 		AudioServicesPlaySystemSound(1520);
         if([fileManager isDeletableFileAtPath:filePath]){

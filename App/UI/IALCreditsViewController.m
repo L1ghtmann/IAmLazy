@@ -81,7 +81,7 @@
 		[cell.detailTextLabel setTextColor:[UIColor labelColor]];
 	}
 
-	NSInteger refCount = [_references.allKeys count];
+	NSInteger refCount = [_references count];
 	if(indexPath.row < refCount){
 		[cell.textLabel setText:_references.allKeys[indexPath.row]];
 		[cell.detailTextLabel setText:_references.allValues[indexPath.row]];
@@ -94,6 +94,7 @@
 	return cell;
 }
 
+// TODO: localize
 -(void)getReferences{
 	_references = @{
 		// readme credits
@@ -105,6 +106,7 @@
 	};
 }
 
+// TODO: localize
 -(void)getContributors{
 	_contributors = @{
 		// translators
