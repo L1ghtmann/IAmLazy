@@ -7,7 +7,9 @@
 
 #import <SafariServices/SFSafariViewController.h>
 #import "IALCreditsViewController.h"
+#import "IALHeaderView.h"
 #import "../../Common.h"
+#import <objc/runtime.h>
 
 @implementation IALCreditsViewController
 
@@ -15,14 +17,6 @@
 
 -(instancetype)init{
 	return [super initWithStyle:UITableViewStyleGrouped];
-}
-
--(void)loadView{
-	[super loadView];
-
-	// get data to present
-	[self getReferences];
-	[self getContributors];
 }
 
 -(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
@@ -37,27 +31,40 @@
 	return localize(@"Credits");
 }
 
--(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UITableViewHeaderFooterView *)header forSection:(NSInteger)section{
-	[header.textLabel setTextColor:[UIColor labelColor]];
-	[header.textLabel setFont:[UIFont systemFontOfSize:20 weight:UIFontWeightHeavy]];
-	[header.textLabel setText:[header.textLabel.text capitalizedString]];
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{
+    return (85.5 * hScaleFactor);
+}
 
-	[header.textLabel setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[header.textLabel.centerYAnchor constraintEqualToAnchor:header.centerYAnchor] setActive:YES];
-	[[header.textLabel.leadingAnchor constraintEqualToAnchor:header.leadingAnchor constant:15] setActive:YES];
+-(void)loadView{
+	[super loadView];
 
-	// add link button to header
-	UIButton *link = [UIButton buttonWithType:UIButtonTypeSystem];
-	[header addSubview:link];
+	// get data to present
+	[self getReferences];
+	[self getContributors];
+}
 
-	[link setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[link.widthAnchor constraintEqualToConstant:50] setActive:YES];
-	[[link.heightAnchor constraintEqualToConstant:50] setActive:YES];
-	[[link.trailingAnchor constraintEqualToAnchor:header.trailingAnchor constant:-5] setActive:YES];
-	[[link.topAnchor constraintEqualToAnchor:header.topAnchor constant:5] setActive:YES];
+-(void)viewDidLoad{
+	[super viewDidLoad];
 
-	[link setImage:[UIImage systemImageNamed:@"link.circle.fill"] forState:UIControlStateNormal];
-	[link addTarget:self action:@selector(openSource) forControlEvents:UIControlEventTouchUpInside];
+	// tableview background gradient
+	MTMaterialView *matView = [objc_getClass("MTMaterialView") materialViewWithRecipe:2 configuration:1 initialWeighting:1];
+	[self.tableView setBackgroundView:matView];
+	[self.tableView setBackgroundColor:[UIColor clearColor]];
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
+    static NSString *headerIdentifier = @"header";
+    IALHeaderView *header = [tableView dequeueReusableHeaderFooterViewWithIdentifier:headerIdentifier];
+
+    if (!header) {
+        // TODO: localize
+        NSString *subtitle = @"Thank you to all who have helped!";
+        UIImage *button = [UIImage systemImageNamed:@"link.circle.fill"];
+        header = [[IALHeaderView alloc] initWithReuseIdentifier:headerIdentifier subtitle:subtitle andButtonImage:button];
+        [header.import addTarget:self action:@selector(openSource) forControlEvents:UIControlEventTouchUpInside];
+    }
+
+    return header;
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -66,16 +73,19 @@
 
 	if(!cell){
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdentifier];
-	}
 
-	NSInteger refCount = [_references count];
-	if(indexPath.row < refCount){
-		[cell.textLabel setText:_references.allKeys[indexPath.row]];
-		[cell.detailTextLabel setText:_references.allValues[indexPath.row]];
-	}
-	else {
-		[cell.textLabel setText:_contributors.allKeys[indexPath.row - refCount]];
-		[cell.detailTextLabel setText:_contributors.allValues[indexPath.row - refCount]];
+		NSInteger refCount = [_references count];
+		if(indexPath.row < refCount){
+			[cell.textLabel setText:_references.allKeys[indexPath.row]];
+			[cell.detailTextLabel setText:_references.allValues[indexPath.row]];
+		}
+		else {
+			[cell.textLabel setText:_contributors.allKeys[indexPath.row - refCount]];
+			[cell.detailTextLabel setText:_contributors.allValues[indexPath.row - refCount]];
+		}
+
+		[cell setBackgroundColor:[UIColor clearColor]];
+		[cell setSeparatorInset:UIEdgeInsetsZero];
 	}
 
 	return cell;

@@ -9,4 +9,5 @@
     UILabel *_subtitle;
 }
 @property (nonatomic, strong) UIButton *import;
+-(instancetype)initWithReuseIdentifier:(NSString *)reuseIdentifier subtitle:(NSString *)subtitle andButtonImage:(UIImage *)img;
 @end

@@ -43,16 +43,6 @@
 
 	// tableview background gradient
 	MTMaterialView *matView = [objc_getClass("MTMaterialView") materialViewWithRecipe:2 configuration:1 initialWeighting:1];
-	[self.tableView addSubview:matView];
-
-	[matView setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[matView.topAnchor constraintEqualToAnchor:self.tableView.topAnchor constant:-30] setActive:YES];
-	[[matView.bottomAnchor constraintEqualToAnchor:self.tableView.bottomAnchor] setActive:YES];
-	[[matView.leadingAnchor constraintEqualToAnchor:self.tableView.leadingAnchor] setActive:YES];
-	[[matView.trailingAnchor constraintEqualToAnchor:self.tableView.trailingAnchor] setActive:YES];
-	[[matView.centerXAnchor constraintEqualToAnchor:self.tableView.centerXAnchor] setActive:YES];
-	[[matView.centerYAnchor constraintEqualToAnchor:self.tableView.centerYAnchor] setActive:YES];
-
 	[self.tableView setBackgroundView:matView];
 	[self.tableView setBackgroundColor:[UIColor clearColor]];
 }
@@ -78,7 +68,10 @@
     IALHeaderView *header = [tableView dequeueReusableHeaderFooterViewWithIdentifier:headerIdentifier];
 
     if (!header) {
-        header = [[IALHeaderView alloc] initWithReuseIdentifier:headerIdentifier];
+        // TODO: localize
+        NSString *subtitle = @"Swipe or tap desired backup";
+        UIImage *button = [UIImage systemImageNamed:@"plus.circle.fill"];
+        header = [[IALHeaderView alloc] initWithReuseIdentifier:headerIdentifier subtitle:subtitle andButtonImage:button];
         [header.import addTarget:self action:@selector(importBackup) forControlEvents:UIControlEventTouchUpInside];
     }
 

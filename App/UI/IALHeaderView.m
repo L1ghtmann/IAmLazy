@@ -1,9 +1,16 @@
+//
+//	IALHeaderView.m
+//	IAmLazy
+//
+//	Created by Lightmann in 2024
+//
+
 #import "IALHeaderView.h"
 #import <objc/runtime.h>
 
 @implementation IALHeaderView
 
-- (instancetype)initWithReuseIdentifier:(NSString *)reuseIdentifier {
+- (instancetype)initWithReuseIdentifier:(NSString *)reuseIdentifier subtitle:(NSString *)subtitle andButtonImage:(UIImage *)img {
     self = [super initWithReuseIdentifier:reuseIdentifier];
 
     if (self) {
@@ -11,13 +18,12 @@
         [self setBackgroundView:_matView];
 
         _subtitle = [[UILabel alloc] init];
-        // TODO: localize
-        [_subtitle setText:@"Swipe or tap desired backup"];
+        [_subtitle setText:subtitle];
         [_subtitle setFont:[UIFont systemFontOfSize:_subtitle.font.pointSize weight:UIFontWeightLight]];
         [self.contentView addSubview:_subtitle];
 
         _import = [UIButton buttonWithType:UIButtonTypeSystem];
-        [_import setImage:[UIImage systemImageNamed:@"plus.circle.fill"] forState:UIControlStateNormal];
+        [_import setImage:img forState:UIControlStateNormal];
         [_import setTintColor:_subtitle.textColor];
         [self.contentView addSubview:_import];
     }
