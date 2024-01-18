@@ -39,7 +39,7 @@
 
 -(void)tableView:(UITableView *)tableView willDisplayHeaderView:(UITableViewHeaderFooterView *)header forSection:(NSInteger)section{
 	[header.textLabel setTextColor:[UIColor labelColor]];
-	[header.textLabel setFont:[UIFont systemFontOfSize:20 weight:0.56]];
+	[header.textLabel setFont:[UIFont systemFontOfSize:20 weight:UIFontWeightHeavy]];
 	[header.textLabel setText:[header.textLabel.text capitalizedString]];
 
 	[header.textLabel setTranslatesAutoresizingMaskIntoConstraints:NO];

@@ -48,16 +48,21 @@
 	[self configureMainScreen];
 
 	// setup footer label
-	UILabel *footer = [[UILabel alloc] init];
+	UIButton *footer = [UIButton buttonWithType:UIButtonTypeCustom];
 	[_mainView addSubview:footer];
 
 	[footer setTranslatesAutoresizingMaskIntoConstraints:NO];
 	[[footer.centerXAnchor constraintEqualToAnchor:_mainView.centerXAnchor] setActive:YES];
-	[[footer.bottomAnchor constraintEqualToAnchor:_mainView.bottomAnchor constant:-15] setActive:YES];
+	[[footer.bottomAnchor constraintEqualToAnchor:_mainView.bottomAnchor constant:-10] setActive:YES];
 
-	[footer setText:@"v2.5.1 | Lightmann 2021-2024"];
-	[footer setFont:[UIFont systemFontOfSize:[UIFont smallSystemFontSize] weight:UIFontWeightUltraLight]];
-	[footer setUserInteractionEnabled:NO];
+	[footer setTitle:@"v2.5.1 | Lightmann 2021-2024" forState:UIControlStateNormal];
+	[footer.titleLabel setFont:[UIFont systemFontOfSize:[UIFont smallSystemFontSize] weight:UIFontWeightUltraLight]];
+	[footer addTarget:self action:@selector(footerTapped) forControlEvents:UIControlEventTouchUpInside];
+}
+
+-(void)footerTapped{
+	IALCreditsViewController *creditsViewController = [[IALCreditsViewController alloc] init];
+	[self presentViewController:creditsViewController animated:YES completion:nil];
 }
 
 -(void)configureMainScreen{
@@ -101,7 +106,7 @@
 	[[_itemContainer.centerXAnchor constraintEqualToAnchor:_mainView.centerXAnchor] setActive:YES];
 	[[_itemContainer.topAnchor constraintEqualToAnchor:_labelContainer.bottomAnchor constant:50] setActive:YES];
 
-	[_itemContainer setBackgroundColor:[UIColor redColor]];
+	[_itemContainer setBackgroundColor:[UIColor clearColor]];
 
 	[_itemContainer setSpacing:15];
 	[_itemContainer setAlignment:UIStackViewAlignmentFill];
@@ -141,25 +146,25 @@
 		[button setTag:i];
 
 		if(i == 0){
-			[button setTitle:localize(@"Begin") forState:UIControlStateNormal];
+			[button setTitle:localize(@"Backup") forState:UIControlStateNormal];
 			[button setImage:[UIImage systemImageNamed:@"chevron.right.circle"] forState:UIControlStateNormal];
 		}
 		else{
-			[button setTitle:localize(@"Credits") forState:UIControlStateNormal];
-			[button setImage:[UIImage systemImageNamed:@"person.circle"] forState:UIControlStateNormal];
+			[button setTitle:localize(@"Restore") forState:UIControlStateNormal];
+			[button setImage:[UIImage systemImageNamed:@"arrow.counterclockwise.circle"] forState:UIControlStateNormal];
 		}
 
 		// flip title and icon
 		[button setSemanticContentAttribute:UISemanticContentAttributeForceRightToLeft];
 		[button setImageEdgeInsets:UIEdgeInsetsMake(2.5, 5, 0, 0)];
 
-		[button.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:0.56]];
+		[button.titleLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:UIFontWeightHeavy]];
 		[button setTintColor:[self IALBlue]];
 		[button setTitleColor:[self IALBlue] forState:UIControlStateNormal];
 		if(self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) [button setBackgroundColor:[UIColor systemGray6Color]];
 		else [button setBackgroundColor:[UIColor whiteColor]];
 
-		// fix me
+		// TODO: fix me
 		[button layoutIfNeeded];
 		[button.layer setMasksToBounds:YES];
 		[button.layer setCornerRadius:button.bounds.size.height/2];
@@ -172,40 +177,26 @@
 -(void)mainButtonTapped:(UIButton *)sender{
 	AudioServicesPlaySystemSound(1520);
 
+	CATransition *transition = [CATransition animation];
+	[transition setDuration:0.4];
+	[transition setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut]];
+	[transition setType:kCATransitionPush];
+	[transition setSubtype:kCATransitionFromRight];
+	[self.view.window.layer addAnimation:transition forKey:nil];
+
 	switch(sender.tag){
 		case 0: {
-			IALBackupsViewController *backupsViewController = [[IALBackupsViewController alloc] init];
-			[self presentViewController:backupsViewController animated:YES completion:nil];
+			IALProgressViewController *progressViewController = [[IALProgressViewController alloc] initWithPurpose:0 withFilter:0];
+			[self presentViewController:progressViewController animated:NO completion:nil];
 			break;
 		}
 		case 1: {
-			IALCreditsViewController *creditsViewController = [[IALCreditsViewController alloc] init];
-			[self presentViewController:creditsViewController animated:YES completion:nil];
+			IALBackupsViewController *backupsViewController = [[IALBackupsViewController alloc] init];
+			[self presentViewController:backupsViewController animated:NO completion:nil];
 			break;
 		}
 	}
 }
-
-// -(void)startWork{
-// 	AudioServicesPlaySystemSound(1520);
-
-// 	switch(_controlPanelState){
-// 		case 1: // backup
-// 			// standard = 0 | developer = 1
-// 			[self selectedBackupWithFilter:!_configSwitch.selectedSegmentIndex];
-// 			break;
-// 		case 2: // restore
-// 			// latest = 0 | specific = 1
-// 			[self restoreLatestBackup:!_configSwitch.selectedSegmentIndex];
-// 			break;
-// 	}
-
-// 	[UIView animateWithDuration:0.5 animations:^(void) {
-// 		[_panelOneContainer setAlpha:1];
-// 		[_panelTwoContainer setAlpha:0];
-// 		_controlPanelState = 0;
-// 	}];
-// }
 
 #pragma mark Functionality
 
@@ -265,140 +256,6 @@
 	return [NSString stringWithFormat:@"%.02f", duration];
 }
 
--(void)restoreLatestBackup:(BOOL)latest{
-	NSArray *backups = [_manager getBackups];
-	if(![backups count]){
-		[_manager displayErrorWithMessage:localize(@"No backups were found!")];
-		return;
-	}
-
-	// get desired backup
-	if(latest){
-		NSString *backup = [backups firstObject];
-		[self confirmRestoreFromBackup:backup];
-	}
-	else{
-		// post list of available backups
-		UIAlertController *alert = [UIAlertController
-									alertControllerWithTitle:@"IAmLazy"
-									message:localize(@"Choose the backup you'd like to restore from:")
-									preferredStyle:UIAlertControllerStyleAlert];
-
-		// make each available backup its own action
-		for(NSString *backup in backups){
-			UIAlertAction *action = [UIAlertAction
-										actionWithTitle:backup
-										style:UIAlertActionStyleDefault
-										handler:^(UIAlertAction *action){
-											[self confirmRestoreFromBackup:backup];
-										}];
-
-			[alert addAction:action];
-		}
-
-		UIAlertAction *cancel = [UIAlertAction
-									actionWithTitle:localize(@"Cancel")
-									style:UIAlertActionStyleDefault
-									handler:^(UIAlertAction *action){
-										[self dismissViewControllerAnimated:YES completion:nil];
-									}];
-
-		[alert addAction:cancel];
-
-		[self presentViewController:alert animated:YES completion:^{
-			// allows dismissal of UIAlertControllerStyleAlerts when
-			// the user touches anywhere out of bounds of the alert view
-			[alert.view.superview setUserInteractionEnabled:YES];
-			[alert.view.superview addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(alertOOBTap)]];
-		}];
-	}
-}
-
--(void)confirmRestoreFromBackup:(NSString *)backup{
-	// get confirmation before proceeding
-	UIAlertController *alert = [UIAlertController
-								alertControllerWithTitle:@"IAmLazy"
-								message:[NSString stringWithFormat:localize(@"Are you sure that you want to restore from %@?"), backup]
-								preferredStyle:UIAlertControllerStyleActionSheet];
-
-	UIAlertAction *yes = [UIAlertAction
-							actionWithTitle:localize(@"Yes")
-							style:UIAlertActionStyleDefault
-							handler:^(UIAlertAction *action){
-								if([backup hasSuffix:@"u.tar.gz"]){
-									// get *extra* confirmation before proceeding
-									UIAlertController *subalert = [UIAlertController
-																alertControllerWithTitle:localize(@"Please note:")
-																message:[[localize(@"You have chosen to restore from a developer backup. This backup includes bootstrap packages.")
-																			stringByAppendingString:@"\n\n"]
-																			stringByAppendingString:localize(@"Please confirm that you understand this and still wish to proceed with the restore")]
-																preferredStyle:UIAlertControllerStyleActionSheet];
-
-									UIAlertAction *subyes = [UIAlertAction
-															actionWithTitle:localize(@"Confirm")
-															style:UIAlertActionStyleDestructive
-															handler:^(UIAlertAction *action){
-																[self restoreFromBackup:backup];
-															}];
-
-									UIAlertAction *subno = [UIAlertAction
-															actionWithTitle:localize(@"Cancel")
-															style:UIAlertActionStyleDefault
-															handler:^(UIAlertAction *action){
-																[self dismissViewControllerAnimated:YES completion:nil];
-															}];
-
-									[subalert addAction:subyes];
-									[subalert addAction:subno];
-
-									[[subalert popoverPresentationController] setSourceView:self.view];
-
-									[self presentViewController:subalert animated:YES completion:nil];
-								}
-								else{
-									[self restoreFromBackup:backup];
-								}
-							}];
-
-	UIAlertAction *no = [UIAlertAction
-							actionWithTitle:localize(@"No")
-							style:UIAlertActionStyleDefault
-							handler:^(UIAlertAction *action){
-								[self dismissViewControllerAnimated:YES completion:nil];
-							}];
-
-	[alert addAction:yes];
-	[alert addAction:no];
-
-	[[alert popoverPresentationController] setSourceView:self.view];
-
-	[self presentViewController:alert animated:YES completion:nil];
-}
-
--(void)alertOOBTap{
-	[self dismissViewControllerAnimated:YES completion:nil];
-}
-
--(void)restoreFromBackup:(NSString *)backup{
-	[self presentViewController:[[IALProgressViewController alloc] initWithPurpose:1 withFilter:nil] animated:YES completion:nil];
-
-	UIApplication *app = [UIApplication sharedApplication];
-	[app setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
-
-	[_manager restoreFromBackup:backup withCompletion:^(BOOL completed){
-		dispatch_async(dispatch_get_main_queue(), ^(void){
-			[app setIdleTimerDisabled:NO]; // re-enable idle timer regardless of completion status
-			if(completed){
-				dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-					[self dismissViewControllerAnimated:YES completion:^{
-						[self popPostRestore];
-					}];
-				});
-			}
-		});
-	}];
-}
-
 #pragma mark Popups
 
 -(void)popPostBackupWithInfo:(NSString *)info{
@@ -443,52 +300,6 @@
 
 	[alert addAction:export];
 	[alert addAction:okay];
-
- 	[self presentViewController:alert animated:YES completion:nil];
-}
-
--(void)popPostRestore{
-	AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
-
-	UIAlertController *alert = [UIAlertController
-								alertControllerWithTitle:@"IAmLazy"
-								message:localize(@"Choose a post-restore command:")
-								preferredStyle:UIAlertControllerStyleAlert];
-
-	UIAlertAction *respring = [UIAlertAction
-								actionWithTitle:@"Respring"
-								style:UIAlertActionStyleDefault
-								handler:^(UIAlertAction *action){
-									const char *args[] = {
-										ROOT_PATH("/usr/bin/sbreload"),
-										NULL
-									};
-									task(args);
-								}];
-
-	UIAlertAction *uicache = [UIAlertAction
-								actionWithTitle:@"UICache & Respring"
-								style:UIAlertActionStyleDefault
-								handler:^(UIAlertAction *action){
-									const char *args[] = {
-										ROOT_PATH("/usr/bin/uicache"),
-										"-a",
-										"-r",
-										NULL
-									};
-									task(args);
-								}];
-
-	UIAlertAction *none = [UIAlertAction
-							actionWithTitle:localize(@"None")
-							style:UIAlertActionStyleDefault
-							handler:^(UIAlertAction *action){
-								[self dismissViewControllerAnimated:YES completion:nil];
-							}];
-
-	[alert addAction:respring];
-	[alert addAction:uicache];
-	[alert addAction:none];
 
  	[self presentViewController:alert animated:YES completion:nil];
 }
