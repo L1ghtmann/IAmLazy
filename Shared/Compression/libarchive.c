@@ -39,7 +39,6 @@ void write_entry(struct archive *a, const char *item){
 }
 
 bool write_deb_archive(const char *tmp, const char *outname){
-
 	// components
 	// note: archival order of these matters
 	char db[PATH_MAX], control[PATH_MAX], data[PATH_MAX];
@@ -136,6 +135,10 @@ bool write_archive(const char *src, const char *outname, bool component){
 		}
 		else if(strcmp(name, src) == 0){
 			continue;
+		}
+
+		if(!component){
+			IALLog("Adding %s to %s", name, outname);
 		}
 
 		char *relPath;
@@ -265,6 +268,8 @@ bool extract_archive(const char *src, const char *dest){
 		char path[PATH_MAX];
 		sprintf(path, "%s/%s", dest, file);
 		archive_entry_set_pathname(entry, path);
+
+		IALLog("Extracting %s from %s", path, src);
 
 		r = archive_read_extract(a, entry, flags);
 		if(r != ARCHIVE_OK){

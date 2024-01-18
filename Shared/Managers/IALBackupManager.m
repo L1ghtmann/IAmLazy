@@ -353,13 +353,11 @@
 		NSString *path = [[dpkgInfoDir stringByAppendingPathComponent:package] stringByAppendingPathExtension:@"list"];
 		NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&error];
 		if(error){
-		#if CLI || DEBUG
 			NSString *msg = [NSString stringWithFormat:[[localize(@"Failed to get contents of %@!")
 															stringByAppendingString:@" "]
 															stringByAppendingString:localize(@"Info: %@")],
 															path,
 															error.localizedDescription];
-		#endif
 			// [_generalManager displayErrorWithMessage:msg];
 			IALLogErr(@"%@", msg);
 			error = nil;
@@ -505,18 +503,14 @@
 	if(![relevantControls count]){
 		// Using error log as opposed to alert as borked pkgs are skipped
 		// (and the entire backup does not stop because of one package)
-	#if CLI || DEBUG
 		NSString *msg = [NSString stringWithFormat:@"There appear to be no controls for %@?!", package];
-	#endif
 		IALLogErr(@"%@", msg);
 		return NO;
 	}
 
 	NSString *theOne = [relevantControls firstObject];
 	if (![theOne length]){
-	#if CLI || DEBUG
 		NSString *msg = [NSString stringWithFormat:@"The control for %@ is blank?!", package];
-	#endif
 		IALLogErr(@"%@", msg);
 		return NO;
 	}
@@ -528,9 +522,7 @@
 	*/
 	else if([theOne rangeOfString:@"Status: install ok installed"].location == NSNotFound &&
 			[theOne rangeOfString:@"Status: hold ok installed"].location == NSNotFound){
-	#if CLI || DEBUG
 		NSString *msg = [NSString stringWithFormat:@"%@ is not fully installed?!", package];
-	#endif
 		IALLogErr(@"%@", msg);
 		return NO;
 	}
@@ -538,17 +530,13 @@
 	NSError *error = nil;
 	NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"Status:\\s.*\n" options:NSRegularExpressionCaseInsensitive error:&error];
 	if(error){
-	#if CLI || DEBUG
 		NSString *msg = [NSString stringWithFormat:@"Regex error: %@", error.localizedDescription];
-	#endif
 		IALLogErr(@"%@", msg);
 		return NO;
 	}
 	NSString *noStatusLine = [regex stringByReplacingMatchesInString:theOne options:0 range:NSMakeRange(0, [theOne length]) withTemplate:@""];
 	if(![noStatusLine length]){
-	#if CLI || DEBUG
 		NSString *msg = [NSString stringWithFormat:@"The control for %@ is blank?!", package];
-	#endif
 		IALLogErr(@"%@", msg);
 		return NO;
 	}
@@ -563,9 +551,7 @@
 		NSError *writeError = nil;
 		[fileManager createDirectoryAtPath:debian withIntermediateDirectories:YES attributes:nil error:&writeError];
 		if(writeError){
-		#if CLI || DEBUG
 			NSString *msg = [NSString stringWithFormat:@"Failed to create %@! Info: %@", debian, writeError.localizedDescription];
-		#endif
 			IALLogErr(@"%@", msg);
 			return NO;
 		}

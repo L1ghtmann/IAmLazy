@@ -13,7 +13,7 @@
 @implementation IALRestoreManager
 
 -(void)restoreFromBackup:(NSString *)backupName withCompletion:(void (^)(BOOL))completed{
-	[_generalManager updateItem:0 WithStatus:-0.5];
+	[_generalManager updateItem:0 WithStatus:-0.5]; // TODO: fix me
 	[_generalManager updateItem:1 WithStatus:0];
 
 	// check for backup dir

@@ -264,8 +264,30 @@
 	}
 }
 
--(void)addDebugViewTo:(UITableViewCell *)cell{
+- (void)addDebugViewTo:(UITableViewCell *)cell {
+    UITextView *textView = [[UITextView alloc] initWithFrame:cell.contentView.bounds];
+	[cell.contentView addSubview:textView];
 
+    [textView setEditable:NO];
+	[textView setTextContainerInset:UIEdgeInsetsMake(0, 10, 0, 10)];
+
+    [[NSDistributedNotificationCenter defaultCenter] addObserverForName:@"[IALLog]" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
+        NSDictionary *userInfo = note.userInfo;
+        NSString *message = userInfo[@"message"];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            textView.text = [textView.text stringByAppendingFormat:@"\n%@", message];
+			[textView scrollRangeToVisible:NSMakeRange(textView.text.length - 1, 1)];
+        });
+    }];
+
+    [[NSDistributedNotificationCenter defaultCenter] addObserverForName:@"[IALLogErr]" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
+        NSDictionary *userInfo = note.userInfo;
+        NSString *message = userInfo[@"message"];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            textView.text = [textView.text stringByAppendingFormat:@"\n%@", message];
+			[textView scrollRangeToVisible:NSMakeRange(textView.text.length - 1, 1)];
+        });
+    }];
 }
 
 -(void)updateItemStatus:(NSNotification *)notification{

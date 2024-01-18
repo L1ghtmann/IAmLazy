@@ -1,3 +1,4 @@
+#include "Log.h"
 #include "Task.h"
 #include <stdio.h>
 #include <spawn.h>
@@ -5,22 +6,6 @@
 #include <stdlib.h>
 // #include <rootless.h>
 #include <sys/wait.h>
-#include <sys/syslog.h>
-
-#if DEBUG
-#include <fcntl.h>
-#endif
-
-#if CLI
-#define print(loc, val) printf("[i] %s: %d\n", loc, val)
-#define printErr(loc, val) printf("[x] %s: %d\n", loc, val)
-#elif DEBUG
-#define print(loc, val) syslog(LOG_WARNING, "[IALLog] %s: %d\n", loc, val)
-#define printErr(loc, val) syslog(LOG_WARNING, "[IALLogErr] %s: %d\n", loc, val)
-#else
-#define print(loc, val)
-#define printErr(loc, val)
-#endif
 
 extern char **environ;
 
@@ -43,27 +28,27 @@ int task(const char *args[]){
 	int ret = posix_spawn(&pid, args[0], NULL, NULL, (char* const*)args, environ);
 #endif
 	if(ret != 0){
-		printErr("posix_spawn() ret", ret);
+		IALLogErr("posix_spawn() ret: %d", ret);
 		return ret;
 	}
 
 	pid_t wait = waitpid(pid, &ret, 0);
 	if(wait == -1){
-		printErr("waitpid() ret", wait);
+		IALLogErr("waitpid() ret: %d", wait);
 		return wait;
 	}
 	else if(WIFSIGNALED(ret)){
 		int tSig = WTERMSIG(ret);
-		printErr("child proc sigterm", tSig);
+		IALLogErr("child proc sigterm: %d", tSig);
 		return tSig;
 	}
 	else if(WIFEXITED(ret)){
 		int eStat = WEXITSTATUS(ret);
 		if(eStat != 0){
-			printErr("child proc estat", eStat);
+			IALLogErr("child proc estat: %d", eStat);
 		}
 		return eStat ?: ret;
 	}
-	printErr("child proc ret", ret);
+	IALLog("child proc ret: %d", ret);
 	return ret;
 }
