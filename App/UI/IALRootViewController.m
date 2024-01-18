@@ -177,20 +177,27 @@
 -(void)mainButtonTapped:(UIButton *)sender{
 	AudioServicesPlaySystemSound(1520);
 
-	CATransition *transition = [CATransition animation];
-	[transition setDuration:0.4];
-	[transition setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut]];
-	[transition setType:kCATransitionPush];
-	[transition setSubtype:kCATransitionFromRight];
-	[self.view.window.layer addAnimation:transition forKey:nil];
-
 	switch(sender.tag){
 		case 0: {
+			CATransition *transition = [CATransition animation];
+			[transition setDuration:0.4];
+			[transition setType:kCATransitionReveal];
+			[transition setSubtype:kCATransitionFromRight];
+			[transition setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut]];
+			[self.view.window.layer addAnimation:transition forKey:nil];
+
 			IALProgressViewController *progressViewController = [[IALProgressViewController alloc] initWithPurpose:0 withFilter:0];
 			[self presentViewController:progressViewController animated:NO completion:nil];
 			break;
 		}
 		case 1: {
+			CATransition *transition = [CATransition animation];
+			[transition setDuration:0.4];
+			[transition setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut]];
+			[transition setType:kCATransitionReveal];
+			[transition setSubtype:kCATransitionFromLeft];
+			[self.view.window.layer addAnimation:transition forKey:nil];
+
 			IALBackupsViewController *backupsViewController = [[IALBackupsViewController alloc] init];
 			[self presentViewController:backupsViewController animated:NO completion:nil];
 			break;

@@ -35,18 +35,18 @@
     [super layoutSubviews];
 
     [self.textLabel setTranslatesAutoresizingMaskIntoConstraints:NO];
-    [[self.textLabel.topAnchor constraintEqualToAnchor:self.contentView.topAnchor constant:25] setActive:YES];
     [[self.textLabel.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor constant:15] setActive:YES];
+    [[self.textLabel.centerYAnchor constraintEqualToAnchor:self.contentView.centerYAnchor constant:15] setActive:YES];
 
     [_subtitle setTranslatesAutoresizingMaskIntoConstraints:NO];
     [[_subtitle.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor constant:15] setActive:YES];
-    [[_subtitle.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor constant:-10] setActive:YES];
+    [[_subtitle.bottomAnchor constraintEqualToAnchor:self.textLabel.topAnchor constant:5] setActive:YES];
 
     [_import setTranslatesAutoresizingMaskIntoConstraints:NO];
     [[_import.widthAnchor constraintEqualToConstant:50] setActive:YES];
     [[_import.heightAnchor constraintEqualToConstant:50] setActive:YES];
     [[_import.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor constant:-5] setActive:YES];
-    [[_import.centerYAnchor constraintEqualToAnchor:self.contentView.centerYAnchor] setActive:YES];
+    [[_import.centerYAnchor constraintEqualToAnchor:self.contentView.centerYAnchor constant:5] setActive:YES];
 }
 
 -(UILabel *)textLabel{
