@@ -22,10 +22,12 @@
         [_subtitle setFont:[UIFont systemFontOfSize:_subtitle.font.pointSize weight:UIFontWeightLight]];
         [self.contentView addSubview:_subtitle];
 
-        _import = [UIButton buttonWithType:UIButtonTypeSystem];
-        [_import setImage:img forState:UIControlStateNormal];
-        [_import setTintColor:_subtitle.textColor];
-        [self.contentView addSubview:_import];
+        if(img){
+            _import = [UIButton buttonWithType:UIButtonTypeSystem];
+            [_import setImage:img forState:UIControlStateNormal];
+            [_import setTintColor:_subtitle.textColor];
+            [self.contentView addSubview:_import];
+        }
     }
 
     return self;
@@ -42,11 +44,13 @@
     [[_subtitle.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor constant:15] setActive:YES];
     [[_subtitle.bottomAnchor constraintEqualToAnchor:self.textLabel.topAnchor constant:5] setActive:YES];
 
-    [_import setTranslatesAutoresizingMaskIntoConstraints:NO];
-    [[_import.widthAnchor constraintEqualToConstant:50] setActive:YES];
-    [[_import.heightAnchor constraintEqualToConstant:50] setActive:YES];
-    [[_import.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor constant:-5] setActive:YES];
-    [[_import.centerYAnchor constraintEqualToAnchor:self.contentView.centerYAnchor constant:5] setActive:YES];
+    if(_import){
+        [_import setTranslatesAutoresizingMaskIntoConstraints:NO];
+        [[_import.widthAnchor constraintEqualToConstant:50] setActive:YES];
+        [[_import.heightAnchor constraintEqualToConstant:50] setActive:YES];
+        [[_import.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor constant:-5] setActive:YES];
+        [[_import.centerYAnchor constraintEqualToAnchor:self.contentView.centerYAnchor constant:5] setActive:YES];
+    }
 }
 
 -(UILabel *)textLabel{

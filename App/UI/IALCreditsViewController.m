@@ -32,7 +32,7 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{
-    return (85.5 * hScaleFactor);
+    return (85 * hScaleFactor);
 }
 
 -(void)loadView{
@@ -73,19 +73,22 @@
 
 	if(!cell){
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdentifier];
-
-		NSInteger refCount = [_references count];
-		if(indexPath.row < refCount){
-			[cell.textLabel setText:_references.allKeys[indexPath.row]];
-			[cell.detailTextLabel setText:_references.allValues[indexPath.row]];
-		}
-		else {
-			[cell.textLabel setText:_contributors.allKeys[indexPath.row - refCount]];
-			[cell.detailTextLabel setText:_contributors.allValues[indexPath.row - refCount]];
-		}
-
 		[cell setBackgroundColor:[UIColor clearColor]];
 		[cell setSeparatorInset:UIEdgeInsetsZero];
+		[cell setUserInteractionEnabled:NO];
+
+		[cell.textLabel setTextColor:[UIColor labelColor]];
+		[cell.detailTextLabel setTextColor:[UIColor labelColor]];
+	}
+
+	NSInteger refCount = [_references.allKeys count];
+	if(indexPath.row < refCount){
+		[cell.textLabel setText:_references.allKeys[indexPath.row]];
+		[cell.detailTextLabel setText:_references.allValues[indexPath.row]];
+	}
+	else {
+		[cell.textLabel setText:_contributors.allKeys[indexPath.row - refCount]];
+		[cell.detailTextLabel setText:_contributors.allValues[indexPath.row - refCount]];
 	}
 
 	return cell;

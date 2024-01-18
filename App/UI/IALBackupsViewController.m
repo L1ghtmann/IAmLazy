@@ -60,7 +60,7 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{
-    return (85.5 * hScaleFactor);
+    return (85 * hScaleFactor);
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
@@ -85,10 +85,12 @@
 	if(!cell){
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdentifier];
 
-		[cell setBackgroundColor:[UIColor clearColor]];
-		[cell.textLabel setText:_backups[indexPath.row]];
+		NSString *backup = _backups[indexPath.row];
+		[cell.textLabel setText:backup];
 		[cell.textLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:UIFontWeightBold]];
-		[cell.detailTextLabel setText:_backups[indexPath.row]];
+
+		NSString *type = [backup containsString:@"u"] ? @"Developer" : @"Standard";
+		[cell.detailTextLabel setText:[NSString stringWithFormat:@"Type: %@", type]];
 		[cell.detailTextLabel setTextColor:[UIColor systemGrayColor]];
 
 		UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:30];
@@ -97,6 +99,7 @@
                                               brightness:(0.5 + (arc4random_uniform(128) / 255.0)) alpha:1.0]];
 
 		[cell setSeparatorInset:UIEdgeInsetsZero];
+		[cell setBackgroundColor:[UIColor clearColor]];
 		[cell setAccessoryType:UITableViewCellAccessoryDisclosureIndicator];
 	}
 
@@ -286,6 +289,13 @@
 }
 
 -(void)restoreFromBackup:(NSString *)backup{
+	CATransition *transition = [CATransition animation];
+	[transition setDuration:0.4];
+	[transition setType:kCATransitionReveal];
+	[transition setSubtype:kCATransitionFromRight];
+	[transition setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut]];
+	[self.view.window.layer addAnimation:transition forKey:nil];
+
 	[self presentViewController:[[IALProgressViewController alloc] initWithPurpose:1 withFilter:nil] animated:YES completion:nil];
 
 	UIApplication *app = [UIApplication sharedApplication];

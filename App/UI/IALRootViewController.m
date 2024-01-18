@@ -77,49 +77,47 @@
 	[imgView setImage:[UIImage imageNamed:@"Assets/AppIcon250-Clear"]];
 	[imgView setUserInteractionEnabled:NO];
 
-
 	// container for labels
-	_labelContainer = [[UIStackView alloc] init];
-	[_mainView addSubview:_labelContainer];
+	UIStackView *labelContainer = [[UIStackView alloc] init];
+	[_mainView addSubview:labelContainer];
 
-	[_labelContainer setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[_labelContainer.widthAnchor constraintEqualToConstant:kWidth] setActive:YES];
-	[[_labelContainer.centerXAnchor constraintEqualToAnchor:_mainView.centerXAnchor] setActive:YES];
-	[[_labelContainer.topAnchor constraintEqualToAnchor:imgView.bottomAnchor] setActive:YES];
+	[labelContainer setTranslatesAutoresizingMaskIntoConstraints:NO];
+	[[labelContainer.widthAnchor constraintEqualToConstant:kWidth] setActive:YES];
+	[[labelContainer.centerXAnchor constraintEqualToAnchor:_mainView.centerXAnchor] setActive:YES];
+	[[labelContainer.topAnchor constraintEqualToAnchor:imgView.bottomAnchor] setActive:YES];
 
-	[_labelContainer setBackgroundColor:[UIColor clearColor]];
+	[labelContainer setBackgroundColor:[UIColor clearColor]];
 
-	[_labelContainer setAlignment:UIStackViewAlignmentCenter];
-	[_labelContainer setAxis:UILayoutConstraintAxisVertical];
-	[_labelContainer setDistribution:UIStackViewDistributionEqualSpacing];
+	[labelContainer setAlignment:UIStackViewAlignmentCenter];
+	[labelContainer setAxis:UILayoutConstraintAxisVertical];
+	[labelContainer setDistribution:UIStackViewDistributionEqualSpacing];
 
-	[self configureLabelContainer];
-
+	[self configureLabelContainer:labelContainer];
 
 	// container for items
-	_itemContainer = [[UIStackView alloc] init];
-	[_mainView addSubview:_itemContainer];
+	UIStackView *itemContainer = [[UIStackView alloc] init];
+	[_mainView addSubview:itemContainer];
 
-	[_itemContainer setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[_itemContainer.widthAnchor constraintEqualToConstant:((kWidth/3) * 2)] setActive:YES];
-	[[_itemContainer.heightAnchor constraintEqualToConstant:125] setActive:YES];
-	[[_itemContainer.centerXAnchor constraintEqualToAnchor:_mainView.centerXAnchor] setActive:YES];
-	[[_itemContainer.topAnchor constraintEqualToAnchor:_labelContainer.bottomAnchor constant:50] setActive:YES];
+	[itemContainer setTranslatesAutoresizingMaskIntoConstraints:NO];
+	[[itemContainer.widthAnchor constraintEqualToConstant:((kWidth/3) * 2)] setActive:YES];
+	[[itemContainer.heightAnchor constraintEqualToConstant:125] setActive:YES];
+	[[itemContainer.centerXAnchor constraintEqualToAnchor:_mainView.centerXAnchor] setActive:YES];
+	[[itemContainer.topAnchor constraintEqualToAnchor:labelContainer.bottomAnchor constant:50] setActive:YES];
 
-	[_itemContainer setBackgroundColor:[UIColor clearColor]];
+	[itemContainer setBackgroundColor:[UIColor clearColor]];
 
-	[_itemContainer setSpacing:15];
-	[_itemContainer setAlignment:UIStackViewAlignmentFill];
-	[_itemContainer setAxis:UILayoutConstraintAxisVertical];
-	[_itemContainer setDistribution:UIStackViewDistributionFillEqually];
+	[itemContainer setSpacing:15];
+	[itemContainer setAlignment:UIStackViewAlignmentFill];
+	[itemContainer setAxis:UILayoutConstraintAxisVertical];
+	[itemContainer setDistribution:UIStackViewDistributionFillEqually];
 
-	[self configureItemContainer];
+	[self configureItemContainer:itemContainer];
 }
 
--(void)configureLabelContainer{
+-(void)configureLabelContainer:(UIStackView *)labelContainer{
 	// setup IAL label
 	UILabel *label = [[UILabel alloc] init];
-	[_labelContainer addArrangedSubview:label];
+	[labelContainer addArrangedSubview:label];
 
 	[label setText:@"IAmLazy"];
 	[label setFont:[UIFont systemFontOfSize:([UIFont labelFontSize] * 2) weight:UIFontWeightBlack]];
@@ -127,21 +125,20 @@
 	[label setShadowOffset:CGSizeMake(1,2)];
 	[label setUserInteractionEnabled:NO];
 
-
 	// setup sublabel
 	UILabel *sublabel = [[UILabel alloc] init];
-	[_labelContainer addArrangedSubview:sublabel];
+	[labelContainer addArrangedSubview:sublabel];
 
 	[sublabel setText:@"Easily backup and restore your tweaks"];
 	[sublabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:UIFontWeightRegular]];
 	[sublabel setUserInteractionEnabled:NO];
 }
 
--(void)configureItemContainer{
+-(void)configureItemContainer:(UIStackView *)itemContainer{
 	// setup two function buttons
 	for(int i = 0; i < 2; i++){
 		UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
-		[_itemContainer addArrangedSubview:button];
+		[itemContainer addArrangedSubview:button];
 
 		[button setTag:i];
 
@@ -169,8 +166,12 @@
 		[button.layer setMasksToBounds:YES];
 		[button.layer setCornerRadius:button.bounds.size.height/2];
 
-		[button setAdjustsImageWhenHighlighted:NO];
 		[button addTarget:self action:@selector(mainButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+		if(i == 0){
+			UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(mainButtonLongPressed:)];
+			[button addGestureRecognizer:longPressGesture];
+		}
+		[button setAdjustsImageWhenHighlighted:NO];
 	}
 }
 
@@ -179,15 +180,7 @@
 
 	switch(sender.tag){
 		case 0: {
-			CATransition *transition = [CATransition animation];
-			[transition setDuration:0.4];
-			[transition setType:kCATransitionReveal];
-			[transition setSubtype:kCATransitionFromRight];
-			[transition setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut]];
-			[self.view.window.layer addAnimation:transition forKey:nil];
-
-			IALProgressViewController *progressViewController = [[IALProgressViewController alloc] initWithPurpose:0 withFilter:0];
-			[self presentViewController:progressViewController animated:NO completion:nil];
+			[self selectedBackupWithFilter:YES];
 			break;
 		}
 		case 1: {
@@ -202,6 +195,14 @@
 			[self presentViewController:backupsViewController animated:NO completion:nil];
 			break;
 		}
+	}
+}
+
+-(void)mainButtonLongPressed:(UILongPressGestureRecognizer *)gesture {
+    if (gesture.state == UIGestureRecognizerStateBegan) {
+  		AudioServicesPlaySystemSound(1520);
+
+		[self selectedBackupWithFilter:NO];
 	}
 }
 
@@ -236,6 +237,13 @@
 }
 
 -(void)makeBackupWithFilter:(BOOL)filter{
+	CATransition *transition = [CATransition animation];
+	[transition setDuration:0.4];
+	[transition setType:kCATransitionReveal];
+	[transition setSubtype:kCATransitionFromRight];
+	[transition setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut]];
+	[self.view.window.layer addAnimation:transition forKey:nil];
+
 	[self presentViewController:[[IALProgressViewController alloc] initWithPurpose:0 withFilter:filter] animated:YES completion:nil];
 
 	UIApplication *app = [UIApplication sharedApplication];

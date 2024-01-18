@@ -1,13 +1,10 @@
 #import <UIKit/UIKit.h>
 
-@interface IALProgressViewController : UIViewController {
-    NSMutableArray<UIImageView *> *_items;
-    NSMutableArray<NSString *> *_itemIcons;
+@interface IALProgressViewController : UITableViewController {
     NSMutableArray<NSString *> *_itemDescriptions;
-    NSMutableArray<UIView *> *_itemStatusIcons;
+    NSMutableArray<UIView *> *_itemStatusIndicators;
     NSMutableArray<UILabel *> *_itemStatusText;
-    UIView *_titleContainer;
-    UIView *_loadingContainer;
+    NSString *_purpose;
     UIStackView *_itemContainer;
     CAShapeLayer *_circleFill;
 }
