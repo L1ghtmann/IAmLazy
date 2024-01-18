@@ -19,6 +19,7 @@
 	self = [super initWithStyle:UITableViewStyleGrouped];
 
 	if(self){
+		_debug = [[NSUserDefaults standardUserDefaults] boolForKey:@"debug"];
 		_itemDescriptions = [self itemDescriptionsForPurpose:purpose withFilter:filter];
 
 		switch(purpose){
@@ -74,7 +75,8 @@
 }
 
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-	return 3;
+	// loading, labels, (log?)
+	return _debug ? 3 : 2;
 }
 
 -(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section{
@@ -128,7 +130,7 @@
 					break;
 				}
 				case 2:{
-					[self addSelectionButtonsTo:cell];
+					[self addDebugViewTo:cell];
 					break;
 				}
 			}
@@ -144,6 +146,11 @@
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
 	// cell height
 	CGFloat workingWith = tableView.frame.size.height - headerSize;
+	if(!_debug && indexPath.row == 1){
+		// loading always 1/3
+		// items take up rest of space
+		return 2 * (workingWith/3);
+	}
 	return workingWith/3;
 }
 
@@ -257,8 +264,8 @@
 	}
 }
 
--(void)addSelectionButtonsTo:(UITableViewCell *)cell{
-	// TODO: maybe?
+-(void)addDebugViewTo:(UITableViewCell *)cell{
+
 }
 
 -(void)updateItemStatus:(NSNotification *)notification{

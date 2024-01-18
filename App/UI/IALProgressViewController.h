@@ -5,6 +5,7 @@
     NSMutableArray<UIView *> *_itemStatusIndicators;
     NSMutableArray<UILabel *> *_itemStatusText;
     NSString *_purpose;
+    BOOL _debug;
     UIStackView *_itemContainer;
     CAShapeLayer *_circleFill;
 }

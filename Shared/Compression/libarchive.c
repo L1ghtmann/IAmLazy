@@ -9,24 +9,13 @@
 #include <CoreFoundation/CFString.h>
 #include <libarchive/archive.h>
 #include <dispatch/queue.h>
+#include "../../Log.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
 #include <limits.h>
-
-#if CLI
-#define IALLog(format, ...) printf("[i] " format "\n", ##__VA_ARGS__)
-#define IALLogErr(format, ...) printf("[x] " format "\n", ##__VA_ARGS__)
-#elif DEBUG
-#include <syslog.h>
-#define IALLog(format, ...) syslog(LOG_NOTICE, "[IALLog] " format "\n", ##__VA_ARGS__)
-#define IALLogErr(format, ...) syslog(LOG_NOTICE, "[IALLogErr] " format "\n", ##__VA_ARGS__)
-#else
-#define IALLog(...)
-#define IALLogErr(...)
-#endif
 
 void write_entry(struct archive *a, const char *item){
 	struct archive_entry *entry = archive_entry_new();

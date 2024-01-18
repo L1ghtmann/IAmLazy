@@ -74,8 +74,10 @@
 	[[imgView.centerXAnchor constraintEqualToAnchor:_mainView.centerXAnchor] setActive:YES];
 	[[imgView.topAnchor constraintEqualToAnchor:_mainView.topAnchor constant:85] setActive:YES];
 
+	UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(toggleDebugMode:)];
+	[imgView addGestureRecognizer:longPressGesture];
+	[imgView setUserInteractionEnabled:YES];
 	[imgView setImage:[UIImage imageNamed:@"Assets/AppIcon250-Clear"]];
-	[imgView setUserInteractionEnabled:NO];
 
 	// container for labels
 	UIStackView *labelContainer = [[UIStackView alloc] init];
@@ -112,6 +114,27 @@
 	[itemContainer setDistribution:UIStackViewDistributionFillEqually];
 
 	[self configureItemContainer:itemContainer];
+}
+
+-(void)toggleDebugMode:(UILongPressGestureRecognizer *)gesture {
+    if (gesture.state == UIGestureRecognizerStateBegan) {
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        BOOL mode = ![defaults boolForKey:@"debug"];
+        [defaults setBool:mode forKey:@"debug"];
+        [defaults synchronize];
+
+        NSString *message = mode ? @"Debug mode enabled." : @"Debug mode disabled.";
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy"
+										message:message
+										preferredStyle:UIAlertControllerStyleAlert];
+
+        UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK"
+										style:UIAlertActionStyleDefault
+										handler:nil];
+        [alert addAction:okAction];
+
+        [self presentViewController:alert animated:YES completion:nil];
+    }
 }
 
 -(void)configureLabelContainer:(UIStackView *)labelContainer{
