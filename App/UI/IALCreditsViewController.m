@@ -57,8 +57,7 @@
     IALHeaderView *header = [tableView dequeueReusableHeaderFooterViewWithIdentifier:headerIdentifier];
 
     if (!header) {
-        // TODO: localize
-        NSString *subtitle = @"Thank you to all who have helped!";
+        NSString *subtitle = localize(@"Thank you to all who have helped!");
         UIImage *button = [UIImage systemImageNamed:@"link.circle.fill"];
         header = [[IALHeaderView alloc] initWithReuseIdentifier:headerIdentifier subtitle:subtitle andButtonImage:button];
         [header.import addTarget:self action:@selector(openSource) forControlEvents:UIControlEventTouchUpInside];
@@ -75,26 +74,24 @@
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdentifier];
 		[cell setBackgroundColor:[UIColor clearColor]];
 		[cell setSeparatorInset:UIEdgeInsetsZero];
-		[cell setUserInteractionEnabled:NO];
+		[cell setSelectionStyle:UITableViewCellSelectionStyleNone];
 
-		[cell.textLabel setTextColor:[UIColor labelColor]];
-		[cell.detailTextLabel setTextColor:[UIColor labelColor]];
+		[cell.detailTextLabel setTextColor:[UIColor systemGrayColor]];
 	}
 
 	NSInteger refCount = [_references count];
 	if(indexPath.row < refCount){
 		[cell.textLabel setText:_references.allKeys[indexPath.row]];
-		[cell.detailTextLabel setText:_references.allValues[indexPath.row]];
+		[cell.detailTextLabel setText:localize(_references.allValues[indexPath.row])];
 	}
 	else {
 		[cell.textLabel setText:_contributors.allKeys[indexPath.row - refCount]];
-		[cell.detailTextLabel setText:_contributors.allValues[indexPath.row - refCount]];
+		[cell.detailTextLabel setText:localize(_contributors.allValues[indexPath.row - refCount])];
 	}
 
 	return cell;
 }
 
-// TODO: localize
 -(void)getReferences{
 	_references = @{
 		// readme credits
@@ -106,7 +103,6 @@
 	};
 }
 
-// TODO: localize
 -(void)getContributors{
 	_contributors = @{
 		// translators

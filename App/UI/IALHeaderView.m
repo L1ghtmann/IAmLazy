@@ -14,6 +14,7 @@
     self = [super initWithReuseIdentifier:reuseIdentifier];
 
     if (self) {
+        // this darkens when the app goes into the background and re-enters the foreground ???
         _matView = [objc_getClass("MTMaterialView") materialViewWithRecipe:2 configuration:1 initialWeighting:0.25];
         [self setBackgroundView:_matView];
 

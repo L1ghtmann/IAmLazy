@@ -149,6 +149,8 @@
 
 	[_generalManager updateItem:1 WithStatus:0.2];
 
+	IALLog(@"Read %lu controls", [controls count]);
+
 	return controls;
 }
 
@@ -199,6 +201,9 @@
 		progress+=progressPerPart;
 		[_generalManager updateItem:1 WithStatus:progress];
 	}
+
+	IALLog(@"Found %lu packages", [packages count]);
+
 	return packages;
 }
 
@@ -333,6 +338,8 @@
 
 	[_generalManager updateItem:1 WithStatus:0.9];
 
+	IALLog(@"Found %lu packages after Canister filter", [packages count]);
+
 	return packages;
 }
 
@@ -350,6 +357,7 @@
 	_skip = [NSMutableArray new];
 	for(NSString *package in _packages){
 		// get installed files
+		IALLog(@"Gathering files for %@", package);
 		NSString *path = [[dpkgInfoDir stringByAppendingPathComponent:package] stringByAppendingPathExtension:@"list"];
 		NSString *contents = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&error];
 		if(error){
@@ -561,6 +569,8 @@
 	NSData *data = [info dataUsingEncoding:NSUTF8StringEncoding];
 	NSString *control = [debian stringByAppendingPathComponent:@"control"];
 	[fileManager createFileAtPath:control contents:data attributes:nil];
+
+	IALLog(@"Wrote control for %@", package);
 
 	return YES;
 }

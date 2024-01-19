@@ -41,8 +41,7 @@
 
 	CAGradientLayer *gradient = [CAGradientLayer layer];
 	[gradient setFrame:_mainView.bounds];
-	[gradient setColors:@[(id)[UIColor colorWithRed:252.0f/255.0f green:251.0f/255.0f blue:216.0f/255.0f alpha:1.0f].CGColor,
-						  (id)[self IALBlue].CGColor]];
+	[gradient setColors:@[(id)[self IALYellow].CGColor, (id)[self IALBlue].CGColor]];
 	[_mainView.layer insertSublayer:gradient atIndex:0];
 
 	[self configureMainScreen];
@@ -152,8 +151,7 @@
 	UILabel *sublabel = [[UILabel alloc] init];
 	[labelContainer addArrangedSubview:sublabel];
 
-	// TODO: localize
-	[sublabel setText:@"Easily backup and restore your tweaks"];
+	[sublabel setText:localize(@"Easily backup and restore your tweaks")];
 	[sublabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:UIFontWeightRegular]];
 	[sublabel setUserInteractionEnabled:NO];
 }
@@ -270,7 +268,9 @@
 	[transition setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut]];
 	[self.view.window.layer addAnimation:transition forKey:nil];
 
-	[self presentViewController:[[IALProgressViewController alloc] initWithPurpose:0 withFilter:filter] animated:YES completion:nil];
+	IALProgressViewController *vc = [[IALProgressViewController alloc] initWithPurpose:0 withFilter:filter];
+	[vc setModalInPresentation:YES];
+	[self presentViewController:vc animated:YES completion:nil];
 
 	UIApplication *app = [UIApplication sharedApplication];
 	[app setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
@@ -343,6 +343,10 @@
 	[alert addAction:okay];
 
  	[self presentViewController:alert animated:YES completion:nil];
+}
+
+-(UIColor *)IALYellow{
+	return [UIColor colorWithRed:252.0f/255.0f green:251.0f/255.0f blue:216.0f/255.0f alpha:1.0f];
 }
 
 -(UIColor *)IALBlue{

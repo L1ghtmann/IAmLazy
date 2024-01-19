@@ -341,7 +341,8 @@ int main(int argc, char *argv[]){
 				IALLogErr(@"%@ failed to build!", tweakTarget);
 				return 1;
 			}
-			IALLog(@"%@ created successfully!", tweakTarget);
+
+			IALLog(@"Created %@", [current stringByAppendingPathExtension:@"deb"]);
 
 			// delete component archives since deb has been made
 			[fileManager removeItemAtPath:controlTarget error:&deleteError];

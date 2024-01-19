@@ -11,7 +11,7 @@ extern char **environ;
 
 int task(const char *args[]){
 	pid_t pid;
-	// FIX: palera1n
+	// fix for palera1n (et al ?)
 	// this is unprefixed by default ????
 	if(strstr(getenv("PATH"), "/var/jb") == NULL){
 		// https://github.com/opa334/Dopamine/blob/1595dbf05561e55aa36e8dd39a77ebe2a5dd00c1/Packages/Fugu15KernelExploit/Sources/Fugu15KernelExploit/oobPCI.swift#L252

@@ -137,10 +137,6 @@ bool write_archive(const char *src, const char *outname, bool component){
 			continue;
 		}
 
-		if(!component){
-			IALLog("Adding %s to %s", name, outname);
-		}
-
 		char *relPath;
 		if(!component){
 			// don't include /tmp/ in archive
@@ -208,8 +204,11 @@ bool write_archive(const char *src, const char *outname, bool component){
 				CFRelease(progStr);
 			}
 
-			// char *target = strrchr(outname, '/') + 1;
-			// IALLog("added %s to %s", relPath, target);
+			if(!component){
+				char *file = strrchr(name, '/') + 1;
+				char *target = strrchr(outname, '/') + 1;
+				IALLog("Added %s to %s", file, target);
+			}
 		}
 	}
 	archive_entry_free(entry);
@@ -269,8 +268,6 @@ bool extract_archive(const char *src, const char *dest){
 		sprintf(path, "%s/%s", dest, file);
 		archive_entry_set_pathname(entry, path);
 
-		IALLog("Extracting %s from %s", path, src);
-
 		r = archive_read_extract(a, entry, flags);
 		if(r != ARCHIVE_OK){
 			IALLogErr("failed to extract %s: %s", path, archive_error_string(a));
@@ -291,8 +288,9 @@ bool extract_archive(const char *src, const char *dest){
 	#endif
 		CFRelease(progStr);
 
-		// char *deb = strrchr(path, '/') + 1;
-		// IALLog("successfully extracted %s from %s", deb, src);
+		char *deb = strrchr(path, '/') + 1;
+		char *backup = strrchr(src, '/') + 1;
+		IALLog("Extracted %s from %s", deb, backup);
 	}
 	archive_read_close(a);
 	archive_read_free(a);

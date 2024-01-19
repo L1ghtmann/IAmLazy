@@ -68,8 +68,7 @@
     IALHeaderView *header = [tableView dequeueReusableHeaderFooterViewWithIdentifier:headerIdentifier];
 
     if (!header) {
-        // TODO: localize
-        NSString *subtitle = @"Swipe or tap desired backup";
+        NSString *subtitle = localize(@"Swipe or tap desired backup");
         UIImage *button = [UIImage systemImageNamed:@"plus.circle.fill"];
         header = [[IALHeaderView alloc] initWithReuseIdentifier:headerIdentifier subtitle:subtitle andButtonImage:button];
         [header.import addTarget:self action:@selector(importBackup) forControlEvents:UIControlEventTouchUpInside];
@@ -84,31 +83,33 @@
 
 	if(!cell){
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdentifier];
-
-		NSString *backup = _backups[indexPath.row];
-		[cell.textLabel setText:backup];
-		[cell.textLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:UIFontWeightBold]];
-
-		NSString *type = [backup containsString:@"u"] ? localize(@"Developer") : localize(@"Standard");
-		[cell.detailTextLabel setText:[NSString stringWithFormat:@"Type: %@", type]]; // TODO: localize
-		[cell.detailTextLabel setTextColor:[UIColor systemGrayColor]];
-
-		UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:30];
-		[cell.imageView setImage:[UIImage systemImageNamed:@"folder.fill" withConfiguration:config]];
-		[cell.imageView setTintColor:[UIColor colorWithHue:0.6 saturation:(0.5 + (arc4random_uniform(128) / 255.0))
-                                              brightness:(0.5 + (arc4random_uniform(128) / 255.0)) alpha:1.0]];
-
 		[cell setSeparatorInset:UIEdgeInsetsZero];
 		[cell setBackgroundColor:[UIColor clearColor]];
 		[cell setAccessoryType:UITableViewCellAccessoryDisclosureIndicator];
+		// [cell setSelectionStyle:UITableViewCellSelectionStyleNone]; // TODO: maybe?
+
+		[cell.textLabel setFont:[UIFont systemFontOfSize:[UIFont labelFontSize] weight:UIFontWeightBold]];
+
+		UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:25];
+		[cell.imageView setImage:[UIImage systemImageNamed:@"folder.fill" withConfiguration:config]];
 	}
+
+	NSString *backup = _backups[indexPath.row];
+	[cell.textLabel setText:backup];
+
+	NSString *type = [backup containsString:@"u"] ? localize(@"Developer") : localize(@"Standard");
+	[cell.detailTextLabel setText:[NSString stringWithFormat:localize(@"Type: %@"), type]];
+
+	UIColor *typeColor = [backup containsString:@"u"] ? [self IALBlue] : [self IALYellow];
+	[cell.textLabel setTextColor:typeColor];
+	[cell.imageView setTintColor:typeColor];
 
 	return cell;
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
 	// cell height
-	return (100 * hScaleFactor);
+	return (75 * hScaleFactor);
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -122,7 +123,7 @@
     NSString *backupName = [tableView cellForRowAtIndexPath:indexPath].textLabel.text;
 
     // Note: to export a local file, need to use an NSURL
-    NSURL *fileURL = [NSURL fileURLWithPath:[backupDir stringByAppendingString:backupName]];
+    NSURL *fileURL = [NSURL fileURLWithPath:[backupDir stringByAppendingPathComponent:backupName]];
 
     UIContextualAction *action = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal title:localize(@"Export") handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
 		AudioServicesPlaySystemSound(1520);
@@ -147,8 +148,7 @@
     NSString *filePath = [backupDir stringByAppendingPathComponent:backupName];
     NSFileManager *fileManager = [NSFileManager defaultManager];
 
-	// TODO: localize
-    UIContextualAction *action = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleDestructive title:@"Delete" handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
+    UIContextualAction *action = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleDestructive title:localize(@"Delete") handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
 		AudioServicesPlaySystemSound(1520);
         if([fileManager isDeletableFileAtPath:filePath]){
             NSError *deleteError = nil;
@@ -297,7 +297,9 @@
 	[transition setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut]];
 	[self.view.window.layer addAnimation:transition forKey:nil];
 
-	[self presentViewController:[[IALProgressViewController alloc] initWithPurpose:1 withFilter:nil] animated:YES completion:nil];
+	IALProgressViewController *vc = [[IALProgressViewController alloc] initWithPurpose:1 withFilter:nil];
+	[vc setModalInPresentation:YES];
+	[self presentViewController:vc animated:YES completion:nil];
 
 	UIApplication *app = [UIApplication sharedApplication];
 	[app setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
@@ -379,6 +381,14 @@
 	[alert addAction:okay];
 
 	[self presentViewController:alert animated:YES completion:nil];
+}
+
+-(UIColor *)IALYellow{
+	return [UIColor colorWithRed:252.0f/255.0f green:251.0f/255.0f blue:216.0f/255.0f alpha:1.0f];
+}
+
+-(UIColor *)IALBlue{
+	return [UIColor colorWithRed:82.0f/255.0f green:102.0f/255.0f blue:142.0f/255.0f alpha:1.0f];
 }
 
 @end
