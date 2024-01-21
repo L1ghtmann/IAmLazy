@@ -2,6 +2,11 @@
 
 @class IALRestoreManager, IALBackupManager;
 
+typedef NS_ENUM(NSInteger, ItemType) {
+    ItemTypeStatus,
+    ItemTypeProgress
+};
+
 @interface IALGeneralManager : NSObject {
     IALRestoreManager *_restoreManager;
     IALBackupManager *_backupManager;

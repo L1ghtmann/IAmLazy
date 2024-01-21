@@ -28,7 +28,7 @@
 	}
 
 	_filtered = filter;
-	[_generalManager updateItem:0 WithStatus:-0.5];
+	[_generalManager updateItem:ItemTypeStatus WithStatus:-0.5];
 
 	_controlFiles = [self getControlFiles];
 	if(![_controlFiles count]){
@@ -45,7 +45,7 @@
 		return;
 	}
 
-	[_generalManager updateItem:0 WithStatus:0];
+	[_generalManager updateItem:ItemTypeStatus WithStatus:0];
 
 	// make fresh tmp directory
 	if(![fileManager fileExistsAtPath:tmpDir]){
@@ -63,19 +63,19 @@
 		}
 	}
 
-	[_generalManager updateItem:0 WithStatus:0.5];
+	[_generalManager updateItem:ItemTypeStatus WithStatus:0.5];
 	if(![self gatherFilesForPackages]){
 		completed(NO, nil);
 		return;
 	}
-	[_generalManager updateItem:0 WithStatus:1];
+	[_generalManager updateItem:ItemTypeStatus WithStatus:1];
 
-	[_generalManager updateItem:0 WithStatus:1.5];
+	[_generalManager updateItem:ItemTypeStatus WithStatus:1.5];
 	if(![self buildDebs]){
 		completed(NO, nil);
 		return;
 	}
-	[_generalManager updateItem:0 WithStatus:2];
+	[_generalManager updateItem:ItemTypeStatus WithStatus:2];
 
 	// specify the bootstrap it was created on
 	if(!_filtered){
@@ -94,18 +94,18 @@
 	}
 
 	// make archive of packages
-	[_generalManager updateItem:0 WithStatus:2.5];
+	[_generalManager updateItem:ItemTypeStatus WithStatus:2.5];
 	if(![self makeTarball]){
 		completed(NO, nil);
 		return;
 	}
-	[_generalManager updateItem:0 WithStatus:3];
+	[_generalManager updateItem:ItemTypeStatus WithStatus:3];
 
 	completed(YES, [_skip count] ? [_skip componentsJoinedByString:@",\n"] : nil);
 }
 
 -(NSArray<NSString *> *)getControlFiles{
-	[_generalManager updateItem:1 WithStatus:0];
+	[_generalManager updateItem:ItemTypeProgress WithStatus:0];
 
 	// get control files for all installed packages
 	NSError *readError = nil;
@@ -128,7 +128,7 @@
 		return [NSArray new];
 	}
 
-	[_generalManager updateItem:1 WithStatus:0.1];
+	[_generalManager updateItem:ItemTypeProgress WithStatus:0.1];
 
 	// divvy up massive control collection into individual control files
 	NSMutableArray *controls = [NSMutableArray new];
@@ -147,7 +147,7 @@
 		}
 	}
 
-	[_generalManager updateItem:1 WithStatus:0.2];
+	[_generalManager updateItem:ItemTypeProgress WithStatus:0.2];
 
 	IALLog(@"Read %lu controls", [controls count]);
 
@@ -199,7 +199,7 @@
 		}
 
 		progress+=progressPerPart;
-		[_generalManager updateItem:1 WithStatus:progress];
+		[_generalManager updateItem:ItemTypeProgress WithStatus:progress];
 	}
 
 	IALLog(@"Found %lu packages", [packages count]);
@@ -313,7 +313,7 @@
 }
 
 -(NSMutableArray<NSString *> *)getUserPackages{
-	[_generalManager updateItem:1 WithStatus:0.8];
+	[_generalManager updateItem:ItemTypeProgress WithStatus:0.8];
 
 	dispatch_semaphore_t sem = dispatch_semaphore_create(0);
 
@@ -336,7 +336,7 @@
 	// wait for block to return before proceeding
 	dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
 
-	[_generalManager updateItem:1 WithStatus:0.9];
+	[_generalManager updateItem:ItemTypeProgress WithStatus:0.9];
 
 	IALLog(@"Found %lu packages after Canister filter", [packages count]);
 
@@ -473,7 +473,7 @@
 		}
 
 		progress+=progressPerPart;
-		[_generalManager updateItem:1 WithStatus:progress];
+		[_generalManager updateItem:ItemTypeProgress WithStatus:progress];
 
 		NSString *tweakDir = [tmpDir stringByAppendingPathComponent:package];
 		if(![self makeControlForPackage:package inDirectory:tweakDir]){
@@ -483,28 +483,28 @@
 		}
 
 		progress+=progressPerPart;
-		[_generalManager updateItem:1 WithStatus:progress];
+		[_generalManager updateItem:ItemTypeProgress WithStatus:progress];
 
 		if(![self makeSubDirectories:directories inDirectory:tweakDir]){
 			return NO;
 		}
 
 		progress+=progressPerPart;
-		[_generalManager updateItem:1 WithStatus:progress];
+		[_generalManager updateItem:ItemTypeProgress WithStatus:progress];
 
 		if(![self copyFilesOfType:0]){
 			return NO;
 		}
 
 		progress+=progressPerPart;
-		[_generalManager updateItem:1 WithStatus:progress];
+		[_generalManager updateItem:ItemTypeProgress WithStatus:progress];
 
 		if(![self copyFilesOfType:1]){
 			return NO;
 		}
 
 		progress+=progressPerPart;
-		[_generalManager updateItem:1 WithStatus:progress];
+		[_generalManager updateItem:ItemTypeProgress WithStatus:progress];
 	}
 
 	// remove list file now that we're done w it
@@ -651,7 +651,7 @@
 		}
 
 		progress+=progressPerPart;
-		[_generalManager updateItem:1 WithStatus:progress];
+		[_generalManager updateItem:ItemTypeProgress WithStatus:progress];
 	}
 
 	// remove 'debian-binary' now that we're done w it

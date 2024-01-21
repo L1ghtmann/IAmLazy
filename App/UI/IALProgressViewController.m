@@ -194,25 +194,25 @@
 	_itemStatusText = [NSMutableArray new];
 
 	// container for items
-	_itemContainer = [[UIStackView alloc] init];
-	[cell.contentView addSubview:_itemContainer];
+	UIStackView *itemcontainer = [[UIStackView alloc] init];
+	[cell.contentView addSubview:itemcontainer];
 
-	[_itemContainer setTranslatesAutoresizingMaskIntoConstraints:NO];
-	[[_itemContainer.widthAnchor constraintEqualToConstant:cell.contentView.frame.size.width-75] setActive:YES];
-	[[_itemContainer.topAnchor constraintEqualToAnchor:cell.contentView.topAnchor] setActive:YES];
-	[[_itemContainer.bottomAnchor constraintEqualToAnchor:cell.contentView.bottomAnchor] setActive:YES];
-	[[_itemContainer.centerXAnchor constraintEqualToAnchor:cell.contentView.centerXAnchor] setActive:YES];
+	[itemcontainer setTranslatesAutoresizingMaskIntoConstraints:NO];
+	[[itemcontainer.widthAnchor constraintEqualToConstant:cell.contentView.frame.size.width-75] setActive:YES];
+	[[itemcontainer.topAnchor constraintEqualToAnchor:cell.contentView.topAnchor] setActive:YES];
+	[[itemcontainer.bottomAnchor constraintEqualToAnchor:cell.contentView.bottomAnchor] setActive:YES];
+	[[itemcontainer.centerXAnchor constraintEqualToAnchor:cell.contentView.centerXAnchor] setActive:YES];
 
-	[_itemContainer setAlignment:UIStackViewAlignmentLeading];
-	[_itemContainer setAxis:UILayoutConstraintAxisVertical];
-	[_itemContainer setDistribution:UIStackViewDistributionEqualSpacing];
-	[_itemContainer setLayoutMargins:UIEdgeInsetsMake(0, 25, 0, 0)];
-	[_itemContainer setLayoutMarginsRelativeArrangement:YES];
+	[itemcontainer setAlignment:UIStackViewAlignmentLeading];
+	[itemcontainer setAxis:UILayoutConstraintAxisVertical];
+	[itemcontainer setDistribution:UIStackViewDistributionEqualSpacing];
+	[itemcontainer setLayoutMargins:UIEdgeInsetsMake(0, 25, 0, 0)];
+	[itemcontainer setLayoutMarginsRelativeArrangement:YES];
 
 	for(int i = 0; i < [_itemDescriptions count]; i++){
 		// pane for container
 		UIView *pane = [[UIView alloc] init];
-		[_itemContainer addArrangedSubview:pane];
+		[itemcontainer addArrangedSubview:pane];
 
 		[pane setTranslatesAutoresizingMaskIntoConstraints:NO];
 		[[pane.widthAnchor constraintEqualToConstant:cell.contentView.frame.size.width] setActive:YES];

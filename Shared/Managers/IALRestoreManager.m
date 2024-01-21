@@ -13,8 +13,8 @@
 @implementation IALRestoreManager
 
 -(void)restoreFromBackup:(NSString *)backupName withCompletion:(void (^)(BOOL))completed{
-	[_generalManager updateItem:0 WithStatus:-0.5];
-	[_generalManager updateItem:1 WithStatus:0];
+	[_generalManager updateItem:ItemTypeStatus WithStatus:-0.5];
+	[_generalManager updateItem:ItemTypeProgress WithStatus:0];
 
 	// check for backup dir
 	NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -24,7 +24,7 @@
 		return;
 	}
 
-	[_generalManager updateItem:1 WithStatus:0.2];
+	[_generalManager updateItem:ItemTypeProgress WithStatus:0.2];
 
 	// check for backups
 	if(![[_generalManager getBackups] count]){
@@ -33,7 +33,7 @@
 		return;
 	}
 
-	[_generalManager updateItem:1 WithStatus:0.4];
+	[_generalManager updateItem:ItemTypeProgress WithStatus:0.4];
 
 	// check for target backup
 	NSString *target = [backupDir stringByAppendingPathComponent:backupName];
@@ -44,7 +44,7 @@
 		return;
 	}
 
-	[_generalManager updateItem:1 WithStatus:0.6];
+	[_generalManager updateItem:ItemTypeProgress WithStatus:0.6];
 
 	// check for old tmp files
 	if([fileManager fileExistsAtPath:tmpDir]){
@@ -54,22 +54,22 @@
 		}
 	}
 
-	[_generalManager updateItem:1 WithStatus:0.8];
+	[_generalManager updateItem:ItemTypeProgress WithStatus:0.8];
 
 	if(![_generalManager ensureUsableDpkgLock]){
 		completed(NO);
 		return;
 	}
 
-	[_generalManager updateItem:1 WithStatus:1];
-	[_generalManager updateItem:0 WithStatus:0];
+	[_generalManager updateItem:ItemTypeProgress WithStatus:1];
+	[_generalManager updateItem:ItemTypeStatus WithStatus:0];
 
-	[_generalManager updateItem:0 WithStatus:0.5];
+	[_generalManager updateItem:ItemTypeStatus WithStatus:0.5];
 	if(![self extractArchive:target]){
 		completed(NO);
 		return;
 	}
-	[_generalManager updateItem:0 WithStatus:1];
+	[_generalManager updateItem:ItemTypeStatus WithStatus:1];
 
 	BOOL compatible = YES;
 	if([backupName hasSuffix:@"u.tar.gz"]){
@@ -80,19 +80,19 @@
 	}
 
 	if(compatible){
-		[_generalManager updateItem:0 WithStatus:1.5];
+		[_generalManager updateItem:ItemTypeStatus WithStatus:1.5];
 		if(![self updateAPT]){
 			completed(NO);
 			return;
 		}
-		[_generalManager updateItem:0 WithStatus:2];
+		[_generalManager updateItem:ItemTypeStatus WithStatus:2];
 
-		[_generalManager updateItem:0 WithStatus:2.5];
+		[_generalManager updateItem:ItemTypeStatus WithStatus:2.5];
 		if(![self installDebs]){
 			completed(NO);
 			return;
 		}
-		[_generalManager updateItem:0 WithStatus:3];
+		[_generalManager updateItem:ItemTypeStatus WithStatus:3];
 	}
 
 	if(![_generalManager cleanupTmp]){
@@ -165,9 +165,9 @@
 
 -(BOOL)updateAPT{
 	// ensure bootstrap repos' package files are up-to-date
-	[_generalManager updateItem:1 WithStatus:0];
+	[_generalManager updateItem:ItemTypeProgress WithStatus:0];
 	BOOL ret = [_generalManager updateAPT];
-	[_generalManager updateItem:1 WithStatus:1];
+	[_generalManager updateItem:ItemTypeProgress WithStatus:1];
 	return ret;
 }
 
@@ -222,7 +222,7 @@
 		}
 
 		progress+=progressPerPart;
-		[_generalManager updateItem:1 WithStatus:progress];
+		[_generalManager updateItem:ItemTypeProgress WithStatus:progress];
 	}
 
 	return YES;

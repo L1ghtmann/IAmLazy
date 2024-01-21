@@ -219,16 +219,24 @@ bool write_archive(const char *src, const char *outname, bool component){
 	return true;
 }
 
+bool open_archive(struct archive **a, const char *src) {
+    int r;
+    *a = archive_read_new();
+    archive_read_support_format_tar(*a);
+    archive_read_support_filter_gzip(*a);
+    if((r = archive_read_open_filename(*a, src, 10240))){
+        archive_read_close(*a);
+        archive_read_free(*a);
+        return false;
+    }
+    return true;
+}
+
 bool extract_archive(const char *src, const char *dest){
 	// item count read
-	int r;
-	struct archive *a = archive_read_new();
-	archive_read_support_format_tar(a);
-	archive_read_support_filter_gzip(a);
-	if((r = archive_read_open_filename(a, src, 10240))){
+	struct archive *a;
+	if(!open_archive(&a, src)) {
 		IALLogErr("failed to open %s for extraction [1]!", src);
-		archive_read_close(a);
-		archive_read_free(a);
 		return false;
 	}
 
@@ -245,13 +253,8 @@ bool extract_archive(const char *src, const char *dest){
 	float progress_per_part = (1.0/count);
 	float progress = 0.0;
 
-	a = archive_read_new();
-	archive_read_support_format_tar(a);
-	archive_read_support_filter_gzip(a);
-	if((r = archive_read_open_filename(a, src, 10240))){
+	if(!open_archive(&a, src)) {
 		IALLogErr("failed to open %s for extraction [2]!", src);
-		archive_read_close(a);
-		archive_read_free(a);
 		return false;
 	}
 
@@ -268,7 +271,7 @@ bool extract_archive(const char *src, const char *dest){
 		sprintf(path, "%s/%s", dest, file);
 		archive_entry_set_pathname(entry, path);
 
-		r = archive_read_extract(a, entry, flags);
+		int r = archive_read_extract(a, entry, flags);
 		if(r != ARCHIVE_OK){
 			IALLogErr("failed to extract %s: %s", path, archive_error_string(a));
 			archive_read_close(a);

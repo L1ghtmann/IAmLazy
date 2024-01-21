@@ -6,7 +6,6 @@
     NSMutableArray<UILabel *> *_itemStatusText;
     NSString *_purpose;
     BOOL _debug;
-    UIStackView *_itemContainer;
     CAShapeLayer *_circleFill;
 }
 -(instancetype)initWithPurpose:(NSInteger)purpose withFilter:(BOOL)filter;

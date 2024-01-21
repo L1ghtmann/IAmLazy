@@ -97,7 +97,7 @@
 	NSString *backup = _backups[indexPath.row];
 	[cell.textLabel setText:backup];
 
-	NSString *type = [backup containsString:@"u"] ? localize(@"Developer") : localize(@"Standard");
+	NSString *type = [backup hasSuffix:@"u.tar.gz"] ? localize(@"Developer") : localize(@"Standard");
 	[cell.detailTextLabel setText:[NSString stringWithFormat:localize(@"Type: %@"), type]];
 
 	UIColor *typeColor = [backup containsString:@"u"] ? [self IALBlue] : [self IALYellow];
