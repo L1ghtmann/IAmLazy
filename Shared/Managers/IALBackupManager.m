@@ -383,22 +383,59 @@
 			return NO;
 		}
 
-		// determine unique generic files and directories
-		NSMutableArray *genericFiles = [NSMutableArray new];
-		NSMutableArray *directories = [NSMutableArray new];
-		for(__strong NSString *line in lines){
+		/*
+			Three part process:
+			1) fix symlink lines
+			2) find unique items
+			3) characterize files and dirs
+		*/
+
+		// first pass: symlinks
+		NSPredicate *symlink = [NSPredicate predicateWithFormat:@"SELF CONTAINS '->'"];
+		NSArray *symlinks = [lines filteredArrayUsingPredicate:symlink];
+		NSMutableArray *updatedLines = [lines mutableCopy];
+		for(NSString *line in symlinks){
+			// find line
+			NSInteger index = [updatedLines indexOfObject:line];
+
+			// grab relevant bit
+			NSArray *bits = [line componentsSeparatedByString:@" "];
+			NSString *newLine = bits.firstObject;
+
+			// replace with relevant bit
+			[updatedLines replaceObjectAtIndex:index withObject:newLine];
+		}
+
+		// second pass: find unique items
+		NSMutableArray *unique = [NSMutableArray new];
+		for(NSString *line in updatedLines){
 			if(![line length] || [line isEqualToString:@"/."] || [[line lastPathComponent] isEqualToString:@".."] || [[line lastPathComponent] isEqualToString:@"."]){
 				continue;
 			}
 
-			// symlinks are listed as "link -> file"
-			// we want to grab the link as the file
-			// is already copied as part of the list
-			if([line containsString:@"->"]){
-				NSArray *bits = [line componentsSeparatedByString:@" "];
-				line = bits.firstObject;
+			// here, we want to somehow distinguish between the package's list structure
+			// and the actual files/directories that the package places on-device
+			//
+			// to do this, we make use of the fact that the directory structure items
+			// (e.g., /var, /usr, /var/jb, etc) are not suffixed with "/"
+			// so, by appending "/" to the given line and checking for a substring match,
+			// we can see if the given line is part of the directory structure, as it
+			// will be present in other lines, or if it's an item installed by the package
+			//
+			// test:
+			//		/var/jb/usr/lib/TweakInject.dylib & /var/jb/usr/lib/TweakInject
+			// 		from 'ellekit' should both pass as should /var/jb/usr/include/llvm
+			// 		& /var/jb/usr/include/llvm-c from 'llvm-dev'
+			NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS %@", [line stringByAppendingString:@"/"]];
+			if(![[updatedLines filteredArrayUsingPredicate:predicate] count]){
+				[unique addObject:line];
 			}
+		}
 
+		// third pass: characterize files and dirs
+		NSMutableArray *files = [NSMutableArray new];
+		NSMutableArray *directories = [NSMutableArray new];
+		for(NSString *line in unique){
 			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:line error:&error];
 			if(error){
 				IALLogErr(@"Failed to get attributes for %@! Info: %@", line, error.localizedDescription);
@@ -406,42 +443,18 @@
 				continue;
 			}
 
-			// for categorization below
-			NSString *type = [fileAttributes fileType];
-
-			// check to see how many times the current filepath is present in the list output
-			// shoutout Cœur on StackOverflow for this efficient code (https://stackoverflow.com/a/57869286)
-			NSUInteger count = [[NSMutableString stringWithString:contents] replaceOccurrencesOfString:line withString:line options:NSLiteralSearch range:NSMakeRange(0, [contents length])];
-
-			if(count == 1){ // this is good, means it's unique!
-				if(type == NSFileTypeDirectory){
-					[directories addObject:line];
-				}
-				else{
-					[genericFiles addObject:line];
-				}
+			if([fileAttributes fileType] == NSFileTypeDirectory){
+				[directories addObject:line];
 			}
 			else{
-				// sometimes files will have similar names (e.g., /usr/bin/zip, /usr/bin/zipcloak, /usr/bin/zipnote, /usr/bin/zipsplit)
-				// though /usr/bin/zip will have a count > 1, since it's present in the other filepaths, we want to avoid disregarding it
-				// since it's a valid file. instead, we want to disregard all dirs and symlinks that don't lead to files as they're simply
-				// part of the package's list structure. in the above example, that would mean disregarding /usr and /usr/bin
-				if(type != NSFileTypeDirectory && type != NSFileTypeSymbolicLink){
-					[genericFiles addObject:line];
-				}
-				else if(type == NSFileTypeSymbolicLink){
-					// want to grab any symlniks that lead to files, but ignore those that lead to dirs
-					// this will traverse any links and check for the existence of a file at the link's final destination
-					BOOL isDir = NO;
-					if([fileManager fileExistsAtPath:line isDirectory:&isDir] && !isDir){
-						[genericFiles addObject:line];
-					}
-				}
+				// also treating symlinks
+				// as files (i.e., cp not mkdir)
+				[files addObject:line];
 			}
 		}
 
 		// put the files we want to copy into lists for easier writing
-		NSString *gFilePaths = [genericFiles componentsJoinedByString:@"\n"];
+		NSString *gFilePaths = [files componentsJoinedByString:@"\n"];
 		if(![gFilePaths length]){
 			IALLog(@"%@ has no generic files!", package);
 		}
