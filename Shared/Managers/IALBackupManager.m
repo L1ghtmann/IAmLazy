@@ -133,17 +133,17 @@
 	// divvy up massive control collection into individual control files
 	NSMutableArray *controls = [NSMutableArray new];
 	NSMutableString *controlFile = [NSMutableString new];
-	for(int i = 0; i < [lines count]; i++){
-		NSString *line = lines[i];
+	for(NSString *line in lines){
 		if([line length]){
-			if(![controlFile length]) [controlFile appendString:line];
-			else [controlFile appendString:[@"\n" stringByAppendingString:line]];
+			if([controlFile length]){
+				[controlFile appendString:@"\n"];
+			}
+			[controlFile appendString:line];
 		}
+		// when we hit an empty line it's a new control
 		else{
-			// when we hit an empty line it's a new control
 			[controls addObject:[controlFile copy]];
-			if(i != [lines count]) [controlFile setString:@""];
-			else controlFile = nil;
+			[controlFile setString:@""];
 		}
 	}
 
@@ -349,12 +349,13 @@
 	NSCharacterSet *newlineChars = [NSCharacterSet newlineCharacterSet];
 	NSString *filesToCopy = [tmpDir stringByAppendingPathComponent:@".filesToCopy"];
 
+	_skip = [NSMutableArray new];
+
 	NSUInteger total = ([_packages count] * 5); // 5 steps per pkg
 	CGFloat progressPerPart = (1.0/total);
 	CGFloat progress = 0.0;
 
 	NSError *error = nil;
-	_skip = [NSMutableArray new];
 	for(NSString *package in _packages){
 		// get installed files
 		IALLog(@"Gathering files for %@", package);
@@ -407,27 +408,32 @@
 		}
 
 		// second pass: find unique items
-		NSMutableArray *unique = [NSMutableArray new];
-		for(NSString *line in updatedLines){
+		NSMutableArray *unique = [NSMutableArray array];
+		NSInteger count = [updatedLines count];
+		for(NSInteger i = 0; i < count; i++){
+			NSString *line = updatedLines[i];
 			if(![line length] || [line isEqualToString:@"/."] || [[line lastPathComponent] isEqualToString:@".."] || [[line lastPathComponent] isEqualToString:@"."]){
 				continue;
 			}
 
-			// here, we want to somehow distinguish between the package's list structure
-			// and the actual files/directories that the package places on-device
-			//
-			// to do this, we make use of the fact that the directory structure items
-			// (e.g., /var, /usr, /var/jb, etc) are not suffixed with "/"
-			// so, by appending "/" to the given line and checking for a substring match,
-			// we can see if the given line is part of the directory structure, as it
-			// will be present in other lines, or if it's an item installed by the package
-			//
-			// test:
-			//		/var/jb/usr/lib/TweakInject.dylib & /var/jb/usr/lib/TweakInject
-			// 		from 'ellekit' should both pass as should /var/jb/usr/include/llvm
-			// 		& /var/jb/usr/include/llvm-c from 'llvm-dev'
-			NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS %@", [line stringByAppendingString:@"/"]];
-			if(![[updatedLines filteredArrayUsingPredicate:predicate] count]){
+			/*
+				here, we want to somehow distinguish between the package's list structure
+				and the actual files/directories that the package places on-device
+
+				to do this, we make use of the fact that 1) directories are not suffixed
+				with "/" in the packacge's list structure and 2) that the list is ordered.
+				by appending "/" to the given line and checking for a prefix match in
+				the subsequent line, we can see if the given line is part of the
+				directory structure, as it will be present in other lines, or if it's
+				a unique item installed by the package, as it will differ in its prefix
+
+				test:
+						/var/jb/usr/lib/TweakInject.dylib & /var/jb/usr/lib/TweakInject
+						from 'ellekit' should both pass as should /var/jb/usr/include/llvm
+						& /var/jb/usr/include/llvm-c from 'llvm-dev'
+			*/
+			NSString *nextLine = (i < count - 1) ? updatedLines[i + 1] : nil;
+			if(!nextLine || ![nextLine hasPrefix:[line stringByAppendingString:@"/"]]){
 				[unique addObject:line];
 			}
 		}
