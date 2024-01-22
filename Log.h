@@ -1,11 +1,22 @@
+/*
+    ObjC
+        CLI
+        Not CLI
+    Not ObjC
+        CLI
+        Not CLI
+*/
+
+#if __has_feature(objc_arc) // ObjC
+#include <Foundation/Foundation.h>
+
 #if CLI
 
-#define IALLog(format, ...) printf("[i] " format "\n", ##__VA_ARGS__)
-#define IALLogErr(format, ...) printf("[x] " format "\n", ##__VA_ARGS__)
+#define IALLog(format, ...) printf("[i] %s\n", [[NSString stringWithFormat:format, ##__VA_ARGS__] UTF8String])
+#define IALLogErr(format, ...) printf("[x] %s\n", [[NSString stringWithFormat:format, ##__VA_ARGS__] UTF8String])
 
-#else
-#if __has_feature(objc_arc)
-#include <Foundation/Foundation.h>
+#else // not CLI
+
 @interface NSDistributedNotificationCenter : NSNotificationCenter
 @end
 
@@ -19,7 +30,16 @@
     [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"[IALLogErr]" object:nil userInfo:@{@"file": @(__FILE__), @"line": @(__LINE__), @"message": message}]; \
 } while(0)
 
-#else // for libarchive functions
+#endif // end CLI check
+
+#else // not ObjC
+
+#if CLI
+
+#define IALLog(format, ...) printf("[i] " format "\n", ##__VA_ARGS__)
+#define IALLogErr(format, ...) printf("[x] " format "\n", ##__VA_ARGS__)
+
+#else // not CLI
 #include <CoreFoundation/CoreFoundation.h>
 extern CFNotificationCenterRef CFNotificationCenterGetDistributedCenter(void);
 
@@ -35,5 +55,5 @@ extern CFNotificationCenterRef CFNotificationCenterGetDistributedCenter(void);
     CFRelease(message); \
 } while(0)
 
-#endif
-#endif
+#endif // end CLI check
+#endif // end ObjC check

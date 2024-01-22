@@ -286,35 +286,35 @@
 #pragma mark Popups
 
 -(void)displayErrorWithMessage:(NSString *)msg{
-	#if !(CLI)
-		dispatch_async(dispatch_get_main_queue(), ^(void){
-			UIAlertController *alert = [UIAlertController
-										alertControllerWithTitle:[NSString stringWithFormat:localize(@"IAmLazy Error:")]
-										message:msg
-										preferredStyle:UIAlertControllerStyleAlert];
+#if !(CLI)
+	dispatch_async(dispatch_get_main_queue(), ^(void){
+		UIAlertController *alert = [UIAlertController
+									alertControllerWithTitle:[NSString stringWithFormat:localize(@"IAmLazy Error:")]
+									message:msg
+									preferredStyle:UIAlertControllerStyleAlert];
 
-			UIAlertAction *okay = [UIAlertAction
-									actionWithTitle:localize(@"Okay")
-									style:UIAlertActionStyleDefault
-									handler:^(UIAlertAction *action){
-										[_rootVC dismissViewControllerAnimated:YES completion:nil];
-									}];
+		UIAlertAction *okay = [UIAlertAction
+								actionWithTitle:localize(@"Okay")
+								style:UIAlertActionStyleDefault
+								handler:^(UIAlertAction *action){
+									[_rootVC dismissViewControllerAnimated:YES completion:nil];
+								}];
 
-			[alert addAction:okay];
+		[alert addAction:okay];
 
-			// dismiss progress view controller and display error alert
-			[_rootVC dismissViewControllerAnimated:YES completion:^{
-				[_rootVC presentViewController:alert animated:YES completion:nil];
-			}];
+		// dismiss progress view controller and display error alert
+		[_rootVC dismissViewControllerAnimated:YES completion:^{
+			[_rootVC presentViewController:alert animated:YES completion:nil];
+		}];
 
-			AudioServicesPlaySystemSound(1107); // error
+		AudioServicesPlaySystemSound(1107); // error
 
-			IALLogErr(@"%@", [msg stringByReplacingOccurrencesOfString:@"\n" withString:@" "]);
-		});
-	#else
 		IALLogErr(@"%@", [msg stringByReplacingOccurrencesOfString:@"\n" withString:@" "]);
-		exit(1);
-	#endif
+	});
+#else
+	IALLogErr(@"%@", [msg stringByReplacingOccurrencesOfString:@"\n" withString:@" "]);
+	exit(1);
+#endif
 }
 
 @end

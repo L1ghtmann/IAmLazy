@@ -28,7 +28,8 @@ include $(THEOS_MAKE_PATH)/application.mk
 else
 TOOL_NAME = ial
 
-ial_FILES = Task.c $(wildcard Shared/**/*.m Shared/**/*.c) $(wildcard CLI/*.m) App/UI/IALProgressViewController.m
+# TODO remove dependency on prog (and header) view
+ial_FILES = Task.c $(wildcard Shared/**/*.m Shared/**/*.c) $(wildcard CLI/*.m) App/UI/IALHeaderView.m App/UI/IALProgressViewController.m
 ial_LIBRARIES = archive
 ial_CFLAGS = -fobjc-arc
 ial_CODESIGN_FLAGS = -SCLI/entitlements.plist

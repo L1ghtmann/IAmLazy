@@ -7,6 +7,10 @@
 // #include <rootless.h>
 #include <sys/wait.h>
 
+#if CLI
+#include <fcntl.h>
+#endif
+
 extern char **environ;
 
 int task(const char *args[]){

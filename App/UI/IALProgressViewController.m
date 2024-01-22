@@ -271,6 +271,7 @@
     [textView setEditable:NO];
 	[textView setTextContainerInset:UIEdgeInsetsMake(0, 10, 0, 10)];
 
+#if !(CLI)
     [[NSDistributedNotificationCenter defaultCenter] addObserverForName:@"[IALLog]" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
         NSDictionary *userInfo = note.userInfo;
         NSString *message = userInfo[@"message"];
@@ -288,45 +289,46 @@
 			[textView scrollRangeToVisible:NSMakeRange(textView.text.length - 1, 1)];
         });
     }];
+#endif
 }
 
 -(void)updateItemStatus:(NSNotification *)notification{
 	CGFloat item = [(NSString *)notification.object floatValue];
 	NSInteger itemInt = ceil(item);
-	#if !(CLI)
-		BOOL isInteger = item == itemInt;
+#if !(CLI)
+	BOOL isInteger = item == itemInt;
 
-		// Note: colorWithRed:green:blue:alpha: seems to use sRGB, not Adobe RGB (https://stackoverflow.com/a/40052756)
-		// a helpful link -- https://www.easyrgb.com/en/convert.php#inputFORM
-		dispatch_async(dispatch_get_main_queue(), ^(void){
-			if(isInteger){
-				[UIView animateWithDuration:0.5 animations:^{
-					[_itemStatusIndicators[itemInt] setBackgroundColor:[UIColor colorWithRed:0.04716 green:0.73722 blue:0.09512 alpha:1.00000]];
-					[_itemStatusText[itemInt] setText:localize(@"Completed")];
-				}];
-			}
-			else{
-				[UIView animateWithDuration:0.5 animations:^{
-					[_itemStatusIndicators[itemInt] setBackgroundColor:[UIColor colorWithRed:1.00000 green:0.67260 blue:0.21379 alpha:1.00000]];
-					[_itemStatusText[itemInt] setText:localize(@"In-progress")];
-				}];
-			}
-		});
-	#else
-		NSString *msg = [@"[!] " stringByAppendingString:_itemDescriptions[itemInt]];
-		puts([msg UTF8String]);
-	#endif
+	// Note: colorWithRed:green:blue:alpha: seems to use sRGB, not Adobe RGB (https://stackoverflow.com/a/40052756)
+	// a helpful link -- https://www.easyrgb.com/en/convert.php#inputFORM
+	dispatch_async(dispatch_get_main_queue(), ^(void){
+		if(isInteger){
+			[UIView animateWithDuration:0.5 animations:^{
+				[_itemStatusIndicators[itemInt] setBackgroundColor:[UIColor colorWithRed:0.04716 green:0.73722 blue:0.09512 alpha:1.00000]];
+				[_itemStatusText[itemInt] setText:localize(@"Completed")];
+			}];
+		}
+		else{
+			[UIView animateWithDuration:0.5 animations:^{
+				[_itemStatusIndicators[itemInt] setBackgroundColor:[UIColor colorWithRed:1.00000 green:0.67260 blue:0.21379 alpha:1.00000]];
+				[_itemStatusText[itemInt] setText:localize(@"In-progress")];
+			}];
+		}
+	});
+#else
+	NSString *msg = [@"[!] " stringByAppendingString:_itemDescriptions[itemInt]];
+	puts([msg UTF8String]);
+#endif
 }
 
 -(void)updateItemProgress:(NSNotification *)notification{
 	CGFloat progress = [(NSString *)notification.object floatValue];
-	#if !(CLI)
-		[_circleFill setStrokeEnd:progress];
-		[_circleFill didChangeValueForKey:@"strokeEnd"];
-	#else
-		NSString *msg = [NSString stringWithFormat:@"%.02f%%", (progress * 100)];
-		puts([msg UTF8String]);
-	#endif
+#if !(CLI)
+	[_circleFill setStrokeEnd:progress];
+	[_circleFill didChangeValueForKey:@"strokeEnd"];
+#else
+	NSString *msg = [NSString stringWithFormat:@"%.02f%%", (progress * 100)];
+	puts([msg UTF8String]);
+#endif
 }
 
 -(UIColor *)IALDarkGray{
