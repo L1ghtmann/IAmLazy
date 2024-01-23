@@ -71,7 +71,7 @@
 
 	[imgView setTranslatesAutoresizingMaskIntoConstraints:NO];
 	[[imgView.centerXAnchor constraintEqualToAnchor:_mainView.centerXAnchor] setActive:YES];
-	[[imgView.topAnchor constraintEqualToAnchor:_mainView.topAnchor constant:85] setActive:YES];
+	[[imgView.centerYAnchor constraintEqualToAnchor:_mainView.centerYAnchor constant:-125] setActive:YES];
 
 	UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(toggleDebugMode:)];
 	[imgView addGestureRecognizer:longPressGesture];
