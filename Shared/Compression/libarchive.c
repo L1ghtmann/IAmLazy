@@ -263,6 +263,7 @@ bool extract_archive(const char *src, const char *dest){
 	flags |= ARCHIVE_EXTRACT_PERM;
 	flags |= ARCHIVE_EXTRACT_ACL;
 	flags |= ARCHIVE_EXTRACT_FFLAGS;
+	flags |= ARCHIVE_EXTRACT_OWNER;
 
 	while(archive_read_next_header2(a, entry) == ARCHIVE_OK){
 		const char *file = archive_entry_pathname(entry);
