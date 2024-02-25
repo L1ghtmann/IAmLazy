@@ -5,8 +5,8 @@
 //	Created by Lightmann during COVID-19
 //
 
-#import "../Shared/Compression/libarchive.h"
 #import <Foundation/Foundation.h>
+#import <libarchive.h>
 #import <sys/stat.h>
 #import <Common.h>
 #import <Task.h>

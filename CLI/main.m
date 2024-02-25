@@ -1,5 +1,5 @@
-#import "../Shared/Managers/IALGeneralManager.h"
 #import "../App/UI/IALProgressViewController.h"
+#import <IALGeneralManager.h>
 #import <Common.h>
 #import <Task.h>
 

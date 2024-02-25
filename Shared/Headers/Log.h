@@ -7,7 +7,7 @@
         Not CLI
 */
 
-#if __has_feature(objc_arc) // ObjC
+#ifdef __OBJC__
 #include <Foundation/Foundation.h>
 
 #if CLI
@@ -30,7 +30,7 @@
     [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"[IALLogErr]" object:nil userInfo:@{@"file": @(__FILE__), @"line": @(__LINE__), @"message": message}]; \
 } while(0)
 
-#endif // end CLI check
+#endif /* CLI */
 
 #else // not ObjC
 
@@ -55,5 +55,5 @@ extern CFNotificationCenterRef CFNotificationCenterGetDistributedCenter(void);
     CFRelease(message); \
 } while(0)
 
-#endif // end CLI check
-#endif // end ObjC check
+#endif /* CLI */
+#endif /* ObjC */

@@ -5,11 +5,11 @@
 //	Created by Lightmann during COVID-19
 //
 
-#import "../../Shared/Managers/IALGeneralManager.h"
 #import <UniformTypeIdentifiers/UTCoreTypes.h>
 #import <AudioToolbox/AudioServices.h>
 #import "IALProgressViewController.h"
 #import "IALBackupsViewController.h"
+#import <IALGeneralManager.h>
 #import "IALHeaderView.h"
 #import <objc/runtime.h>
 #import <Common.h>
