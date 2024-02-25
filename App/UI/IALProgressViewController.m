@@ -7,8 +7,8 @@
 
 #import "IALProgressViewController.h"
 #import "IALHeaderView.h"
-#import "../../Common.h"
 #import <objc/runtime.h>
+#import <Common.h>
 
 #define headerSize (85 * hScaleFactor)
 #define backgroundSize 55

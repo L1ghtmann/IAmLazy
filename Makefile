@@ -12,7 +12,7 @@ endif
 
 include $(THEOS)/makefiles/common.mk
 
-export ADDITIONAL_CFLAGS += -D CLI="$(CLI)"
+export ADDITIONAL_CFLAGS += -I$(PWD)/Headers -DCLI="$(CLI)"
 
 ifeq ($(CLI),1)
 SUBPROJECTS = CLI

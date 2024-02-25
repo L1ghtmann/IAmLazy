@@ -8,8 +8,8 @@
 #import <SafariServices/SFSafariViewController.h>
 #import "IALCreditsViewController.h"
 #import "IALHeaderView.h"
-#import "../../Common.h"
 #import <objc/runtime.h>
+#import <Common.h>
 
 @implementation IALCreditsViewController
 

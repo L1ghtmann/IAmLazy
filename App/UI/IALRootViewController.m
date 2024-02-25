@@ -11,8 +11,8 @@
 #import "IALCreditsViewController.h"
 #import "IALBackupsViewController.h"
 #import "IALRootViewController.h"
-#import "../../Common.h"
-#import "../../Task.h"
+#import <Common.h>
+#import <Task.h>
 
 @implementation IALRootViewController
 

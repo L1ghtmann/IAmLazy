@@ -8,7 +8,7 @@
 #import "../Compression/libarchive.h"
 #import "IALGeneralManager.h"
 #import "IALBackupManager.h"
-#import "../../Common.h"
+#import <Common.h>
 
 @implementation IALBackupManager
 

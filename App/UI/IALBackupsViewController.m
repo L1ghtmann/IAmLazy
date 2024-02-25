@@ -12,8 +12,8 @@
 #import "IALBackupsViewController.h"
 #import "IALHeaderView.h"
 #import <objc/runtime.h>
-#import "../../Common.h"
-#import "../../Task.h"
+#import <Common.h>
+#import <Task.h>
 
 #define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v) ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending) // https://stackoverflow.com/a/5337804
 

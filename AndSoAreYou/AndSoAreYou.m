@@ -7,9 +7,9 @@
 
 #import "../Shared/Compression/libarchive.h"
 #import <Foundation/Foundation.h>
-#import "../Common.h"
 #import <sys/stat.h>
-#import "../Task.h"
+#import <Common.h>
+#import <Task.h>
 
 // have this so we don't have
 // to r/w filenames from a file

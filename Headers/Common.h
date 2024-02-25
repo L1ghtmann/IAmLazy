@@ -1,5 +1,5 @@
 #import <rootless.h>
-#import "Log.h"
+#import <Log.h>
 
 #define localize(str) NSLocalizedStringWithDefaultValue(str, nil, [NSBundle mainBundle], str, nil)
 

@@ -10,8 +10,8 @@
 #import "IALGeneralManager.h"
 #import "IALRestoreManager.h"
 #import "IALBackupManager.h"
-#import "../../Common.h"
-#import "../../Task.h"
+#import <Common.h>
+#import <Task.h>
 
 @implementation IALGeneralManager
 

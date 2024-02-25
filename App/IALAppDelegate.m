@@ -1,6 +1,6 @@
 #import "UI/IALRootViewController.h"
 #import "IALAppDelegate.h"
-#import "../Common.h"
+#import <Common.h>
 
 @implementation IALAppDelegate
 

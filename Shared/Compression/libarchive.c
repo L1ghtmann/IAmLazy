@@ -5,17 +5,17 @@
 //	Created by Lightmann during COVID-19
 //
 
-#include <libarchive/archive_entry.h>
 #include <CoreFoundation/CFString.h>
-#include <libarchive/archive.h>
 #include <dispatch/queue.h>
-#include "../../Log.h"
+#include <archive_entry.h>
+#include <archive.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
 #include <limits.h>
+#include <Log.h>
 
 void write_entry(struct archive *a, const char *item){
 	struct archive_entry *entry = archive_entry_new();
