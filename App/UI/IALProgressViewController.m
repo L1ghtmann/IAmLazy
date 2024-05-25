@@ -8,6 +8,7 @@
 #import "IALProgressViewController.h"
 #import "IALHeaderView.h"
 #import <objc/runtime.h>
+#import <Shared.h>
 #import <Common.h>
 
 #define headerSize (85 * hScaleFactor)
@@ -20,7 +21,7 @@
 
 	if(self){
 		_debug = [[NSUserDefaults standardUserDefaults] boolForKey:@"debug"];
-		_itemDescriptions = [self itemDescriptionsForPurpose:purpose withFilter:filter];
+		_itemDescriptions = itemDescriptionsForPurposeWithFilter(purpose,filter);
 
 		switch(purpose){
 			case 0:
@@ -40,34 +41,6 @@
 	}
 
 	return self;
-}
-
--(NSMutableArray<NSString *> *)itemDescriptionsForPurpose:(NSInteger)purpose withFilter:(BOOL)filter{
-	NSMutableArray *itemDescs = [NSMutableArray new];
-
-	/*
-		purpose: 0 = backup | 1 = restore
-	*/
-
-	if(purpose == 0){
-		if(filter){
-			[itemDescs addObject:localize(@"Determining user packages")];
-		}
-		else {
-			[itemDescs addObject:localize(@"Determining installed packages")];
-		}
-		[itemDescs addObject:localize(@"Gathering files for packages")];
-		[itemDescs addObject:localize(@"Building debs from files")];
-		[itemDescs addObject:localize(@"Creating backup from debs")];
-	}
-	else{
-		[itemDescs addObject:localize(@"Completing pre-restore checks")];
-		[itemDescs addObject:localize(@"Unpacking backup")];
-		[itemDescs addObject:localize(@"Refreshing APT sources")];
-		[itemDescs addObject:localize(@"Installing debs")];
-	}
-
-	return itemDescs;
 }
 
 -(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
@@ -271,7 +244,6 @@
     [textView setEditable:NO];
 	[textView setTextContainerInset:UIEdgeInsetsMake(0, 10, 0, 10)];
 
-#if !(CLI)
     [[NSDistributedNotificationCenter defaultCenter] addObserverForName:@"[IALLog]" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
         NSDictionary *userInfo = note.userInfo;
         NSString *message = userInfo[@"message"];
@@ -289,13 +261,11 @@
 			[textView scrollRangeToVisible:NSMakeRange(textView.text.length - 1, 1)];
         });
     }];
-#endif
 }
 
 -(void)updateItemStatus:(NSNotification *)notification{
 	CGFloat item = [(NSString *)notification.object floatValue];
 	NSInteger itemInt = ceil(item);
-#if !(CLI)
 	BOOL isInteger = item == itemInt;
 
 	// Note: colorWithRed:green:blue:alpha: seems to use sRGB, not Adobe RGB (https://stackoverflow.com/a/40052756)
@@ -314,21 +284,12 @@
 			}];
 		}
 	});
-#else
-	NSString *msg = [@"[!] " stringByAppendingString:_itemDescriptions[itemInt]];
-	puts([msg UTF8String]);
-#endif
 }
 
 -(void)updateItemProgress:(NSNotification *)notification{
 	CGFloat progress = [(NSString *)notification.object floatValue];
-#if !(CLI)
 	[_circleFill setStrokeEnd:progress];
 	[_circleFill didChangeValueForKey:@"strokeEnd"];
-#else
-	NSString *msg = [NSString stringWithFormat:@"%.02f%%", (progress * 100)];
-	puts([msg UTF8String]);
-#endif
 }
 
 -(UIColor *)IALDarkGray{

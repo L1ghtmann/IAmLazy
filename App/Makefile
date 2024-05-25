@@ -4,7 +4,7 @@ include $(THEOS)/makefiles/common.mk
 
 APPLICATION_NAME = IAmLazy
 
-IAmLazy_FILES = $(wildcard ../Shared/**/*.m ../Shared/**/*.c ../Shared/*.c) $(wildcard *.m **/*.m)
+IAmLazy_FILES = $(wildcard ../Shared/*.m ../Shared/**/*.m ../Shared/*.c ../Shared/**/*.c) $(wildcard *.m **/*.m)
 IAmLazy_FRAMEWORKS = UIKit
 IAmLazy_LIBRARIES = archive
 IAmLazy_CFLAGS = -fobjc-arc

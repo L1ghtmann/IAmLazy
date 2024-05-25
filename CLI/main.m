@@ -1,63 +1,10 @@
-#import "../App/UI/IALProgressViewController.h"
+// #import "../App/UI/IALProgressViewController.h"
 #import <IALGeneralManager.h>
 #import <Common.h>
 #import <Task.h>
+#import "util.h"
 
 #define print(str) puts([str UTF8String])
-
-NSArray *getOpts(){
-	@autoreleasepool{
-		NSArray *opts = @[
-			@"-h",
-			@"--help",
-			@"-b",
-			@"--backup",
-			@"-r",
-			@"--restore",
-			@"-l",
-			@"--list"
-		];
-		return opts;
-	}
-}
-
-NSString *getHelp(){
-	@autoreleasepool{
-		NSString *msg = @"\
-Usage: ial [options]\n\
-Options:\n\
-  [-b|--backup]       Create a backup\n\
-  [-r|--restore]      Restore from a backup\n\
-  [-l|--list]         List available backups\n\
-  [-h|--help]         Display this page";
-		return msg;
-	}
-}
-
-// https://stackoverflow.com/a/25753918
-NSString *getInput(){
-	@autoreleasepool{
-		NSString *input = [[NSString alloc] initWithData:[[NSFileHandle fileHandleWithStandardInput] availableData] encoding:NSUTF8StringEncoding];
-		NSString *cleanInput = [input stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]];
-		return [cleanInput stringByReplacingOccurrencesOfString:@" " withString:@""];
-	}
-}
-
-NSString *prompt(NSArray<NSString *> *items, NSInteger upperBound){
-	@autoreleasepool{
-		__block NSString *input = nil;
-		do {
-			for(NSString *item in items){
-				print(item);
-			}
-			input = getInput();
-			if([input length] == 1 && [input intValue] <= upperBound){
-				break;
-			}
-		} while(true);
-		return input;
-	}
-}
 
 int main(int argc, char **argv){
 	@autoreleasepool {
@@ -102,7 +49,8 @@ int main(int argc, char **argv){
 						return 0;
 					}
 
-					__unused IALProgressViewController *prog = [[IALProgressViewController alloc] initWithPurpose:0 withFilter:filter];
+					handleObserverForPurposeWithFilter(0, filter);
+
 					IALGeneralManager *gManager = [IALGeneralManager sharedManager];
 					dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 					NSDate *startTime = [NSDate date];
@@ -128,7 +76,8 @@ int main(int argc, char **argv){
 				// restore
 				case 4:
 				case 5: {
-					__unused IALProgressViewController *prog = [[IALProgressViewController alloc] initWithPurpose:1 withFilter:nil];
+					handleObserverForPurposeWithFilter(1, nil);
+
 					IALGeneralManager *gManager = [IALGeneralManager sharedManager];
 					NSArray *backups = [gManager getBackups];
 					NSUInteger count = [backups count];
