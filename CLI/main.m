@@ -1,10 +1,14 @@
-// #import "../App/UI/IALProgressViewController.h"
+//
+//	main.m
+//	IAmLazy-CLI
+//
+//	Created by Lightmann
+//
+
 #import <IALGeneralManager.h>
 #import <Common.h>
 #import <Task.h>
 #import "util.h"
-
-#define print(str) puts([str UTF8String])
 
 int main(int argc, char **argv){
 	@autoreleasepool {

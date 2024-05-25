@@ -1,7 +1,14 @@
+//
+//	Shared.m
+//	IAmLazy
+//
+//	Created by Lightmann
+//
+
 #import <Common.h>
 
 NSMutableArray<NSString *>* itemDescriptionsForPurposeWithFilter(NSInteger purpose, BOOL filter) {
-    NSMutableArray *itemDescs = [NSMutableArray new];
+	NSMutableArray *itemDescs = [NSMutableArray new];
 
 	/*
 		purpose: 0 = backup | 1 = restore

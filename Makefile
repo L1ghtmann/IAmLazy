@@ -6,7 +6,6 @@ ifeq ($(ROOTLESS),1)
 export THEOS_PACKAGE_SCHEME = rootless
 export TARGET = iphone:clang:14.5:15.0
 else
-export ADDITIONAL_CFLAGS = -D XINA_SUPPORT
 export TARGET = iphone:clang:14.5:13.0
 endif
 

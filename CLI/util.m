@@ -1,4 +1,14 @@
+//
+//	util.m
+//	IAmLazy-CLI
+//
+//	Created by Lightmann
+//
+
+#import <CoreGraphics/CoreGraphics.h>
+#import <Foundation/Foundation.h>
 #import <Shared.h>
+#import "util.h"
 
 NSArray *getOpts(){
 	@autoreleasepool{
@@ -55,16 +65,17 @@ NSString *prompt(NSArray<NSString *> *items, NSInteger upperBound){
 }
 
 void handleObserverForPurposeWithFilter(NSInteger purpose, BOOL filter){
-    NSNotificationCenter *notifCenter = [NSNotificationCenter defaultCenter];
-    CGFloat item = [(NSString *)notification.object floatValue];
-    [notifCenter addObserverForName:@"updateItemStatus" object:nil queue:nil usingBlock:^(NSNotification *notif) {
-        NSInteger itemInt = ceil(item);
-        NSArray *itemDescriptions = itemDescriptionsForPurposeWithFilter(purpose,filter);
-        NSString *msg = [@"[!] " stringByAppendingString:itemDescriptions[itemInt]];
-        puts([msg UTF8String]);
-    }];
-    [notifCenter addObserverForName:@"updateItemProgress" object:nil queue:nil usingBlock:^(NSNotification *notif) {
-        NSString *msg = [NSString stringWithFormat:@"%.02f%%", (item * 100)];
-        puts([msg UTF8String]);
-    }];
+	NSNotificationCenter *notifCenter = [NSNotificationCenter defaultCenter];
+	[notifCenter addObserverForName:@"updateItemStatus" object:nil queue:nil usingBlock:^(NSNotification *notification) {
+		CGFloat item = [(NSString *)notification.object floatValue];
+		NSInteger itemInt = ceil(item);
+		NSArray *itemDescriptions = itemDescriptionsForPurposeWithFilter(purpose,filter);
+		NSString *msg = [@"[!] " stringByAppendingString:itemDescriptions[itemInt]];
+		puts([msg UTF8String]);
+	}];
+	[notifCenter addObserverForName:@"updateItemProgress" object:nil queue:nil usingBlock:^(NSNotification *notification) {
+		CGFloat progress = [(NSString *)notification.object floatValue];
+		NSString *msg = [NSString stringWithFormat:@"%.02f%%", (progress * 100)];
+		puts([msg UTF8String]);
+	}];
 }

@@ -1,3 +1,10 @@
+//
+//	Task.c
+//	IAmLazy
+//
+//	Created by Lightmann
+//
+
 #include <Log.h>
 #include <Task.h>
 #include <stdio.h>
