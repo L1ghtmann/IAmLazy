@@ -62,21 +62,21 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{
-    return (85 * hScaleFactor);
+	return (85 * hScaleFactor);
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
-    static NSString *headerIdentifier = @"header";
-    IALHeaderView *header = [tableView dequeueReusableHeaderFooterViewWithIdentifier:headerIdentifier];
+	static NSString *headerIdentifier = @"header";
+	IALHeaderView *header = [tableView dequeueReusableHeaderFooterViewWithIdentifier:headerIdentifier];
 
-    if (!header) {
-        NSString *subtitle = localize(@"Swipe or tap desired backup");
-        UIImage *button = [UIImage systemImageNamed:@"plus.circle.fill"];
-        header = [[IALHeaderView alloc] initWithReuseIdentifier:headerIdentifier subtitle:subtitle andButtonImage:button];
-        [header.import addTarget:self action:@selector(importBackup) forControlEvents:UIControlEventTouchUpInside];
-    }
+	if (!header) {
+		NSString *subtitle = localize(@"Swipe or tap desired backup");
+		UIImage *button = [UIImage systemImageNamed:@"plus.circle.fill"];
+		header = [[IALHeaderView alloc] initWithReuseIdentifier:headerIdentifier subtitle:subtitle andButtonImage:button];
+		[header.import addTarget:self action:@selector(importBackup) forControlEvents:UIControlEventTouchUpInside];
+	}
 
-    return header;
+	return header;
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -116,69 +116,69 @@
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
 	AudioServicesPlaySystemSound(1520); // haptic feedback
-    NSString *backupName = [tableView cellForRowAtIndexPath:indexPath].textLabel.text;
-    [self confirmRestoreFromBackup:backupName];
+	NSString *backupName = [tableView cellForRowAtIndexPath:indexPath].textLabel.text;
+	[self confirmRestoreFromBackup:backupName];
 	[tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 - (UISwipeActionsConfiguration *)tableView:(UITableView *)tableView trailingSwipeActionsConfigurationForRowAtIndexPath:(NSIndexPath *)indexPath {
-    // export backup
-    NSString *backupName = [tableView cellForRowAtIndexPath:indexPath].textLabel.text;
+	// export backup
+	NSString *backupName = [tableView cellForRowAtIndexPath:indexPath].textLabel.text;
 
-    // Note: to export a local file, need to use an NSURL
-    NSURL *fileURL = [NSURL fileURLWithPath:[backupDir stringByAppendingPathComponent:backupName]];
+	// Note: to export a local file, need to use an NSURL
+	NSURL *fileURL = [NSURL fileURLWithPath:[backupDir stringByAppendingPathComponent:backupName]];
 
-    UIContextualAction *action = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal title:localize(@"Export") handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
+	UIContextualAction *action = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal title:localize(@"Export") handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
 		AudioServicesPlaySystemSound(1520);
-        UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
-        [activityViewController setModalTransitionStyle:UIModalTransitionStyleCoverVertical];
-        [activityViewController.popoverPresentationController setSourceView:tableView];
-        [activityViewController.popoverPresentationController setSourceRect:CGRectMake(0, 0, kWidth, (kHeight/2))];
-        [self presentViewController:activityViewController animated:YES completion:nil];
-        completionHandler(YES);
-    }];
-    [action setImage:[UIImage systemImageNamed:@"square.and.arrow.up"]];
-    [action setBackgroundColor:[UIColor systemBlueColor]];
+		UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
+		[activityViewController setModalTransitionStyle:UIModalTransitionStyleCoverVertical];
+		[activityViewController.popoverPresentationController setSourceView:tableView];
+		[activityViewController.popoverPresentationController setSourceRect:CGRectMake(0, 0, kWidth, (kHeight/2))];
+		[self presentViewController:activityViewController animated:YES completion:nil];
+		completionHandler(YES);
+	}];
+	[action setImage:[UIImage systemImageNamed:@"square.and.arrow.up"]];
+	[action setBackgroundColor:[UIColor systemBlueColor]];
 
-    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+	[tableView deselectRowAtIndexPath:indexPath animated:YES];
 
-    return [UISwipeActionsConfiguration configurationWithActions:@[action]];
+	return [UISwipeActionsConfiguration configurationWithActions:@[action]];
 }
 
 - (UISwipeActionsConfiguration *)tableView:(UITableView *)tableView leadingSwipeActionsConfigurationForRowAtIndexPath:(NSIndexPath *)indexPath {
-    // delete backup
-    NSString *backupName = [tableView cellForRowAtIndexPath:indexPath].textLabel.text;
-    NSString *filePath = [backupDir stringByAppendingPathComponent:backupName];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
+	// delete backup
+	NSString *backupName = [tableView cellForRowAtIndexPath:indexPath].textLabel.text;
+	NSString *filePath = [backupDir stringByAppendingPathComponent:backupName];
+	NSFileManager *fileManager = [NSFileManager defaultManager];
 
-    UIContextualAction *action = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleDestructive title:localize(@"Delete") handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
+	UIContextualAction *action = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleDestructive title:localize(@"Delete") handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
 		AudioServicesPlaySystemSound(1520);
-        if([fileManager isDeletableFileAtPath:filePath]){
-            NSError *deleteError = nil;
-            [fileManager removeItemAtPath:filePath error:&deleteError];
-            if(deleteError){
-                NSString *msg = [NSString stringWithFormat:[[localize(@"An error occured and %@ was not deleted!")
-                                                                stringByAppendingString:@"\n\n"]
-                                                               stringByAppendingString:localize(@"Info: %@")],
-                                                              backupName,
-                                                              deleteError.localizedDescription];
-                [self displayErrorWithMessage:msg];
-                completionHandler(NO);
-            }
+		if([fileManager isDeletableFileAtPath:filePath]){
+			NSError *deleteError = nil;
+			[fileManager removeItemAtPath:filePath error:&deleteError];
+			if(deleteError){
+				NSString *msg = [NSString stringWithFormat:[[localize(@"An error occured and %@ was not deleted!")
+																stringByAppendingString:@"\n\n"]
+															   stringByAppendingString:localize(@"Info: %@")],
+															  backupName,
+															  deleteError.localizedDescription];
+				[self displayErrorWithMessage:msg];
+				completionHandler(NO);
+			}
 			[tableView beginUpdates];
 			[self refreshTable];
 			[tableView endUpdates];
 			completionHandler(YES);
-        }
+		}
 		else {
-            NSString *msg = [NSString stringWithFormat:localize(@"%@ cannot be deleted?!"), filePath];
-            [self displayErrorWithMessage:msg];
-            completionHandler(NO);
-        }
-    }];
-    [action setImage:[UIImage systemImageNamed:@"trash"]];
+			NSString *msg = [NSString stringWithFormat:localize(@"%@ cannot be deleted?!"), filePath];
+			[self displayErrorWithMessage:msg];
+			completionHandler(NO);
+		}
+	}];
+	[action setImage:[UIImage systemImageNamed:@"trash"]];
 
-    return [UISwipeActionsConfiguration configurationWithActions:@[action]];
+	return [UISwipeActionsConfiguration configurationWithActions:@[action]];
 }
 
 #pragma mark Functionality
