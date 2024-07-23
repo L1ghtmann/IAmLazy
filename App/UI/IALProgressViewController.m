@@ -269,4 +269,8 @@
 	return [UIColor colorWithRed:247.0f/255.0f green:249.0f/255.0f blue:250.0f/255.0f alpha:1.0f];
 }
 
+-(void)dealloc{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
 @end

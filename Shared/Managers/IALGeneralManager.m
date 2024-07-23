@@ -400,4 +400,10 @@
 #endif
 }
 
+-(void)dealloc{
+#if !(CLI)
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
+#endif
+}
+
 @end
