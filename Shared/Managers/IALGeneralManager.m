@@ -74,6 +74,9 @@
 		[_backupManager makeBackupWithFilter:filter andCompletion:^(BOOL done, NSString *info){
 			// [[NSDistributedNotificationCenter defaultCenter] removeObserverForName:@"[IALLog]" object:nil];
 			// [[NSDistributedNotificationCenter defaultCenter] removeObserverForName:@"[IALLogErr]" object:nil];
+			if(!done){
+				[self displayErrorWithMessage:@"Backup failed!"]; // TODO
+			}
 			completed(done, info);
 		}];
 	});
@@ -100,6 +103,9 @@
 		[_restoreManager restoreFromBackup:backupName withCompletion:^(BOOL done){
 			// [[NSDistributedNotificationCenter defaultCenter] removeObserverForName:@"[IALLog]" object:nil];
 			// [[NSDistributedNotificationCenter defaultCenter] removeObserverForName:@"[IALLogErr]" object:nil];
+			if(!done){
+				[self displayErrorWithMessage:@"Restore failed!"]; // TODO
+			}
 			completed(done);
 		}];
 	});
@@ -323,6 +329,7 @@
 	[hideButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
 	[hideButton setTitle:localize(@"Hide Details") forState:UIControlStateNormal];
 
+	// TODO: this is kinda gross ... sorry i'm tired
 	NSArray *info = (NSArray *)notification.object;
 	NSInteger purpose = [info.firstObject intValue];
 	if(purpose == 0){
@@ -331,6 +338,20 @@
 	else{
 		[hideButton addTarget:self action:@selector(hideDebugVC_restore) forControlEvents:UIControlEventTouchUpInside];
 	}
+
+	[[NSNotificationCenter defaultCenter] addObserverForName:@"errorReached" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *notification) {
+		if(purpose == 0){
+			[hideButton removeTarget:self action:@selector(hideDebugVC_backup) forControlEvents:UIControlEventTouchUpInside];
+		}
+		else {
+			[hideButton removeTarget:self action:@selector(hideDebugVC_restore) forControlEvents:UIControlEventTouchUpInside];
+		}
+		[hideButton addTarget:self action:@selector(hideDebugVC) forControlEvents:UIControlEventTouchUpInside];
+	}];
+}
+
+-(void)hideDebugVC{
+    [_debugVC dismissViewControllerAnimated:YES completion:nil];
 }
 
 -(void)hideDebugVC_backup{
@@ -375,6 +396,19 @@
 									alertControllerWithTitle:[NSString stringWithFormat:localize(@"IAmLazy Error:")]
 									message:msg
 									preferredStyle:UIAlertControllerStyleAlert];
+
+		if(_debugVC){
+			[[NSNotificationCenter defaultCenter] postNotificationName:@"errorReached" object:nil];
+
+			UIAlertAction *details = [UIAlertAction
+									actionWithTitle:localize(@"Show Details")
+									style:UIAlertActionStyleDefault
+									handler:^(UIAlertAction *action){
+										[_rootVC presentViewController:_debugVC animated:YES completion:nil];
+									}];
+
+			[alert addAction:details];
+		}
 
 		UIAlertAction *okay = [UIAlertAction
 								actionWithTitle:localize(@"Okay")
