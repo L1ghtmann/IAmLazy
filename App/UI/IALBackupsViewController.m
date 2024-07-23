@@ -118,6 +118,7 @@
 	AudioServicesPlaySystemSound(1520); // haptic feedback
     NSString *backupName = [tableView cellForRowAtIndexPath:indexPath].textLabel.text;
     [self confirmRestoreFromBackup:backupName];
+	[tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 - (UISwipeActionsConfiguration *)tableView:(UITableView *)tableView trailingSwipeActionsConfigurationForRowAtIndexPath:(NSIndexPath *)indexPath {
