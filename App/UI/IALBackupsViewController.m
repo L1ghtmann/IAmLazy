@@ -263,7 +263,7 @@
 															actionWithTitle:localize(@"Cancel")
 															style:UIAlertActionStyleDefault
 															handler:^(UIAlertAction *action){
-																[self dismissViewControllerAnimated:YES completion:nil];
+																// [self dismissViewControllerAnimated:YES completion:nil];
 															}];
 
 									[subalert addAction:subyes];
@@ -284,7 +284,7 @@
 							actionWithTitle:localize(@"No")
 							style:UIAlertActionStyleDefault
 							handler:^(UIAlertAction *action){
-								[self dismissViewControllerAnimated:YES completion:nil];
+								// [self dismissViewControllerAnimated:YES completion:nil];
 							}];
 
 	[alert addAction:yes];
