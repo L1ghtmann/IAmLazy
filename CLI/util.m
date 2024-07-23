@@ -66,14 +66,14 @@ NSString *prompt(NSArray<NSString *> *items, NSInteger upperBound){
 
 void handleObserverForPurposeWithFilter(NSInteger purpose, BOOL filter){
 	NSNotificationCenter *notifCenter = [NSNotificationCenter defaultCenter];
-	[notifCenter addObserverForName:@"updateItemStatus" object:nil queue:nil usingBlock:^(NSNotification *notification) {
+	[notifCenter addObserverForName:@"updateItemStatus" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *notification) {
 		CGFloat item = [(NSString *)notification.object floatValue];
 		NSInteger itemInt = ceil(item);
 		NSArray *itemDescriptions = itemDescriptionsForPurposeWithFilter(purpose,filter);
 		NSString *msg = [@"[!] " stringByAppendingString:itemDescriptions[itemInt]];
 		puts([msg UTF8String]);
 	}];
-	[notifCenter addObserverForName:@"updateItemProgress" object:nil queue:nil usingBlock:^(NSNotification *notification) {
+	[notifCenter addObserverForName:@"updateItemProgress" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *notification) {
 		CGFloat progress = [(NSString *)notification.object floatValue];
 		NSString *msg = [NSString stringWithFormat:@"%.02f%%", (progress * 100)];
 		puts([msg UTF8String]);

@@ -14,7 +14,9 @@
 #import <Common.h>
 #import <Task.h>
 
+#if !(CLI)
 @class NSDistributedNotificationCenter;
+#endif
 
 @implementation IALGeneralManager
 
@@ -289,6 +291,7 @@
 	[[debugView.topAnchor constraintEqualToAnchor:_debugVC.view.topAnchor] setActive:YES];
 	[[debugView.bottomAnchor constraintEqualToAnchor:_debugVC.view.bottomAnchor constant:-75] setActive:YES];
 
+#if !(CLI)
 	[[NSDistributedNotificationCenter defaultCenter] addObserverForName:@"[IALLog]" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
 		NSDictionary *userInfo = note.userInfo;
 		NSString *message = userInfo[@"message"];
@@ -304,6 +307,7 @@
 			debugView.text = [debugView.text stringByAppendingFormat:@"\n%@", message];
 		});
 	}];
+#endif
 
 	UIButton *hideButton = [UIButton buttonWithType:UIButtonTypeCustom];
 	[_debugVC.view addSubview:hideButton];
