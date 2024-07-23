@@ -12,6 +12,7 @@ typedef NS_ENUM(NSInteger, ItemType) {
     IALBackupManager *_backupManager;
 }
 @property (nonatomic, retain) UIViewController *rootVC;
+@property (nonatomic, retain) UIViewController *debugVC;
 +(instancetype)sharedManager;
 -(void)makeBackupWithFilter:(BOOL)filter andCompletion:(void (^)(BOOL, NSString *))completed;
 -(void)restoreFromBackup:(NSString *)backupName withCompletion:(void (^)(BOOL))completed;

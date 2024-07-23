@@ -20,7 +20,6 @@
 	self = [super initWithStyle:UITableViewStyleGrouped];
 
 	if(self){
-		_debug = [[NSUserDefaults standardUserDefaults] boolForKey:@"debug"];
 		_itemDescriptions = itemDescriptionsForPurposeWithFilter(purpose,filter);
 
 		switch(purpose){
@@ -38,6 +37,7 @@
 		NSNotificationCenter *notifCenter = [NSNotificationCenter defaultCenter];
 		[notifCenter addObserver:self selector:@selector(updateItemStatus:) name:@"updateItemStatus" object:nil];
 		[notifCenter addObserver:self selector:@selector(updateItemProgress:) name:@"updateItemProgress" object:nil];
+		[notifCenter postNotificationName:@"prepDebugLogging" object:@[[NSNumber numberWithInteger:purpose], [NSNumber numberWithBool:filter]]];
 	}
 
 	return self;
@@ -48,8 +48,8 @@
 }
 
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-	// loading, labels, (log?)
-	return _debug ? 3 : 2;
+	// loading & labels
+	return 2;
 }
 
 -(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section{
@@ -102,10 +102,6 @@
 					[self addProgressItemsTo:cell];
 					break;
 				}
-				case 2:{
-					[self addDebugViewTo:cell];
-					break;
-				}
 			}
 		});
 
@@ -119,7 +115,7 @@
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
 	// cell height
 	CGFloat workingWith = tableView.frame.size.height - headerSize;
-	if(!_debug && indexPath.row == 1){
+	if(indexPath.row == 1){
 		// loading always 1/3
 		// items take up rest of space
 		return 2 * (workingWith/3);
@@ -235,32 +231,6 @@
 
 		[_itemStatusIndicators addObject:status];
 	}
-}
-
-- (void)addDebugViewTo:(UITableViewCell *)cell {
-    UITextView *textView = [[UITextView alloc] initWithFrame:cell.contentView.bounds];
-	[cell.contentView addSubview:textView];
-
-    [textView setEditable:NO];
-	[textView setTextContainerInset:UIEdgeInsetsMake(0, 10, 0, 10)];
-
-    [[NSDistributedNotificationCenter defaultCenter] addObserverForName:@"[IALLog]" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
-        NSDictionary *userInfo = note.userInfo;
-        NSString *message = userInfo[@"message"];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            textView.text = [textView.text stringByAppendingFormat:@"\n%@", message];
-			[textView scrollRangeToVisible:NSMakeRange(textView.text.length - 1, 1)];
-        });
-    }];
-
-    [[NSDistributedNotificationCenter defaultCenter] addObserverForName:@"[IALLogErr]" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
-        NSDictionary *userInfo = note.userInfo;
-        NSString *message = userInfo[@"message"];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            textView.text = [textView.text stringByAppendingFormat:@"\n%@", message];
-			[textView scrollRangeToVisible:NSMakeRange(textView.text.length - 1, 1)];
-        });
-    }];
 }
 
 -(void)updateItemStatus:(NSNotification *)notification{

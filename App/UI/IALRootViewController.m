@@ -73,8 +73,6 @@
 	[[imgView.centerXAnchor constraintEqualToAnchor:_mainView.centerXAnchor] setActive:YES];
 	[[imgView.centerYAnchor constraintEqualToAnchor:_mainView.centerYAnchor constant:-125] setActive:YES];
 
-	UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(toggleDebugMode:)];
-	[imgView addGestureRecognizer:longPressGesture];
 	[imgView setUserInteractionEnabled:YES];
 	[imgView setImage:[UIImage imageNamed:@"Assets/AppIcon250-Clear"]];
 
@@ -113,27 +111,6 @@
 	[itemContainer setDistribution:UIStackViewDistributionFillEqually];
 
 	[self configureItemContainer:itemContainer];
-}
-
--(void)toggleDebugMode:(UILongPressGestureRecognizer *)gesture {
-    if (gesture.state == UIGestureRecognizerStateBegan) {
-        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-        BOOL mode = ![defaults boolForKey:@"debug"];
-        [defaults setBool:mode forKey:@"debug"];
-        [defaults synchronize];
-
-        NSString *message = mode ? @"Debug mode enabled." : @"Debug mode disabled.";
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"IAmLazy"
-										message:message
-										preferredStyle:UIAlertControllerStyleAlert];
-
-        UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK"
-										style:UIAlertActionStyleDefault
-										handler:nil];
-        [alert addAction:okAction];
-
-        [self presentViewController:alert animated:YES completion:nil];
-    }
 }
 
 -(void)configureLabelContainer:(UIStackView *)labelContainer{
@@ -292,6 +269,35 @@
 	}];
 }
 
+-(void)restoreFromBackup:(NSString *)backup{
+	CATransition *transition = [CATransition animation];
+	[transition setDuration:0.4];
+	[transition setType:kCATransitionReveal];
+	[transition setSubtype:kCATransitionFromRight];
+	[transition setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut]];
+	[self.view.window.layer addAnimation:transition forKey:nil];
+
+	IALProgressViewController *vc = [[IALProgressViewController alloc] initWithPurpose:1 withFilter:nil];
+	[vc setModalInPresentation:YES];
+	[self presentViewController:vc animated:YES completion:nil];
+
+	UIApplication *app = [UIApplication sharedApplication];
+	[app setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
+
+	[_manager restoreFromBackup:backup withCompletion:^(BOOL completed){
+		dispatch_async(dispatch_get_main_queue(), ^(void){
+			[app setIdleTimerDisabled:NO]; // re-enable idle timer regardless of completion status
+			if(completed){
+				dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+					[self dismissViewControllerAnimated:YES completion:^{
+						[self popPostRestore];
+					}];
+				});
+			}
+		});
+	}];
+}
+
 -(NSString *)getDuration{
 	NSTimeInterval duration = [_endTime timeIntervalSinceDate:_startTime];
 	return [NSString stringWithFormat:@"%.02f", duration];
@@ -319,6 +325,13 @@
 								message:msg
 								preferredStyle:UIAlertControllerStyleAlert];
 
+	UIAlertAction *details = [UIAlertAction
+								actionWithTitle:localize(@"Show Details") // TODO
+								style:UIAlertActionStyleDefault
+								handler:^(UIAlertAction *action){
+									[self presentViewController:_manager.debugVC animated:YES completion:nil];
+								}];
+
 	UIAlertAction *export = [UIAlertAction
 								actionWithTitle:localize(@"Export")
 								style:UIAlertActionStyleDefault
@@ -339,8 +352,63 @@
 								[self dismissViewControllerAnimated:YES completion:nil];
 							}];
 
+	[alert addAction:details];
 	[alert addAction:export];
 	[alert addAction:okay];
+
+ 	[self presentViewController:alert animated:YES completion:nil];
+}
+
+-(void)popPostRestore{
+	AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
+
+	UIAlertController *alert = [UIAlertController
+								alertControllerWithTitle:@"IAmLazy"
+								message:localize(@"Choose a post-restore command:")
+								preferredStyle:UIAlertControllerStyleAlert];
+
+	UIAlertAction *details = [UIAlertAction
+								actionWithTitle:localize(@"Show Details")
+								style:UIAlertActionStyleDefault
+								handler:^(UIAlertAction *action){
+									[self presentViewController:_manager.debugVC animated:YES completion:nil];
+								}];
+
+	UIAlertAction *respring = [UIAlertAction
+								actionWithTitle:@"Respring"
+								style:UIAlertActionStyleDefault
+								handler:^(UIAlertAction *action){
+									const char *args[] = {
+										ROOT_PATH("/usr/bin/sbreload"),
+										NULL
+									};
+									task(args);
+								}];
+
+	UIAlertAction *uicache = [UIAlertAction
+								actionWithTitle:@"UICache & Respring"
+								style:UIAlertActionStyleDefault
+								handler:^(UIAlertAction *action){
+									const char *args[] = {
+										ROOT_PATH("/usr/bin/uicache"),
+										"-a",
+										"-r",
+										NULL
+									};
+									task(args);
+								}];
+
+	UIAlertAction *none = [UIAlertAction
+							actionWithTitle:localize(@"None")
+							style:UIAlertActionStyleDefault
+							handler:^(UIAlertAction *action){
+								[self dismissViewControllerAnimated:YES completion:nil];
+							}];
+
+	[alert addAction:details];
+	[alert addAction:respring];
+	[alert addAction:uicache];
+	[alert addAction:none];
 
  	[self presentViewController:alert animated:YES completion:nil];
 }

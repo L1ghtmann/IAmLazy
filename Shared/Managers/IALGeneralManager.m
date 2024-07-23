@@ -5,6 +5,7 @@
 //	Created by Lightmann during COVID-19
 //
 
+#import "App/UI/IALRootViewController.h"
 #import <AudioToolbox/AudioServices.h>
 #import "IALGeneralManager.h"
 #import "IALRestoreManager.h"
@@ -12,6 +13,8 @@
 #import <Reachability.h>
 #import <Common.h>
 #import <Task.h>
+
+@class NSDistributedNotificationCenter;
 
 @implementation IALGeneralManager
 
@@ -35,6 +38,10 @@
 		[self cleanLog];
 	#endif
 		[self ensureUsableDpkgLock];
+
+	#if !(CLI)
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(prepareDebugController:) name:@"prepDebugLogging" object:nil];
+	#endif
 	}
 
 	return self;
@@ -63,6 +70,8 @@
 	// about to do some heavy lifting ....
 	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
 		[_backupManager makeBackupWithFilter:filter andCompletion:^(BOOL done, NSString *info){
+			// [[NSDistributedNotificationCenter defaultCenter] removeObserverForName:@"[IALLog]" object:nil];
+			// [[NSDistributedNotificationCenter defaultCenter] removeObserverForName:@"[IALLogErr]" object:nil];
 			completed(done, info);
 		}];
 	});
@@ -87,6 +96,8 @@
 	// about to do some heavy-ish lifting ....
 	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
 		[_restoreManager restoreFromBackup:backupName withCompletion:^(BOOL done){
+			// [[NSDistributedNotificationCenter defaultCenter] removeObserverForName:@"[IALLog]" object:nil];
+			// [[NSDistributedNotificationCenter defaultCenter] removeObserverForName:@"[IALLogErr]" object:nil];
 			completed(done);
 		}];
 	});
@@ -260,6 +271,74 @@
 		return YES;
 	}
 	return NO;
+}
+
+-(void)prepareDebugController:(NSNotification *)notification{
+	_debugVC = [UIViewController new];
+	[_debugVC.view setBackgroundColor:[UIColor systemGray6Color]];
+
+	UITextView *debugView = [[UITextView alloc] init];
+	[_debugVC.view addSubview:debugView];
+
+	[debugView setEditable:NO];
+	[debugView setTextContainerInset:UIEdgeInsetsMake(0, 10, 0, 10)];
+
+	CGRect frame = [[UIScreen mainScreen] bounds];
+	[debugView setTranslatesAutoresizingMaskIntoConstraints:NO];
+	[[debugView.widthAnchor constraintEqualToConstant:frame.size.width] setActive:YES];
+	[[debugView.topAnchor constraintEqualToAnchor:_debugVC.view.topAnchor] setActive:YES];
+	[[debugView.bottomAnchor constraintEqualToAnchor:_debugVC.view.bottomAnchor constant:-75] setActive:YES];
+
+	[[NSDistributedNotificationCenter defaultCenter] addObserverForName:@"[IALLog]" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
+		NSDictionary *userInfo = note.userInfo;
+		NSString *message = userInfo[@"message"];
+		dispatch_async(dispatch_get_main_queue(), ^{
+			debugView.text = [debugView.text stringByAppendingFormat:@"\n%@", message];
+		});
+	}];
+
+	[[NSDistributedNotificationCenter defaultCenter] addObserverForName:@"[IALLogErr]" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
+		NSDictionary *userInfo = note.userInfo;
+		NSString *message = userInfo[@"message"];
+		dispatch_async(dispatch_get_main_queue(), ^{
+			debugView.text = [debugView.text stringByAppendingFormat:@"\n%@", message];
+		});
+	}];
+
+	UIButton *hideButton = [UIButton buttonWithType:UIButtonTypeCustom];
+	[_debugVC.view addSubview:hideButton];
+
+	[hideButton setTranslatesAutoresizingMaskIntoConstraints:NO];
+	[[hideButton.widthAnchor constraintEqualToConstant:(frame.size.width - 50)] setActive:YES];
+	[[hideButton.heightAnchor constraintEqualToConstant:50] setActive:YES];
+	[[hideButton.topAnchor constraintEqualToAnchor:debugView.bottomAnchor constant:5] setActive:YES];
+	[[hideButton.centerXAnchor constraintEqualToAnchor:_debugVC.view.centerXAnchor] setActive:YES];
+
+	[hideButton.layer setCornerRadius:10];
+	[hideButton setBackgroundColor:[(IALRootViewController *)_rootVC IALBlue]];
+	[hideButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+	[hideButton setTitle:@"Hide Details" forState:UIControlStateNormal];
+
+	NSArray *info = (NSArray *)notification.object;
+	NSInteger purpose = [info.firstObject intValue];
+	if(purpose == 0){
+		[hideButton addTarget:self action:@selector(hideDebugVC_backup) forControlEvents:UIControlEventTouchUpInside];
+	}
+	else{
+		[hideButton addTarget:self action:@selector(hideDebugVC_restore) forControlEvents:UIControlEventTouchUpInside];
+	}
+}
+
+-(void)hideDebugVC_backup{
+    [_debugVC dismissViewControllerAnimated:YES completion:^{
+		[(IALRootViewController *)_rootVC popPostBackupWithInfo:nil];
+	}];
+}
+
+-(void)hideDebugVC_restore{
+    [_debugVC dismissViewControllerAnimated:YES completion:^{
+		[(IALRootViewController *)_rootVC popPostRestore];
+	}];
 }
 
 -(void)updateItem:(NSInteger)item WithStatus:(CGFloat)status{

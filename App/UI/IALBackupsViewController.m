@@ -9,6 +9,7 @@
 #import <AudioToolbox/AudioServices.h>
 #import "IALProgressViewController.h"
 #import "IALBackupsViewController.h"
+#import "IALRootViewController.h"
 #import <IALGeneralManager.h>
 #import "IALHeaderView.h"
 #import <objc/runtime.h>
@@ -26,6 +27,7 @@
 
 	if(self){
 		_manager = [IALGeneralManager sharedManager];
+		_rootVC = (IALRootViewController *)_manager.rootVC;
 	}
 
 	return self;
@@ -100,7 +102,7 @@
 	NSString *type = [backup hasSuffix:@"u.tar.gz"] ? localize(@"Developer") : localize(@"Standard");
 	[cell.detailTextLabel setText:[NSString stringWithFormat:localize(@"Type: %@"), type]];
 
-	UIColor *typeColor = [backup containsString:@"u"] ? [self IALBlue] : [self IALYellow];
+	UIColor *typeColor = [backup containsString:@"u"] ? [_rootVC IALBlue] : [_rootVC IALYellow];
 	[cell.textLabel setTextColor:typeColor];
 	[cell.imageView setTintColor:typeColor];
 
@@ -252,7 +254,9 @@
 															actionWithTitle:localize(@"Confirm")
 															style:UIAlertActionStyleDestructive
 															handler:^(UIAlertAction *action){
-																[self restoreFromBackup:backup];
+																[_rootVC dismissViewControllerAnimated:YES completion:^{
+																	[_rootVC restoreFromBackup:backup];
+																}];
 															}];
 
 									UIAlertAction *subno = [UIAlertAction
@@ -270,7 +274,9 @@
 									[self presentViewController:subalert animated:YES completion:nil];
 								}
 								else{
-									[self restoreFromBackup:backup];
+									[_rootVC dismissViewControllerAnimated:YES completion:^{
+										[_rootVC restoreFromBackup:backup];
+									}];
 								}
 							}];
 
@@ -289,83 +295,7 @@
 	[self presentViewController:alert animated:YES completion:nil];
 }
 
--(void)restoreFromBackup:(NSString *)backup{
-	CATransition *transition = [CATransition animation];
-	[transition setDuration:0.4];
-	[transition setType:kCATransitionReveal];
-	[transition setSubtype:kCATransitionFromRight];
-	[transition setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut]];
-	[self.view.window.layer addAnimation:transition forKey:nil];
-
-	IALProgressViewController *vc = [[IALProgressViewController alloc] initWithPurpose:1 withFilter:nil];
-	[vc setModalInPresentation:YES];
-	[self presentViewController:vc animated:YES completion:nil];
-
-	UIApplication *app = [UIApplication sharedApplication];
-	[app setIdleTimerDisabled:YES]; // disable idle timer (screen dim + lock)
-
-	[_manager restoreFromBackup:backup withCompletion:^(BOOL completed){
-		dispatch_async(dispatch_get_main_queue(), ^(void){
-			[app setIdleTimerDisabled:NO]; // re-enable idle timer regardless of completion status
-			if(completed){
-				dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-					[self dismissViewControllerAnimated:YES completion:^{
-						[self popPostRestore];
-					}];
-				});
-			}
-		});
-	}];
-}
-
-
 #pragma mark Popups
-
--(void)popPostRestore{
-	AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
-
-	UIAlertController *alert = [UIAlertController
-								alertControllerWithTitle:@"IAmLazy"
-								message:localize(@"Choose a post-restore command:")
-								preferredStyle:UIAlertControllerStyleAlert];
-
-	UIAlertAction *respring = [UIAlertAction
-								actionWithTitle:@"Respring"
-								style:UIAlertActionStyleDefault
-								handler:^(UIAlertAction *action){
-									const char *args[] = {
-										ROOT_PATH("/usr/bin/sbreload"),
-										NULL
-									};
-									task(args);
-								}];
-
-	UIAlertAction *uicache = [UIAlertAction
-								actionWithTitle:@"UICache & Respring"
-								style:UIAlertActionStyleDefault
-								handler:^(UIAlertAction *action){
-									const char *args[] = {
-										ROOT_PATH("/usr/bin/uicache"),
-										"-a",
-										"-r",
-										NULL
-									};
-									task(args);
-								}];
-
-	UIAlertAction *none = [UIAlertAction
-							actionWithTitle:localize(@"None")
-							style:UIAlertActionStyleDefault
-							handler:^(UIAlertAction *action){
-								[self dismissViewControllerAnimated:YES completion:nil];
-							}];
-
-	[alert addAction:respring];
-	[alert addAction:uicache];
-	[alert addAction:none];
-
- 	[self presentViewController:alert animated:YES completion:nil];
-}
 
 -(void)displayErrorWithMessage:(NSString *)msg{
 	UIAlertController *alert = [UIAlertController
@@ -381,14 +311,6 @@
 	[alert addAction:okay];
 
 	[self presentViewController:alert animated:YES completion:nil];
-}
-
--(UIColor *)IALYellow{
-	return [UIColor colorWithRed:252.0f/255.0f green:251.0f/255.0f blue:216.0f/255.0f alpha:1.0f];
-}
-
--(UIColor *)IALBlue{
-	return [UIColor colorWithRed:82.0f/255.0f green:102.0f/255.0f blue:142.0f/255.0f alpha:1.0f];
 }
 
 @end
