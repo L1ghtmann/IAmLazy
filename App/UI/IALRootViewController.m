@@ -326,7 +326,7 @@
 								preferredStyle:UIAlertControllerStyleAlert];
 
 	UIAlertAction *details = [UIAlertAction
-								actionWithTitle:localize(@"Show Details") // TODO
+								actionWithTitle:localize(@"Show Details")
 								style:UIAlertActionStyleDefault
 								handler:^(UIAlertAction *action){
 									[self presentViewController:_manager.debugVC animated:YES completion:nil];

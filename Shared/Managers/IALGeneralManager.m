@@ -321,7 +321,7 @@
 	[hideButton.layer setCornerRadius:10];
 	[hideButton setBackgroundColor:[(IALRootViewController *)_rootVC IALBlue]];
 	[hideButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-	[hideButton setTitle:@"Hide Details" forState:UIControlStateNormal];
+	[hideButton setTitle:localize(@"Hide Details") forState:UIControlStateNormal];
 
 	NSArray *info = (NSArray *)notification.object;
 	NSInteger purpose = [info.firstObject intValue];
