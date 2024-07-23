@@ -72,10 +72,8 @@
 	// about to do some heavy lifting ....
 	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
 		[_backupManager makeBackupWithFilter:filter andCompletion:^(BOOL done, NSString *info){
-			// [[NSDistributedNotificationCenter defaultCenter] removeObserverForName:@"[IALLog]" object:nil];
-			// [[NSDistributedNotificationCenter defaultCenter] removeObserverForName:@"[IALLogErr]" object:nil];
 			if(!done){
-				[self displayErrorWithMessage:@"Backup failed!"]; // TODO
+				[self displayErrorWithMessage:localize(@"Backup failed!")];
 			}
 			completed(done, info);
 		}];
@@ -101,10 +99,8 @@
 	// about to do some heavy-ish lifting ....
 	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
 		[_restoreManager restoreFromBackup:backupName withCompletion:^(BOOL done){
-			// [[NSDistributedNotificationCenter defaultCenter] removeObserverForName:@"[IALLog]" object:nil];
-			// [[NSDistributedNotificationCenter defaultCenter] removeObserverForName:@"[IALLogErr]" object:nil];
 			if(!done){
-				[self displayErrorWithMessage:@"Restore failed!"]; // TODO
+				[self displayErrorWithMessage:localize(@"Restore failed!")];
 			}
 			completed(done);
 		}];
