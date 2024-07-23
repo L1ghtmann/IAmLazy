@@ -184,7 +184,6 @@
 		[itemcontainer addArrangedSubview:pane];
 
 		[pane setTranslatesAutoresizingMaskIntoConstraints:NO];
-		[[pane.widthAnchor constraintEqualToConstant:cell.contentView.frame.size.width] setActive:YES];
 		[[pane.heightAnchor constraintEqualToConstant:cell.contentView.frame.size.height/[_itemDescriptions count]] setActive:YES];
 
 		// main label
