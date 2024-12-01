@@ -54,7 +54,7 @@
 	[[footer.centerXAnchor constraintEqualToAnchor:_mainView.centerXAnchor] setActive:YES];
 	[[footer.bottomAnchor constraintEqualToAnchor:_mainView.bottomAnchor constant:-10] setActive:YES];
 
-	[footer setTitle:@"v2.6.1 | Lightmann 2021-2024" forState:UIControlStateNormal];
+	[footer setTitle:@"v2.6.2 | Lightmann 2021-2024" forState:UIControlStateNormal];
 	[footer.titleLabel setFont:[UIFont systemFontOfSize:[UIFont smallSystemFontSize] weight:UIFontWeightUltraLight]];
 	[footer addTarget:self action:@selector(footerTapped) forControlEvents:UIControlEventTouchUpInside];
 }
