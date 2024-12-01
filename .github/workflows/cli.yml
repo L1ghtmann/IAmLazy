@@ -11,6 +11,10 @@ jobs:
     steps:
       - uses: actions/checkout@main
 
+      - name: Install dependencies
+        run: |
+          sudo apt install -y libarchive-dev
+
       - name: Build Rootless Package
         uses: L1ghtmann/theos-build@main
         with:

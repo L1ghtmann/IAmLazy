@@ -3,6 +3,9 @@ Easily backup and restore your tweaks
 
 Available for free on Chariz. [Depiction](https://chariz.com/get/iamlazy).
 
+## Build Dependencies
+- `libarchive(-dev)`
+
 ## Credits
 - [Apple](https://developer.apple.com/library/archive/samplecode/Reachability/) for Reachability
 - [aesign](https://twitter.com/aesign_) for design inspiration (re: [Electra](https://coolstar.org/electra/))
