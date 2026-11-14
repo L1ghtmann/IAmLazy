@@ -12,6 +12,7 @@
 
 int main(int argc, char **argv){
 	@autoreleasepool {
+		setvbuf(stdout, NULL, _IOLBF, 0);
 		// sanity check
 		NSArray *opts = getOpts();
 		if(argc != 2 || ![opts containsObject:@(argv[1])]){
